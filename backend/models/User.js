@@ -25,10 +25,6 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    totalContestsGiven: {
-      type: Number,
-      default: 0,
-    },
     questionsSolvedByDifficulty: {
       easy: {
         type: Number,
@@ -42,6 +38,14 @@ const userSchema = new mongoose.Schema(
         type: Number,
         default: 0,
       },
+    },
+    attendedContestsCount: {
+      type: Number,
+      default: 0,
+    },
+    globalRanking: {
+      type: Number,
+      default: 0,
     },
   },
   { timestamps: true }

@@ -84,10 +84,10 @@ exports.updateLeetCodeStats = async (req, res) => {
     await User.findOneAndUpdate(
       { leetcodeUsername },
       {
-        totalQuestionsSolved: stats.totalQuestionsSolved,
-        totalContestsGiven: stats.totalContestsGiven,
-        questionsSolvedByDifficulty: stats.questionsSolvedByDifficulty,
-      }
+        attendedContestsCount: stats.attendedContestsCount,
+        globalRanking: stats.globalRanking,
+      },
+      { new: true } // Return the updated document
     );
 
     res

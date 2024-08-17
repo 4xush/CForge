@@ -1,8 +1,7 @@
-// This file will contain the logic to interact with the LeetCode API using axios. It will include a function that takes a user's LeetCode username, queries the LeetCode GraphQL API, and returns their statistics.
-
 const axios = require("axios");
 
 const getLeetCodeStats = async (leetcodeUsername) => {
+  // Updated GraphQL query to include contest data (attendedContestsCount and globalRanking)
   const query = `
   query getUserProfile($username: String!) {
     matchedUser(username: $username) {
@@ -12,9 +11,10 @@ const getLeetCodeStats = async (leetcodeUsername) => {
           count
         }
       }
-      contestBadge {
-        name
-      }
+    }
+    userContestRanking(username: $username) {
+      attendedContestsCount
+      globalRanking
     }
   }
 `;
@@ -41,8 +41,18 @@ const getLeetCodeStats = async (leetcodeUsername) => {
         },
       }
     );
+
     console.log("Received response from LeetCode API:", response.data);
-    return response.data.data.matchedUser;
+
+    // Extract matchedUser and userContestRanking from the response
+    const { matchedUser, userContestRanking } = response.data.data;
+
+    // Return both user submission stats and contest stats
+    return {
+      submitStats: matchedUser.submitStats,
+      attendedContestsCount: userContestRanking.attendedContestsCount,
+      globalRanking: userContestRanking.globalRanking,
+    };
   } catch (error) {
     console.error(
       "Error fetching LeetCode stats:",
@@ -56,6 +66,6 @@ module.exports = {
   getLeetCodeStats,
 };
 
-// GraphQL Query: We define a query that retrieves the user's submission statistics (submitStatsGlobal) and their contest participation data (contestRanking).
-// Axios POST Request: We make a POST request to the LeetCode GraphQL API endpoint with this query to retrieve the data.
-// Data Processing: The data returned is processed to calculate the total number of questions solved, contests attended, and a breakdown of questions solved by difficulty.
+// Explanation of Changes:
+// 1. Updated the GraphQL query to include `userContestRanking` which retrieves `attendedContestsCount` and `globalRanking`.
+// 2. Processed the response to extract `submitStats`, `attendedContestsCount`, and `globalRanking`, returning them in a single object.
