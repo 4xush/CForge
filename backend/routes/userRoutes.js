@@ -3,18 +3,26 @@ const {
   registerUser,
   loginUser,
   updateLeetCodeStats,
-} = require("../controllers/userController");
-const { protect } = require("../middleware/authMiddleware");
+  updateUserSettings,
+  getAllRooms,
+} = require("../controllers/userController"); // Ensure these are imported correctly
+const { protect } = require("../middleware/authMiddleware"); // Ensure this is correctly imported
 
 const router = express.Router();
 
-// Route to register a new user
+// User registration route
 router.post("/register", registerUser);
 
-// Route to login a user
+// User login route
 router.post("/login", loginUser);
 
-// Route to update LeetCode stats for a logged-in user
+// Update LeetCode stats route (protected)
 router.put("/update-stats", protect, updateLeetCodeStats);
+
+// Route to update user settings (protected)
+router.patch("/settings", protect, updateUserSettings);
+
+// Route to get rooms the user is connected to (protected)
+router.get("/rooms", protect, getAllRooms); // New route to fetch user rooms
 
 module.exports = router;

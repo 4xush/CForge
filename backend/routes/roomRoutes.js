@@ -5,9 +5,16 @@ const {
   getAllRooms,
   leaveRoom,
   assignAdmin,
-  acceptJoinRequest, // Add this line
+  acceptJoinRequest,
+  getRoomMembers,
+  sortRoomMembers,
 } = require("../controllers/roomController");
 const { protect } = require("../middleware/authMiddleware");
+
+const {
+  sendMessage,
+  getRoomMessages,
+} = require("../controllers/messageController");
 
 const router = express.Router();
 
@@ -27,6 +34,18 @@ router.post("/leave", protect, leaveRoom);
 router.post("/assign-admin", protect, assignAdmin);
 
 // Route for an admin to accept a join request
-router.post("/accept-join", protect, acceptJoinRequest); // Add this line
+router.post("/accept-join", protect, acceptJoinRequest);
+
+// Route to get members of a room
+router.get("/:roomId/members", protect, getRoomMembers);
+
+// Route to sort members of a room
+router.get("/:roomId/members/sort", protect, sortRoomMembers);
+
+// Route to send a message to a room
+router.post("/:roomId/messages", protect, sendMessage);
+
+// Route to get all messages in a room
+router.get("/:roomId/messages", protect, getRoomMessages);
 
 module.exports = router;
