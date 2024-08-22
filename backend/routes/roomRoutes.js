@@ -7,10 +7,8 @@ const {
   assignAdmin,
   acceptJoinRequest,
   getRoomMembers,
-  sortRoomMembers,
 } = require("../controllers/roomController");
 const { protect } = require("../middleware/authMiddleware");
-
 const {
   sendMessage,
   getRoomMessages,
@@ -36,11 +34,8 @@ router.post("/assign-admin", protect, assignAdmin);
 // Route for an admin to accept a join request
 router.post("/accept-join", protect, acceptJoinRequest);
 
-// Route to get members of a room
-router.get("/:roomId/members", protect, getRoomMembers);
-
-// Route to sort members of a room
-router.get("/:roomId/members/sort", protect, sortRoomMembers);
+// Route to get members of a room (including sorting)
+router.get("/members", protect, getRoomMembers);
 
 // Route to send a message to a room
 router.post("/:roomId/messages", protect, sendMessage);

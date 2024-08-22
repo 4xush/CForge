@@ -1,28 +1,24 @@
 const express = require("express");
 const {
-  registerUser,
-  loginUser,
   updateLeetCodeStats,
   updateUserSettings,
-  getAllRooms,
-} = require("../controllers/userController"); // Ensure these are imported correctly
-const { protect } = require("../middleware/authMiddleware"); // Ensure this is correctly imported
+} = require("../controllers/userController");
+const { registerUser, loginUser } = require("../controllers/authController"); // Import auth functions from authController
+const { getAllRooms } = require("../controllers/roomController"); // Import getAllRooms from roomController
+const { protect } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-// User registration route
+// Auth routes (these don't need protection)
 router.post("/register", registerUser);
-
-// User login route
 router.post("/login", loginUser);
 
-// Update LeetCode stats route (protected)
+// Protected user routes
 router.put("/update-stats", protect, updateLeetCodeStats);
-
-// Route to update user settings (protected)
 router.patch("/settings", protect, updateUserSettings);
 
 // Route to get rooms the user is connected to (protected)
-router.get("/rooms", protect, getAllRooms); // New route to fetch user rooms
+// This route is now handled by the roomController
+router.get("/rooms", protect, getAllRooms);
 
 module.exports = router;

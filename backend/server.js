@@ -5,10 +5,19 @@ const userRoutes = require("./routes/userRoutes");
 const roomRoutes = require("./routes/roomRoutes");
 const http = require("http");
 const { Server } = require("socket.io");
+const cors = require("cors");
 
 dotenv.config(); // Load environment variables from .env file
 
 const app = express();
+
+// CORS middleware configuration
+app.use(
+  cors({
+    origin: "http://localhost:5173", // Replace with your frontend URL without the trailing slash
+    credentials: true,
+  })
+);
 
 // Middleware for parsing JSON bodies
 app.use(express.json());
