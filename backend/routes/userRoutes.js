@@ -1,12 +1,9 @@
 const express = require("express");
-const {
-  updateLeetCodeStats,
-  updateUserSettings,
-} = require("../controllers/userController");
+const { updateUserSettings } = require("../controllers/userController");
 const { registerUser, loginUser } = require("../controllers/authController"); // Import auth functions from authController
 const { getAllRooms } = require("../controllers/roomController"); // Import getAllRooms from roomController
 const { protect } = require("../middleware/authMiddleware");
-
+const { updateLeetCodeStats } = require("../jobs/leetCodeUpdater");
 const router = express.Router();
 
 // Auth routes (these don't need protection)

@@ -20,6 +20,7 @@ const userSchema = new mongoose.Schema(
     leetcodeUsername: {
       type: String,
       required: true,
+      unique: true,
     },
     totalQuestionsSolved: {
       type: Number,

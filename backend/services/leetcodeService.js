@@ -65,7 +65,3 @@ const getLeetCodeStats = async (leetcodeUsername) => {
 module.exports = {
   getLeetCodeStats,
 };
-
-// Explanation of Changes:
-// 1. Updated the GraphQL query to include `userContestRanking` which retrieves `attendedContestsCount` and `globalRanking`.
-// 2. Processed the response to extract `submitStats`, `attendedContestsCount`, and `globalRanking`, returning them in a single object.
