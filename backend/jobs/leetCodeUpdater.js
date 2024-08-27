@@ -2,36 +2,53 @@ const { getLeetCodeStats } = require("../services/leetcodeService");
 const User = require("../models/User");
 
 exports.updateLeetCodeStats = async (req, res) => {
-  const { leetcodeUsername } = req.user;
   try {
+    const user = req.user;
+    if (
+      !user ||
+      !user.platforms.leetcode ||
+      !user.platforms.leetcode.username // Fixed field name
+    ) {
+      return res
+        .status(400)
+        .json({ message: "LeetCode username not found for user" });
+    }
+
+    const leetcodeUsername = user.platforms.leetcode.username; // Fixed field name
     const apiResponse = await getLeetCodeStats(leetcodeUsername);
 
-    // Extract relevant data from apiResponse
-    const submitStats = apiResponse.submitStats.acSubmissionNum;
-
-    // Process `submitStats` to fit the schema
-    const questionsSolvedByDifficulty = {
-      easy: submitStats.find((stat) => stat.difficulty === "Easy")?.count || 0,
-      medium:
-        submitStats.find((stat) => stat.difficulty === "Medium")?.count || 0,
-      hard: submitStats.find((stat) => stat.difficulty === "Hard")?.count || 0,
-    };
+    console.log("API Response:", apiResponse);
 
     const statsToUpdate = {
       "platforms.leetcode.totalQuestionsSolved":
-        submitStats.find((stat) => stat.difficulty === "All")?.count || 555,
-      "platforms.leetcode.questionsSolvedByDifficulty":
-        questionsSolvedByDifficulty,
+        apiResponse.totalQuestionsSolved,
+      "platforms.leetcode.questionsSolvedByDifficulty.easy":
+        apiResponse.questionsSolvedByDifficulty.easy,
+      "platforms.leetcode.questionsSolvedByDifficulty.medium":
+        apiResponse.questionsSolvedByDifficulty.medium,
+      "platforms.leetcode.questionsSolvedByDifficulty.hard":
+        apiResponse.questionsSolvedByDifficulty.hard,
       "platforms.leetcode.attendedContestsCount":
         apiResponse.attendedContestsCount,
-      "platforms.leetcode.globalRanking": apiResponse.globalRanking,
+      "platforms.leetcode.contestRating": apiResponse.contestRating,
     };
 
+    console.log("Stats to update:", statsToUpdate);
+
     const updatedUser = await User.findOneAndUpdate(
-      { leetcodeUsername },
+      { _id: user._id },
       { $set: statsToUpdate },
       { new: true, runValidators: true }
     );
+
+    if (!updatedUser) {
+      console.error("User not found or update failed");
+      return res
+        .status(404)
+        .json({ message: "User not found or update failed" });
+    }
+
+    console.log("Updated user:", updatedUser);
 
     res.status(200).json({
       message: "LeetCode stats updated successfully",

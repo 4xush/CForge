@@ -33,7 +33,9 @@ const registerUser = async (req, res) => {
     }
 
     // Check if LeetCode username is already registered with another email
-    const existingLeetCodeUser = await User.findOne({ leetcodeUsername });
+    const existingLeetCodeUser = await User.findOne({
+      "platforms.leetcode.username": leetcodeUsername, // Updated field name
+    });
     if (existingLeetCodeUser) {
       return res.status(400).json({
         message: `LeetCode username "${leetcodeUsername}" is already registered with another email. Please use a different LeetCode username.`,
@@ -52,7 +54,14 @@ const registerUser = async (req, res) => {
       username,
       email,
       password: hashedPassword,
-      leetcodeUsername,
+      platforms: {
+        leetcode: {
+          username: leetcodeUsername, // Updated field name
+          totalQuestionsSolved: 0,
+          questionsSolvedByDifficulty: { easy: 0, medium: 0, hard: 0 },
+          attendedContestsCount: 0,
+        },
+      },
     });
 
     await newUser.save();
