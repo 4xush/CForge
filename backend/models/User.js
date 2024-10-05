@@ -2,9 +2,14 @@ const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
   {
+    Fullname: {
+      type: String,
+      required: true,
+    },
     username: {
       type: String,
       required: true,
+      unique: true,
     },
     email: {
       type: String,
@@ -15,20 +20,14 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    gender: {
+      type: String,
+      required: true,
+      enum: ["male", "female"],
+    },
     profilePicture: {
       type: String,
       default: "",
-    },
-    settings: {
-      theme: {
-        type: String,
-        enum: ["light", "dark"],
-        default: "light",
-      },
-      language: {
-        type: String,
-        default: "en",
-      },
     },
     platforms: {
       leetcode: {
@@ -65,14 +64,12 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// Virtual for rooms the user is a member of
 userSchema.virtual("rooms", {
   ref: "Room",
   localField: "_id",
   foreignField: "members",
 });
 
-// Virtual for rooms created by the user
 userSchema.virtual("createdRooms", {
   ref: "Room",
   localField: "_id",

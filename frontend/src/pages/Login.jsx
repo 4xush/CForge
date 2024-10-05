@@ -1,7 +1,7 @@
 // src/pages/Login.jsx
 import React, { useState } from 'react';
 import { AlertCircle } from 'lucide-react';
-import { login } from '../api'; // Adjust the path if needed
+import useLogin from '../hooks/useLogin';
 import { useNavigate } from 'react-router-dom';
 
 const CustomAlert = ({ message }) => (
@@ -13,12 +13,14 @@ const CustomAlert = ({ message }) => (
     </div>
 );
 
+
 const Login = () => {
     const [formData, setFormData] = useState({
         email: '',
         password: '',
     });
     const [error, setError] = useState('');
+    const { login, loading } = useLogin(); // Use the hook here
     const navigate = useNavigate();
 
     const handleInputChange = (e) => {
@@ -30,7 +32,7 @@ const Login = () => {
         setError('');
 
         try {
-            const data = await login(formData.email, formData.password);
+            const data = await login(formData.email, formData.password); // Call the hook's login function
             console.log('Success:', data);
             navigate('/dashboard');
         } catch (error) {

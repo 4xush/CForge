@@ -1,20 +1,51 @@
 const mongoose = require("mongoose");
+const shortid = require("shortid"); // You'll need to install this package: npm install shortid
 
-const RoomSchema = new mongoose.Schema(
+const roomSchema = new mongoose.Schema(
   {
-    roomName: { type: String, required: true },
-    createdBy: {
+    roomId: {
+      type: String,
+      required: true,
+      unique: true, // Ensures the roomId is unique
+      index: true, // Creates an index on roomId for faster lookups
+      default: shortid.generate,
+    },
+    name: { type: String, required: true },
+    description: { type: String },
+    creator: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
+    isPublic: { type: Boolean, default: true },
+    maxMembers: { type: Number, default: 50 },
     members: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    admins: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }], // Add admins field
-    inviteCode: { type: String, unique: true, required: true },
+    admins: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    isAdminOnlyMode: {
+      type: Boolean,
+      default: false, // By default, room is not in admin-only mode
+    },
+    mutedUsers: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        muteUntil: {
+          type: Date, // The time until the user is muted
+        },
+      },
+    ],
+    joinRequests: [
+      {
+        user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        requestedAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true }
-); // Add timestamps
+);
 
-const Room = mongoose.model("Room", RoomSchema);
+const Room = mongoose.model("Room", roomSchema);
 
 module.exports = Room;

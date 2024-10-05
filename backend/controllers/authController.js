@@ -21,20 +21,23 @@ const checkLeetCodeUsername = async (username) => {
   }
 };
 
-// User Registration
-const registerUser = async (req, res) => {
-  const { username, email, password, leetcodeUsername } = req.body;
+const signupUser = async (req, res) => {
+  const { Fullname, username, email, password, gender, leetcodeUsername } =
+    req.body;
 
   try {
-    // Check if email is already registered
     const existingEmailUser = await User.findOne({ email });
     if (existingEmailUser) {
       return res.status(400).json({ message: "Email is already registered" });
     }
 
-    // Check if LeetCode username is already registered with another email
+    const existingUsernameUser = await User.findOne({ username });
+    if (existingUsernameUser) {
+      return res.status(400).json({ message: "Username is already taken" });
+    }
+
     const existingLeetCodeUser = await User.findOne({
-      "platforms.leetcode.username": leetcodeUsername, // Updated field name
+      "platforms.leetcode.username": leetcodeUsername,
     });
     if (existingLeetCodeUser) {
       return res.status(400).json({
@@ -42,21 +45,31 @@ const registerUser = async (req, res) => {
       });
     }
 
-    // Check if LeetCode username exists on LeetCode platform
     const leetcodeExists = await checkLeetCodeUsername(leetcodeUsername);
     if (!leetcodeExists) {
       return res.status(400).json({ message: "LeetCode username not found" });
     }
 
+    // Validate gender
+    if (!["male", "female"].includes(gender)) {
+      return res.status(400).json({ message: "Invalid gender value" });
+    }
+
+    const boyProfilePic = `https://avatar.iran.liara.run/public/boy?username=${username}`;
+    const girlProfilePic = `https://avatar.iran.liara.run/public/girl?username=${username}`;
+
     // Create new user
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({
+      Fullname,
       username,
       email,
       password: hashedPassword,
+      gender,
+      profilePicture: gender === "male" ? boyProfilePic : girlProfilePic,
       platforms: {
         leetcode: {
-          username: leetcodeUsername, // Updated field name
+          username: leetcodeUsername,
           totalQuestionsSolved: 0,
           questionsSolvedByDifficulty: { easy: 0, medium: 0, hard: 0 },
           attendedContestsCount: 0,
@@ -80,28 +93,15 @@ const registerUser = async (req, res) => {
   }
 };
 
-// User Login
 const loginUser = async (req, res) => {
-  const { email, password } = req.body;
-
   try {
-    console.log("Login attempt for email:", email);
-
+    const { email, password } = req.body;
     const user = await User.findOne({ email });
-    if (!user) {
-      console.log("User not found for email:", email);
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    console.log("User found:", user);
-
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      console.log("Password does not match for email:", email);
+
+    if (!user || !isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
-
-    console.log("Password matched for email:", email);
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
@@ -117,6 +117,6 @@ const loginUser = async (req, res) => {
 };
 
 module.exports = {
-  registerUser,
+  signupUser,
   loginUser,
 };

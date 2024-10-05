@@ -5,7 +5,6 @@ import axios from 'axios';
 const CForgeHomepage = () => {
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const [isJoiningRoom, setIsJoiningRoom] = useState(false);
-  const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState('');
 
   const handleCreateRoom = async () => {
@@ -22,7 +21,7 @@ const CForgeHomepage = () => {
   const handleJoinRoom = async () => {
     setIsJoiningRoom(true);
     try {
-      await axios.post('/api/rooms/join', { inviteCode });
+      await axios.post('/api/rooms/join');
       // Redirect or update UI to show the joined room
     } catch (error) {
       setError(error.response.data.message || 'Connection lost');
@@ -50,22 +49,13 @@ const CForgeHomepage = () => {
           >
             <PlusCircle className="mr-2" /> {isCreatingRoom ? 'Creating...' : 'Create Room'}
           </button>
-          <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
-            <input
-              type="text"
-              className="bg-gray-800 text-white py-2 px-4 rounded-lg flex-grow"
-              placeholder="Enter invite code"
-              value={inviteCode}
-              onChange={(e) => setInviteCode(e.target.value)}
-            />
-            <button
-              className="bg-pink-600 hover:bg-pink-700 text-white font-bold py-4 px-8 rounded-lg flex items-center justify-center"
-              onClick={handleJoinRoom}
-              disabled={isJoiningRoom}
-            >
-              <Users className="mr-2" /> {isJoiningRoom ? 'Joining...' : 'Join Room'}
-            </button>
-          </div>
+          <button
+            className="bg-pink-600 hover:bg-pink-700 text-white font-bold py-4 px-8 rounded-lg flex items-center justify-center"
+            onClick={handleJoinRoom}
+            disabled={isJoiningRoom}
+          >
+            <Users className="mr-2" /> {isJoiningRoom ? 'Joining...' : 'Join Room'}
+          </button>
         </div>
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mt-8 text-center">

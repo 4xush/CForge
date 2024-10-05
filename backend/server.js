@@ -1,13 +1,12 @@
+require("dotenv").config();
 const express = require("express");
-const dotenv = require("dotenv");
 const connectDB = require("./config/db");
+const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const roomRoutes = require("./routes/roomRoutes");
 const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
-
-dotenv.config(); // Load environment variables from .env file
 
 const app = express();
 
@@ -26,6 +25,7 @@ app.use(express.json());
 connectDB();
 
 // Routes
+app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/rooms", roomRoutes);
 
@@ -69,3 +69,4 @@ io.on("connection", (socket) => {
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+module.exports = app;

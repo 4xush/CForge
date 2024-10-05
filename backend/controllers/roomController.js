@@ -1,190 +1,246 @@
 const Room = require("../models/Room");
 const User = require("../models/User");
 
-exports.createRoom = async (req, res) => {
-  const { roomName, inviteCode } = req.body;
-  const createdBy = req.user.id;
+// Helper function to check if a user is a member of a room
+const isMember = (room, userId) => {
+  return room.members.some((member) => member.toString() === userId.toString());
+};
+
+// Helper function to check if there's space in the room
+const hasAvailableSpace = (room) => {
+  return room.members.length < room.maxMembers;
+};
+
+exports.getAllRoomsForUser = async (req, res) => {
   try {
+    const userId = req.user._id;
+
+    const rooms = await Room.find({ members: userId })
+      .select("roomId name description isPublic members admins")
+      .exec();
+
+    res.json({ rooms });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error fetching user's rooms", error: error.message });
+  }
+};
+
+exports.createRoom = async (req, res) => {
+  try {
+    const { name, description, isPublic, maxMembers } = req.body;
+    const creator = req.user._id;
+
     const newRoom = new Room({
-      roomName,
-      createdBy,
-      inviteCode,
-      members: [createdBy],
-      admins: [createdBy],
+      name,
+      description,
+      creator,
+      isPublic,
+      maxMembers: maxMembers || 50,
+      admins: [creator],
+      members: [creator],
     });
+
     await newRoom.save();
     res
       .status(201)
       .json({ message: "Room created successfully", room: newRoom });
   } catch (error) {
-    console.error("Error creating room:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error creating room", error: error.message });
   }
 };
 
-exports.joinRoom = async (req, res) => {
-  const { inviteCode } = req.body;
-  const userId = req.user.id;
+exports.searchPublicRooms = async (req, res) => {
   try {
-    const room = await Room.findOne({ inviteCode });
+    const { page = 1, limit = 10, search = "" } = req.query;
+    const query = {
+      isPublic: true,
+      $or: [
+        { name: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ],
+    };
+
+    const rooms = await Room.find(query)
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .select("roomId name description maxMembers members")
+      .exec();
+
+    const count = await Room.countDocuments(query);
+
+    res.json({
+      rooms,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error searching rooms", error: error.message });
+  }
+};
+
+exports.getRoomDetails = async (req, res) => {
+  try {
+    const room = await Room.findOne({ roomId: req.params.roomId })
+      .populate("members", "username profilePicture")
+      .populate("admins", "username profilePicture");
+
     if (!room) {
       return res.status(404).json({ message: "Room not found" });
     }
-    if (room.members.includes(userId)) {
+
+    if (!room.isPublic && !isMember(room, req.user._id)) {
+      return res
+        .status(403)
+        .json({ message: "You don't have permission to view this room" });
+    }
+
+    // Separate admins and members for clarity
+    const admins = room.admins.map((admin) => ({
+      _id: admin._id,
+      username: admin.username,
+      profilePicture: admin.profilePicture,
+    }));
+
+    const members = room.members.map((member) => ({
+      _id: member._id,
+      username: member.username,
+      profilePicture: member.profilePicture,
+    }));
+
+    // Additional room info, like creation date or creator
+    const roomDetails = {
+      _id: room._id,
+      roomId: room.roomId,
+      name: room.name,
+      description: room.description,
+      isPublic: room.isPublic,
+      createdAt: room.createdAt, // Assuming `createdAt` exists in the schema
+      createdBy: room.creator, // Assuming `createdBy` exists in the schema
+      admins: admins,
+      members: members,
+    };
+
+    res.json(roomDetails);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error fetching room details", error: error.message });
+  }
+};
+
+exports.deleteRoom = async (req, res) => {
+  try {
+    const room = await Room.findOne({ roomId: req.params.roomId });
+
+    if (!room) {
+      return res.status(404).json({ message: "Room not found" });
+    }
+
+    if (room.creator.toString() !== req.user._id.toString()) {
+      return res
+        .status(403)
+        .json({ message: "Only the room creator can delete the room" });
+    }
+
+    await Room.findByIdAndDelete(room._id);
+    res.json({ message: "Room deleted successfully" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error deleting room", error: error.message });
+  }
+};
+
+exports.getLeaderboard = async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    const room = await Room.findOne({ roomId: req.params.roomId }).populate({
+      path: "members",
+      select: "username profilePicture platforms.leetcode",
+      options: {
+        limit: limit * 1,
+        skip: (page - 1) * limit,
+      },
+    });
+
+    if (!room) {
+      return res.status(404).json({ message: "Room not found" });
+    }
+
+    if (!room.isPublic && !isMember(room, req.user._id)) {
+      return res.status(403).json({
+        message: "You don't have permission to view this room's leaderboard",
+      });
+    }
+
+    const leaderboardData = room.members.map((member) => ({
+      username: member.username,
+      profilePicture: member.profilePicture,
+      leetcodeStats: member.platforms.leetcode,
+    }));
+
+    const totalMembers = room.members.length;
+
+    res.json({
+      leaderboardData,
+      currentPage: page,
+      totalPages: Math.ceil(totalMembers / limit),
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error fetching leaderboard", error: error.message });
+  }
+};
+
+exports.sendJoinRequest = async (req, res) => {
+  try {
+    const room = await Room.findOne({ roomId: req.params.roomId });
+
+    if (!room) {
+      return res.status(404).json({ message: "Room not found" });
+    }
+
+    if (room.isPublic) {
+      if (!hasAvailableSpace(room)) {
+        return res.status(400).json({ message: "The room is full" });
+      }
+      room.members.push(req.user._id);
+      await room.save();
+      return res.json({ message: "You have joined the room successfully" });
+    }
+
+    if (isMember(room, req.user._id)) {
       return res
         .status(400)
         .json({ message: "You are already a member of this room" });
     }
-    room.members.push(userId);
-    await room.save();
-    res.status(200).json({ message: "Joined room successfully", room });
-  } catch (error) {
-    console.error("Error joining room:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
 
-exports.getAllRooms = async (req, res) => {
-  const userId = req.user.id;
-  try {
-    const rooms = await Room.find({
-      $or: [{ members: userId }, { admins: userId }],
-    }).populate({
-      path: "members admins",
-      select: "-password", // Exclude the password field
-    });
-    res.status(200).json({ rooms });
-  } catch (error) {
-    console.error("Error fetching rooms:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-
-exports.leaveRoom = async (req, res) => {
-  const { roomId } = req.body;
-  const userId = req.user.id;
-  try {
-    const room = await Room.findById(roomId);
-    if (!room) {
-      return res.status(404).json({ message: "Room not found" });
-    }
-    room.members = room.members.filter(
-      (memberId) => memberId.toString() !== userId.toString()
+    const existingRequest = room.joinRequests.find(
+      (request) => request.user.toString() === req.user._id.toString()
     );
-    room.admins = room.admins.filter(
-      (adminId) => adminId.toString() !== userId.toString()
-    );
+    if (existingRequest) {
+      return res
+        .status(400)
+        .json({ message: "You have already sent a join request" });
+    }
+
+    if (!hasAvailableSpace(room)) {
+      return res.status(400).json({ message: "The room is full" });
+    }
+
+    room.joinRequests.push({ user: req.user._id });
     await room.save();
-    res.status(200).json({ message: "Left room successfully", room });
+    res.json({ message: "Join request sent successfully" });
   } catch (error) {
-    console.error("Error leaving room:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error sending join request", error: error.message });
   }
 };
-
-exports.assignAdmin = async (req, res) => {
-  const { roomId, userId } = req.body;
-  const adminId = req.user.id;
-  try {
-    const room = await Room.findById(roomId);
-    if (!room) {
-      return res.status(404).json({ message: "Room not found" });
-    }
-    if (!room.admins.includes(adminId)) {
-      return res.status(403).json({ message: "Unauthorized" });
-    }
-    if (!room.admins.includes(userId)) {
-      room.admins.push(userId);
-    }
-    await room.save();
-    res.status(200).json({ message: "Admin assigned successfully", room });
-  } catch (error) {
-    console.error("Error assigning admin:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-
-exports.acceptJoinRequest = async (req, res) => {
-  const { roomId, userId } = req.body;
-  const adminId = req.user.id;
-  try {
-    const room = await Room.findById(roomId);
-    if (!room) {
-      return res.status(404).json({ message: "Room not found" });
-    }
-    if (!room.admins.includes(adminId)) {
-      return res.status(403).json({ message: "Unauthorized" });
-    }
-    if (!room.members.includes(userId)) {
-      room.members.push(userId);
-    }
-    await room.save();
-    res.status(200).json({ message: "Join request accepted", room });
-  } catch (error) {
-    console.error("Error accepting join request:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-
-exports.getRoomMembers = async (req, res) => {
-  const { roomId } = req.query;
-  const userId = req.user.id;
-  try {
-    const room = await Room.findById(roomId).populate({
-      path: "members",
-      select: "-password", // Exclude the password field
-    });
-    if (!room) {
-      return res.status(404).json({ message: "Room not found" });
-    }
-    if (!room.members.includes(userId)) {
-      return res.status(403).json({ message: "Unauthorized" });
-    }
-    res.status(200).json({ members: room.members });
-  } catch (error) {
-    console.error("Error getting room members:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-
-exports.sortRoomMembers = async (req, res) => {
-  const { roomId } = req.params;
-  const { sortBy } = req.query;
-  const userId = req.user.id;
-  try {
-    const room = await Room.findById(roomId).populate({
-      path: "members",
-      select: "-password", // Exclude the password field
-    });
-    if (!room) {
-      return res.status(404).json({ message: "Room not found" });
-    }
-    if (!room.members.includes(userId)) {
-      return res.status(403).json({ message: "Unauthorized" });
-    }
-    let members = room.members;
-    members = sortMembers(members, sortBy);
-    res.status(200).json({ members });
-  } catch (error) {
-    console.error("Error sorting room members:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-
-function sortMembers(members, sortBy) {
-  const sortingCriteria = {
-    totalQuestionsSolved: (a, b) =>
-      b.totalQuestionsSolved - a.totalQuestionsSolved,
-    totalContestsGiven: (a, b) =>
-      b.attendedContestsCount - a.attendedContestsCount,
-    contestRating: (a, b) => b.contestRating - a.contestRating,
-    difficultyEasy: (a, b) =>
-      b.questionsSolvedByDifficulty.easy - a.questionsSolvedByDifficulty.easy,
-    difficultyMedium: (a, b) =>
-      b.questionsSolvedByDifficulty.medium -
-      a.questionsSolvedByDifficulty.medium,
-    difficultyHard: (a, b) =>
-      b.questionsSolvedByDifficulty.hard - a.questionsSolvedByDifficulty.hard,
-  };
-  return members.sort(sortingCriteria[sortBy] || ((a, b) => 0));
-}

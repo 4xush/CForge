@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
-exports.protect = async (req, res, next) => {
+const protect = async (req, res, next) => {
   let token;
   if (
     req.headers.authorization &&
@@ -9,16 +9,24 @@ exports.protect = async (req, res, next) => {
   ) {
     try {
       token = req.headers.authorization.split(" ")[1];
+
+      // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      // Find user by ID and exclude password field
+
+      // Fetch user data (now includes Fullname, gender, and profilePicture)
       req.user = await User.findById(decoded.id).select("-password");
-      return next(); // Ensure we return after calling next
+
+      next();
     } catch (error) {
-      return res.status(401).json({ message: "Not authorized, token failed" });
+      res.status(401);
+      throw new Error("Not authorized, token failed");
     }
   }
 
   if (!token) {
-    return res.status(401).json({ message: "Not authorized, no token" });
+    res.status(401);
+    throw new Error("Not authorized, no token");
   }
 };
+
+module.exports = { protect };

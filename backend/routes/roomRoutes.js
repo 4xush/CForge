@@ -1,46 +1,34 @@
 const express = require("express");
 const {
   createRoom,
-  joinRoom,
-  getAllRooms,
-  leaveRoom,
-  assignAdmin,
-  acceptJoinRequest,
-  getRoomMembers,
+  getAllRoomsForUser,
+  searchPublicRooms,
+  getRoomDetails,
+  getLeaderboard,
+  sendJoinRequest,
 } = require("../controllers/roomController");
 const { protect } = require("../middleware/authMiddleware");
 const {
   sendMessage,
-  getRoomMessages,
+  getMessages,
 } = require("../controllers/messageController");
 
 const router = express.Router();
 
-// Route to create a new room
 router.post("/create", protect, createRoom);
 
-// Route to join a room using an invite code
-router.post("/join", protect, joinRoom);
+router.get("/", protect, getAllRoomsForUser);
 
-// Route to get all rooms for a logged-in user
-router.get("/", protect, getAllRooms);
+router.get("/search", protect, searchPublicRooms);
 
-// Route to leave a room
-router.post("/leave", protect, leaveRoom);
+router.get("/:roomId", protect, getRoomDetails);
 
-// Route to assign a user as admin
-router.post("/assign-admin", protect, assignAdmin);
-
-// Route for an admin to accept a join request
-router.post("/accept-join", protect, acceptJoinRequest);
-
-// Route to get members of a room (including sorting)
-router.get("/members", protect, getRoomMembers);
-
-// Route to send a message to a room
 router.post("/:roomId/messages", protect, sendMessage);
 
-// Route to get all messages in a room
-router.get("/:roomId/messages", protect, getRoomMessages);
+router.get("/:roomId/leaderboard", protect, getLeaderboard);
+
+router.get("/:roomId/messages", protect, getMessages);
+
+router.post("/:roomId/join", protect, sendJoinRequest);
 
 module.exports = router;

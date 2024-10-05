@@ -1,27 +1,28 @@
 const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
 
-const messageSchema = new Schema({
-  content: {
-    type: String,
-    required: true,
+const messageSchema = new mongoose.Schema(
+  {
+    room: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Room",
+      required: true, // Each message is associated with a specific room
+    },
+    sender: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true, // The user who sent the message
+    },
+    content: {
+      type: String,
+      required: true, // The actual message content
+    },
   },
-  sender: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
-  },
-  room: {
-    type: Schema.Types.ObjectId,
-    ref: "Room",
-    required: true,
-  },
-  timestamp: {
-    type: Date,
-    default: Date.now,
-  },
-});
+  { timestamps: true }
+);
 
-const Message = mongoose.model("Message", messageSchema);
+// Add indexes here
+messageSchema.index({ room: 1 });
+messageSchema.index({ sender: 1 });
+messageSchema.index({ createdAt: -1 });
 
-module.exports = Message;
+module.exports = mongoose.model("Message", messageSchema);
