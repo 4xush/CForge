@@ -27,25 +27,31 @@ exports.getAllRoomsForUser = async (req, res) => {
   }
 };
 
+const shortid = require('shortid');
+
 exports.createRoom = async (req, res) => {
   try {
-    const { name, description, isPublic, maxMembers } = req.body;
+    const { name, description, isPublic, roomId } = req.body;
     const creator = req.user._id;
+
+    // Use the custom roomId if provided, otherwise generate a shortid
+    const newRoomId = roomId || shortid.generate();
 
     const newRoom = new Room({
       name,
       description,
       creator,
       isPublic,
-      maxMembers: maxMembers || 50,
       admins: [creator],
       members: [creator],
+      roomId: newRoomId, // Ensure roomId is properly set
     });
 
     await newRoom.save();
     res
       .status(201)
       .json({ message: "Room created successfully", room: newRoom });
+    console.log("Room created with ID:", newRoomId);
   } catch (error) {
     res
       .status(500)

@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const shortid = require("shortid"); // You'll need to install this package: npm install shortid
 
 const roomSchema = new mongoose.Schema(
   {
@@ -8,7 +7,6 @@ const roomSchema = new mongoose.Schema(
       required: true,
       unique: true, // Ensures the roomId is unique
       index: true, // Creates an index on roomId for faster lookups
-      default: shortid.generate,
     },
     name: { type: String, required: true },
     description: { type: String },

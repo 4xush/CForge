@@ -5,7 +5,7 @@ import SignupPage from './pages/Signup';
 import LoginPage from './pages/Login';
 import WelcomePage from './pages/Welcome';
 import DashboardPage from './pages/home/Dashboard';
-import CreateRoomPage from './pages/CreateRoomForm';
+import CreateRoomPage from './components/CreateRoomForm';
 
 const App = () => {
   return (

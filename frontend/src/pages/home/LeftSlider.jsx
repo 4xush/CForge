@@ -2,28 +2,32 @@ import React, { useState } from 'react';
 import { Plus, PanelRightIcon } from 'lucide-react';
 import profileImage from '../../assets/logo.png';
 import useUserRooms from '../../hooks/useUserRooms';
-import CreateRoomForm from '../CreateRoomForm';  // Import CreateRoomForm
+import CreateRoomForm from '../../components/CreateRoomForm';
 
-const LeftSlider = ({ isRoomsListVisible, toggleRoomsList }) => {
-    const { rooms, error } = useUserRooms();
-    const [isCreateRoomVisible, setCreateRoomVisible] = useState(false); // State to manage the modal visibility
+const LeftSlider = ({ isRoomsListVisible, setIsRoomsListVisible }) => {
+    const [refreshRooms, setRefreshRooms] = useState(false); // Track room refresh
+    const { rooms, error } = useUserRooms(refreshRooms);
+    const [isCreateRoomVisible, setCreateRoomVisible] = useState(false);
 
     const handleAddRoomClick = (e) => {
-        e.stopPropagation(); // Prevent this click from affecting other components
-        setCreateRoomVisible(true); // Show the CreateRoomForm when "Add Rooms" is clicked
-        toggleRoomsList(false); // Close the slider when opening the form
+        e.stopPropagation();
+        setCreateRoomVisible(true);
+        setIsRoomsListVisible(false);  // Use setIsRoomsListVisible here
     };
 
     const handleCloseCreateRoom = () => {
+        setCreateRoomVisible(false);
+    };
+
+    const handleRoomCreated = () => {
         setCreateRoomVisible(false); // Close the form
+        setRefreshRooms(prev => !prev); // Trigger refresh
     };
 
     return (
         <>
-            {/* Left Slider Section */}
             <div
-                className={`absolute left-full top-0 h-full w-48 bg-gray-800 p-3 transition-transform duration-300 ease-in-out transform ${isRoomsListVisible ? 'translate-x-0' : '-translate-x-full'
-                    }`}
+                className={`absolute left-full top-0 h-full w-48 bg-gray-800 p-3 transition-transform duration-300 ease-in-out transform ${isRoomsListVisible ? 'translate-x-0' : '-translate-x-full'}`}
                 style={{
                     boxShadow: isRoomsListVisible ? '5px 0 10px rgba(0,0,0,0.1)' : 'none',
                 }}
@@ -33,10 +37,8 @@ const LeftSlider = ({ isRoomsListVisible, toggleRoomsList }) => {
                     Rooms
                 </h2>
 
-                {/* Show error if any */}
                 {error && <div className="text-red-500">Error: {error}</div>}
 
-                {/* Display fetched rooms */}
                 {rooms.length > 0 ? (
                     rooms.map((room, index) => (
                         <div key={index} className="flex items-center mb-2">
@@ -54,19 +56,10 @@ const LeftSlider = ({ isRoomsListVisible, toggleRoomsList }) => {
                 </button>
             </div>
 
-            {/* Create Room Modal */}
             {isCreateRoomVisible && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
                     <div className="relative w-full max-w-lg">
-                        <div className="absolute top-0 right-0 p-2">
-                            <button
-                                className="text-gray-400 hover:text-white"
-                                onClick={handleCloseCreateRoom}  // Close button
-                            >
-                                &times;
-                            </button>
-                        </div>
-                        <CreateRoomForm />
+                        <CreateRoomForm onClose={handleCloseCreateRoom} onRoomCreated={handleRoomCreated} />
                     </div>
                 </div>
             )}

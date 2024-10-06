@@ -58,7 +58,7 @@ const CodingDashboard = () => {
     };
 
     return (
-        <div className="bg-gray-900 text-white p-4">
+        <div className="bg-gray-900 text-white">
             <div className="flex justify-between items-center mb-4">
                 <div className="flex space-x-2">
                     <button className="bg-gray-700 px-3 py-1 rounded text-sm">Total problem</button>
