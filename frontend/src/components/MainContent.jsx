@@ -1,6 +1,6 @@
 import React from 'react';
-import Leaderboard from '../../components/Leaderboard';
-import Chat from '../../components/Chat';
+import Leaderboard from './Leaderboard';
+import Chat from './Chat';
 
 const MainContent = ({ activeTab, setActiveTab, isMobile }) => {
     return (

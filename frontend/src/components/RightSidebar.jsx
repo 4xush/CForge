@@ -1,12 +1,8 @@
 import React from 'react';
 import { Plus } from 'lucide-react';
-import profileImage from '../../assets/logo.png'; // Replace with actual image path
 
 const RightSidebar = ({ isMobile, isRightSidebarOpen, activeTab }) => {
-    if (isMobile && !isRightSidebarOpen && activeTab === 'leaderboard') {
-        return null;
-    }
-
+    const personDP = 'https://avatar.iran.liara.run/username?username=[firstname+lastname]';
     return (
         <div
             className={`w-full md:w-56 bg-gray-800 p-3 border-l border-gray-700 ${isMobile ? 'absolute right-0 top-0 h-full transition-transform duration-300 ease-in-out transform ' + (isRightSidebarOpen ? 'translate-x-0' : 'translate-x-full') : ''}`}
@@ -23,7 +19,7 @@ const RightSidebar = ({ isMobile, isRightSidebarOpen, activeTab }) => {
             <h3 className="text-sm font-semibold mb-2">Group Members</h3>
             {['Person1', 'Person2'].map((name, index) => (
                 <div key={index} className="flex items-center mb-2">
-                    <img src={profileImage} alt={name} className="w-5 h-5 rounded-full mr-2" />
+                    <img src={personDP} alt={name} className="w-5 h-5 rounded-full mr-2" />
                     <span className="text-xs">{name}</span>
                 </div>
             ))}
