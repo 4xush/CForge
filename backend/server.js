@@ -10,13 +10,18 @@ const cors = require("cors");
 
 const app = express();
 
-// CORS middleware configuration
+// CORS middleware configuration with wildcard for testing
 app.use(
   cors({
-    origin: "http://localhost:5173", // Replace with your frontend URL without the trailing slash
+    origin: "*",  // Allow all origins temporarily for testing
+    methods: ['DELETE', 'GET', 'POST', 'PUT'],
     credentials: true,
   })
 );
+
+// Preflight request handler for all routes
+app.options('*', cors());  // Allow all preflight OPTIONS requests
+
 
 // Middleware for parsing JSON bodies
 app.use(express.json());

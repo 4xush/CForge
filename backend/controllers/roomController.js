@@ -59,6 +59,35 @@ exports.createRoom = async (req, res) => {
   }
 };
 
+exports.leaveRoom = async (req, res) => {
+  try {
+    const roomId = req.params.roomId;
+    const userId = req.user._id;
+
+    const room = await Room.findOne({ roomId });
+
+    if (!room) {
+      return res.status(404).json({ message: "Room not found" });
+    }
+
+    if (!isMember(room, userId)) {
+      return res.status(400).json({ message: "You are not a member of this room" });
+    }
+
+    // Remove the user from the room's members
+    room.members = room.members.filter((member) => member.toString() !== userId.toString());
+
+    await room.save();
+
+    res.json({ message: "You have left the room successfully" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error leaving room", error: error.message });
+  }
+};
+
+
 exports.searchPublicRooms = async (req, res) => {
   try {
     const { page = 1, limit = 10, search = "" } = req.query;

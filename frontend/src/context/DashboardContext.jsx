@@ -1,46 +1,18 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useState } from 'react';
 
-export const AuthContext = createContext();
+// Create a context for the dashboard
+export const DashboardContext = createContext();
 
-export const useAuthContext = () => {
-    return useContext(AuthContext);
-};
-
-export const AuthContextProvider = ({ children }) => {
-    const [authUser, setAuthUser] = useState(
-        JSON.parse(localStorage.getItem("chat-user")) || null
-    );
-
-    const [loading, setLoading] = useState(false);  // Optional: loading state
-    const [error, setError] = useState(null);       // Optional: error state
-
-    // Optionally handle side-effects like fetching user data from API
-    useEffect(() => {
-        const fetchUser = async () => {
-            setLoading(true);
-            try {
-                // Perform async operation here if needed (like fetching user data)
-                // e.g., const userData = await api.getUser();
-                setAuthUser(JSON.parse(localStorage.getItem("chat-user")));
-            } catch (err) {
-                setError("Failed to fetch user data");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchUser();
-    }, []);
-
-    // Logout function to clear user session
-    const logout = () => {
-        setAuthUser(null);
-        localStorage.removeItem("chat-user");
-    };
+// Provider component to wrap around the dashboard
+export const DashboardProvider = ({ children }) => {
+    const [activeSection, setActiveSection] = useState('rooms'); // Default section is 'rooms'
+    const [selectedRoom, setSelectedRoom] = useState(null); // Currently selected room
 
     return (
-        <AuthContext.Provider value={{ authUser, setAuthUser, logout, loading, error }}>
+        <DashboardContext.Provider
+            value={{ activeSection, setActiveSection, selectedRoom, setSelectedRoom }}
+        >
             {children}
-        </AuthContext.Provider>
+        </DashboardContext.Provider>
     );
 };
