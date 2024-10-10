@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { RoomProvider } from './context/RoomContext'; // Import the RoomProvider
-import CreateRoomPage from './components/CreateRoomForm';
+import CreateRoomPage from './components/RoomForm.jsx';
 import LoginPage from './pages/Login';
 import SignupPage from './pages/Signup';
 import WelcomePage from './pages/Welcome';
@@ -30,7 +30,7 @@ const App = () => {
           />
 
           <Route path="/room/create" element={<CreateRoomPage />} />
-          <Route path="/" element={<Navigate to="/dashboard" />} />
+          <Route path="/" element={<Navigate to="/login" />} />
         </Routes>
       </RoomProvider>
     </Router>

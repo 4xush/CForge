@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../config/api';
 
 const useUserRooms = (refreshRooms) => {
     const [rooms, setRooms] = useState([]);
@@ -7,21 +7,13 @@ const useUserRooms = (refreshRooms) => {
 
     useEffect(() => {
         const fetchRooms = async () => {
-            const token = localStorage.getItem('token');
-
             try {
-                const response = await axios.get('/api/rooms', {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
-
+                const response = await api.get('/rooms');
                 setRooms(response.data.rooms);
             } catch (err) {
                 setError('Failed to fetch rooms');
             }
         };
-
         fetchRooms();
     }, [refreshRooms]); // Refetch rooms when refreshRooms changes
 

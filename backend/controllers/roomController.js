@@ -1,5 +1,6 @@
 const Room = require("../models/Room");
 const User = require("../models/User");
+const shortid = require('shortid');
 
 // Helper function to check if a user is a member of a room
 const isMember = (room, userId) => {
@@ -27,23 +28,20 @@ exports.getAllRoomsForUser = async (req, res) => {
   }
 };
 
-const shortid = require('shortid');
 
 exports.createRoom = async (req, res) => {
   try {
     const { name, description, isPublic, roomId } = req.body;
-    const creator = req.user._id;
-
     // Use the custom roomId if provided, otherwise generate a shortid
     const newRoomId = roomId || shortid.generate();
 
     const newRoom = new Room({
       name,
       description,
-      creator,
+      creator: req.user._id,
       isPublic,
-      admins: [creator],
-      members: [creator],
+      admins: [req.user._id],
+      members: [req.user._id],
       roomId: newRoomId, // Ensure roomId is properly set
     });
 
@@ -61,8 +59,8 @@ exports.createRoom = async (req, res) => {
 
 exports.leaveRoom = async (req, res) => {
   try {
-    const roomId = req.params.roomId;
-    const userId = req.user._id;
+    const { roomId } = req.params; // Assuming roomId is passed as a parameter
+    const userId = req.user._id; // Get the ID of the user trying to leave
 
     const room = await Room.findOne({ roomId });
 
@@ -70,22 +68,38 @@ exports.leaveRoom = async (req, res) => {
       return res.status(404).json({ message: "Room not found" });
     }
 
-    if (!isMember(room, userId)) {
-      return res.status(400).json({ message: "You are not a member of this room" });
+    const isAdmin = room.admins.includes(userId);
+    const isMember = room.members.includes(userId);
+
+    if (!isMember && !isAdmin) {
+      return res.status(403).json({ message: "You are not a member of this room" });
     }
 
-    // Remove the user from the room's members
-    room.members = room.members.filter((member) => member.toString() !== userId.toString());
+    // Remove user from members and admins if they exist in those arrays
+    room.members = room.members.filter(member => member.toString() !== userId.toString());
+    room.admins = room.admins.filter(admin => admin.toString() !== userId.toString());
+
+    // Case 1: Last admin leaving and no other members - delete the room
+    if (room.admins.length === 0 && room.members.length === 0) {
+      await room.deleteOne();
+      return res.status(200).json({ message: "Room deleted as last admin left and no members remain" });
+    }
+
+    // Case 2: Last admin leaving, but other members are present - assign a new admin
+    if (room.admins.length === 0 && room.members.length > 0) {
+      // Assign a random member as the new admin
+      const newAdmin = room.members[0];
+      room.admins.push(newAdmin);
+    }
 
     await room.save();
+    res.status(200).json({ message: "You have successfully left the room" });
 
-    res.json({ message: "You have left the room successfully" });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error leaving room", error: error.message });
+    res.status(500).json({ message: "Error while leaving the room", error: error.message });
   }
 };
+
 
 
 exports.searchPublicRooms = async (req, res) => {
@@ -123,42 +137,30 @@ exports.getRoomDetails = async (req, res) => {
   try {
     const room = await Room.findOne({ roomId: req.params.roomId })
       .populate("members", "username profilePicture")
-      .populate("admins", "username profilePicture");
+      .populate("admins", "username profilePicture")
+      .populate("creator", "username");
 
     if (!room) {
       return res.status(404).json({ message: "Room not found" });
     }
-
-    if (!room.isPublic && !isMember(room, req.user._id)) {
+    // Check if the room is private and the user is neither an admin nor a member
+    if (!room.isPublic && !(isMember)) {
       return res
         .status(403)
         .json({ message: "You don't have permission to view this room" });
     }
 
-    // Separate admins and members for clarity
-    const admins = room.admins.map((admin) => ({
-      _id: admin._id,
-      username: admin.username,
-      profilePicture: admin.profilePicture,
-    }));
-
-    const members = room.members.map((member) => ({
-      _id: member._id,
-      username: member.username,
-      profilePicture: member.profilePicture,
-    }));
-
-    // Additional room info, like creation date or creator
+    // Send room details including populated creator
     const roomDetails = {
       _id: room._id,
       roomId: room.roomId,
       name: room.name,
       description: room.description,
       isPublic: room.isPublic,
-      createdAt: room.createdAt, // Assuming `createdAt` exists in the schema
-      createdBy: room.creator, // Assuming `createdBy` exists in the schema
-      admins: admins,
-      members: members,
+      createdAt: room.createdAt,
+      createdBy: room.creator ? room.creator.username : "Unknown", // dynamincally changing the db instance in response
+      admins: room.admins,
+      members: room.members,
     };
 
     res.json(roomDetails);
@@ -168,6 +170,7 @@ exports.getRoomDetails = async (req, res) => {
       .json({ message: "Error fetching room details", error: error.message });
   }
 };
+
 
 exports.deleteRoom = async (req, res) => {
   try {
@@ -236,46 +239,48 @@ exports.getLeaderboard = async (req, res) => {
 
 exports.sendJoinRequest = async (req, res) => {
   try {
-    const room = await Room.findOne({ roomId: req.params.roomId });
+    const { roomId } = req.params;
+    const { _id: userId } = req.user;
 
+    // Find the room by its roomId
+    const room = await Room.findOne({ roomId });
+
+    // Check if the room exists
     if (!room) {
       return res.status(404).json({ message: "Room not found" });
     }
 
-    if (room.isPublic) {
-      if (!hasAvailableSpace(room)) {
-        return res.status(400).json({ message: "The room is full" });
-      }
-      room.members.push(req.user._id);
-      await room.save();
-      return res.json({ message: "You have joined the room successfully" });
+    // Check if the user is already a member of the room
+    if (isMember(room, userId)) {
+      return res.status(400).json({ message: "You are already a member of this room" });
     }
 
-    if (isMember(room, req.user._id)) {
-      return res
-        .status(400)
-        .json({ message: "You are already a member of this room" });
-    }
-
-    const existingRequest = room.joinRequests.find(
-      (request) => request.user.toString() === req.user._id.toString()
-    );
-    if (existingRequest) {
-      return res
-        .status(400)
-        .json({ message: "You have already sent a join request" });
-    }
-
+    // Check if the room has available space (applies to both public and private rooms)
     if (!hasAvailableSpace(room)) {
       return res.status(400).json({ message: "The room is full" });
     }
 
-    room.joinRequests.push({ user: req.user._id });
+    // Public Room Logic: Directly add user if room is public
+    if (room.isPublic) {
+      room.members.push(userId);
+      await room.save();
+      return res.json({ message: "You have joined the room successfully" });
+    }
+
+    // Private Room Logic: Check for existing join requests
+    const existingRequest = room.joinRequests.find(request => request.user.toString() === userId.toString());
+    if (existingRequest) {
+      return res.status(400).json({ message: "You have already sent a join request" });
+    }
+
+    // If no join request exists, add the user’s join request for private rooms
+    room.joinRequests.push({ user: userId });
     await room.save();
-    res.json({ message: "Join request sent successfully" });
+
+    return res.json({ message: "Join request sent successfully" });
+
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error sending join request", error: error.message });
+    return res.status(500).json({ message: "Error sending join request", error: error.message });
   }
 };
+

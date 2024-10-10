@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Menu } from 'lucide-react';
 import LeftSidebar from './LeftSidebar';
 import MainContent from './MainContent';
 import RightSidebar from './RightSidebar';
+import { RoomContext } from '../context/RoomContext';  // Use RoomContext to access selectedRoom
 
 const CForgeUI = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -10,6 +11,9 @@ const CForgeUI = () => {
     const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [isRoomsListVisible, setIsRoomsListVisible] = useState(false);
+
+    // Access selectedRoom from RoomContext instead of DashboardContext
+    const { selectedRoom } = useContext(RoomContext);
 
     useEffect(() => {
         const handleResize = () => {
@@ -39,16 +43,22 @@ const CForgeUI = () => {
                 setIsRoomsListVisible={setIsRoomsListVisible}
             />
 
-            {/* Main Content */}
+            {/* Main Content is conditionally rendered based on selectedRoom */}
             <div className="flex-1 flex flex-col md:flex-row">
-                <MainContent
-                    activeTab={activeTab}
-                    setActiveTab={setActiveTab}
-                    isMobile={isMobile}
-                />
+                {selectedRoom ? (
+                    <MainContent
+                        activeTab={activeTab}
+                        setActiveTab={setActiveTab}
+                        isMobile={isMobile}
+                    />
+                ) : (
+                    <div className="flex-1 bg-gray-800 flex items-center justify-center">
+                        <h2 className="text-sm text-gray-700">Please select a room</h2>
+                    </div>
+                )}
 
-                {/* Right Sidebar only when "chat" tab is selected */}
-                {activeTab === 'chat' && (
+                {/* Right Sidebar only when "chat" tab is selected and room is selected */}
+                {activeTab === 'chat' && selectedRoom && (
                     <RightSidebar
                         isMobile={isMobile}
                         isRightSidebarOpen={isRightSidebarOpen}

@@ -40,7 +40,7 @@ const RoomDetails = ({ roomDetails, loading, error }) => {
                     <Calendar size={16} className="mr-2" /> Created
                 </h3>
                 <p className="text-sm">{formatDate(roomDetails.createdAt)}</p>
-                <p className="text-sm mt-1">by {roomDetails.creator}</p>
+                <p className="text-sm mt-1">by {roomDetails.createdBy}</p>
             </div>
 
             <div className="bg-gray-700 rounded-lg p-4 mb-4">

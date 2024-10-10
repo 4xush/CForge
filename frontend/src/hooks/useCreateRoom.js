@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import axios from 'axios';
+import api from '../config/api';
 
 const useCreateRoom = () => {
     const [loading, setLoading] = useState(false);
@@ -12,24 +12,13 @@ const useCreateRoom = () => {
         setSuccess(null);
 
         try {
-            const token = localStorage.getItem('token'); // Get the JWT token from localStorage
-
-            if (!token) {
-                throw new Error('No token found. Please log in.');
-            }
-
-            const config = {
-                headers: {
-                    Authorization: `Bearer ${token}`, // Include JWT token in the Authorization header
-                },
-            };
-
-            const response = await axios.post('/api/rooms/create', formData, config);
-
+            const response = await api.post('/rooms/create', formData);
             setSuccess('Room created successfully!');
             console.log('Room created:', response.data);
+            return response.data; // Return the created room data
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to create room');
+            throw err; // Re-throw the error so it can be handled by the component if needed
         } finally {
             setLoading(false);
         }

@@ -4,10 +4,10 @@ import RoomDetails from './RoomDetails';
 import { useRoomContext } from '../context/RoomContext';
 import useRoomDetails from '../hooks/useRoomDetails';
 import ConfirmDialog from './ui/ConfirmDialog';
-import { showToast } from '../utils/toast'; // Import the toast utility
-import useLeaveRoom from '../hooks/useLeaveRoom'; // Import the leave room hook
+import { showToast } from '../utils/toast';
+import useLeaveRoom from '../hooks/useLeaveRoom';
 
-const TopBar = () => {
+const TopBar = ({ setRefreshRooms }) => { // Accept setRefreshRooms as a prop
     const { selectedRoom, setSelectedRoom } = useRoomContext();
     const [showMenu, setShowMenu] = useState(false);
     const [showRoomDetails, setShowRoomDetails] = useState(false);
@@ -16,7 +16,7 @@ const TopBar = () => {
     const roomDetailsRef = useRef(null);
 
     const { roomDetails, loading, error } = useRoomDetails(selectedRoom?.roomId);
-    const { handleLeaveRoom } = useLeaveRoom(selectedRoom, setSelectedRoom, setShowLeaveConfirmation); // Use the hook
+    const { handleLeaveRoom } = useLeaveRoom(selectedRoom, setSelectedRoom, setShowLeaveConfirmation);
 
     const toggleMenu = () => setShowMenu(!showMenu);
 
@@ -53,6 +53,10 @@ const TopBar = () => {
             description: result.message,
             variant: result.success ? "success" : "destructive",
         });
+
+        if (result.success) {
+            setRefreshRooms(prev => !prev); // Trigger room list refresh on success
+        }
     };
 
     return (

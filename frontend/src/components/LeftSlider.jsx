@@ -1,19 +1,24 @@
 import React, { useState, useContext } from 'react';
 import RoomList from './RoomList';
 import MessageList from './MessageList';
-import CreateRoomForm from './CreateRoomForm';
+import RoomFormContainer from './RoomForm';
 import { DashboardContext } from '../context/DashboardContext';
-import { useRoomContext } from '../context/RoomContext'; // Import RoomContext
+import { useRoomContext } from '../context/RoomContext';
 
 const LeftSlider = ({ isRoomsListVisible, setIsRoomsListVisible }) => {
     const [refreshRooms, setRefreshRooms] = useState(false);
-    const [isCreateRoomVisible, setCreateRoomVisible] = useState(false);
+    const [isRoomFormVisible, setRoomFormVisible] = useState(false);
     const { activeSection } = useContext(DashboardContext);
-    const { setSelectedRoom } = useRoomContext(); // Use RoomContext
+    const { setSelectedRoom } = useRoomContext();
 
     const handleRoomSelection = (room) => {
-        setSelectedRoom(room); // Set selected room from context
+        setSelectedRoom(room);
         setIsRoomsListVisible(false);
+    };
+
+    const handleRoomCreatedOrJoined = () => {
+        setRoomFormVisible(false);
+        setRefreshRooms(prev => !prev);
     };
 
     return (
@@ -24,29 +29,24 @@ const LeftSlider = ({ isRoomsListVisible, setIsRoomsListVisible }) => {
                     boxShadow: isRoomsListVisible ? '5px 0 10px rgba(0,0,0,0.1)' : 'none',
                 }}
             >
-                {/* Conditional rendering based on active section */}
                 {activeSection === 'rooms' ? (
                     <RoomList
-                        setCreateRoomVisible={setCreateRoomVisible}
+                        setRoomFormVisible={setRoomFormVisible}
                         setRefreshRooms={setRefreshRooms}
                         refreshRooms={refreshRooms}
-                        onRoomClick={handleRoomSelection} // Handle room click
+                        onRoomClick={handleRoomSelection}
                     />
                 ) : (
                     <MessageList />
                 )}
             </div>
-
-            {/* Modal for creating a new room */}
-            {isCreateRoomVisible && (
+            {isRoomFormVisible && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
                     <div className="relative w-full max-w-lg">
-                        <CreateRoomForm
-                            onClose={() => setCreateRoomVisible(false)}
-                            onRoomCreated={() => {
-                                setCreateRoomVisible(false);
-                                setRefreshRooms(prev => !prev); // Refresh room list
-                            }}
+                        <RoomFormContainer
+                            onClose={() => setRoomFormVisible(false)}
+                            onRoomCreated={handleRoomCreatedOrJoined}
+                            onRoomJoined={handleRoomCreatedOrJoined}
                         />
                     </div>
                 </div>
