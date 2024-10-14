@@ -3,7 +3,7 @@ import { Menu } from 'lucide-react';
 import LeftSidebar from './LeftSidebar';
 import MainContent from './MainContent';
 import RightSidebar from './RightSidebar';
-import { RoomContext } from '../context/RoomContext';  // Use RoomContext to access selectedRoom
+import { RoomContext } from '../context/RoomContext';
 
 const CForgeUI = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -12,8 +12,8 @@ const CForgeUI = () => {
     const [isMobile, setIsMobile] = useState(false);
     const [isRoomsListVisible, setIsRoomsListVisible] = useState(false);
 
-    // Access selectedRoom from RoomContext instead of DashboardContext
-    const { selectedRoom } = useContext(RoomContext);
+    // Access selectedRoom and refreshRoomList from RoomContext
+    const { selectedRoom, refreshRoomList } = useContext(RoomContext);
 
     useEffect(() => {
         const handleResize = () => {
@@ -41,6 +41,7 @@ const CForgeUI = () => {
                 isMobileMenuOpen={isMobileMenuOpen}
                 isRoomsListVisible={isRoomsListVisible}
                 setIsRoomsListVisible={setIsRoomsListVisible}
+            // No need to pass refreshRooms and setRefreshRooms anymore
             />
 
             {/* Main Content is conditionally rendered based on selectedRoom */}
@@ -50,6 +51,7 @@ const CForgeUI = () => {
                         activeTab={activeTab}
                         setActiveTab={setActiveTab}
                         isMobile={isMobile}
+                    // No need to pass setRefreshRooms anymore
                     />
                 ) : (
                     <div className="flex-1 bg-gray-800 flex items-center justify-center">

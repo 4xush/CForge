@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Leaderboard from './Leaderboard';
 import Chat from './Chat';
 import TopBar from './TopBar';
+import { useRoomContext } from '../context/RoomContext';
 
 const MainContent = ({ activeTab, setActiveTab, isMobile }) => {
-    const [refreshRooms, setRefreshRooms] = useState(false); // Add state for refresh
+    const { refreshRoomList } = useRoomContext(); // Access refreshRoomList directly
 
     return (
         <div className="flex-1 flex flex-col bg-gray-900">
-            {/* Pass setRefreshRooms as a prop */}
-            <TopBar setRefreshRooms={setRefreshRooms} />
+            <TopBar setRefreshRooms={refreshRoomList} /> {/* Pass refreshRoomList to TopBar */}
             <div className="flex border-b border-gray-700">
                 <button
                     className={`px-4 py-1 text-sm ${activeTab === 'leaderboard' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-500'}`}

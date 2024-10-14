@@ -6,10 +6,9 @@ import { DashboardContext } from '../context/DashboardContext';
 import { useRoomContext } from '../context/RoomContext';
 
 const LeftSlider = ({ isRoomsListVisible, setIsRoomsListVisible }) => {
-    const [refreshRooms, setRefreshRooms] = useState(false);
     const [isRoomFormVisible, setRoomFormVisible] = useState(false);
     const { activeSection } = useContext(DashboardContext);
-    const { setSelectedRoom } = useRoomContext();
+    const { setSelectedRoom, refreshRoomList } = useRoomContext(); // Access refreshRoomList directly
 
     const handleRoomSelection = (room) => {
         setSelectedRoom(room);
@@ -18,7 +17,7 @@ const LeftSlider = ({ isRoomsListVisible, setIsRoomsListVisible }) => {
 
     const handleRoomCreatedOrJoined = () => {
         setRoomFormVisible(false);
-        setRefreshRooms(prev => !prev);
+        refreshRoomList(); // Trigger room list refresh
     };
 
     return (
@@ -32,8 +31,6 @@ const LeftSlider = ({ isRoomsListVisible, setIsRoomsListVisible }) => {
                 {activeSection === 'rooms' ? (
                     <RoomList
                         setRoomFormVisible={setRoomFormVisible}
-                        setRefreshRooms={setRefreshRooms}
-                        refreshRooms={refreshRooms}
                         onRoomClick={handleRoomSelection}
                     />
                 ) : (

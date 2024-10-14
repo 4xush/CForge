@@ -1,24 +1,25 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { MoreVertical, X, LogOut } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { MoreVertical, LogOut, X } from 'lucide-react';
 import RoomDetails from './RoomDetails';
+import useLeaveRoom from '../hooks/useLeaveRoom';
+import ConfirmDialog from './ui/ConfirmDialog';
 import { useRoomContext } from '../context/RoomContext';
 import useRoomDetails from '../hooks/useRoomDetails';
-import ConfirmDialog from './ui/ConfirmDialog';
 import { showToast } from '../utils/toast';
-import useLeaveRoom from '../hooks/useLeaveRoom';
 
-const TopBar = ({ setRefreshRooms }) => { // Accept setRefreshRooms as a prop
-    const { selectedRoom, setSelectedRoom } = useRoomContext();
+const TopBar = () => {
+    const { selectedRoom } = useRoomContext();
     const [showMenu, setShowMenu] = useState(false);
     const [showRoomDetails, setShowRoomDetails] = useState(false);
     const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
+
     const menuRef = useRef(null);
     const roomDetailsRef = useRef(null);
 
     const { roomDetails, loading, error } = useRoomDetails(selectedRoom?.roomId);
-    const { handleLeaveRoom } = useLeaveRoom(selectedRoom, setSelectedRoom, setShowLeaveConfirmation);
+    const { handleLeaveRoom } = useLeaveRoom();
 
-    const toggleMenu = () => setShowMenu(!showMenu);
+    const toggleMenu = () => setShowMenu(prev => !prev);
 
     const handleRoomDetailsClick = () => {
         setShowRoomDetails(true);
@@ -39,12 +40,13 @@ const TopBar = ({ setRefreshRooms }) => { // Accept setRefreshRooms as a prop
                 !roomDetailsRef.current.contains(event.target)
             ) {
                 setShowRoomDetails(false);
+                setShowMenu(false);
             }
         };
 
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [setShowRoomDetails]);
+    }, []);
 
     const onLeaveRoom = async () => {
         const result = await handleLeaveRoom();
@@ -53,10 +55,6 @@ const TopBar = ({ setRefreshRooms }) => { // Accept setRefreshRooms as a prop
             description: result.message,
             variant: result.success ? "success" : "destructive",
         });
-
-        if (result.success) {
-            setRefreshRooms(prev => !prev); // Trigger room list refresh on success
-        }
     };
 
     return (
@@ -69,11 +67,13 @@ const TopBar = ({ setRefreshRooms }) => { // Accept setRefreshRooms as a prop
                     {roomDetails ? `${roomDetails.members.length} Members` : '0 Members'}
                 </p>
             </div>
+
             {!showRoomDetails && (
                 <button onClick={toggleMenu} className="text-gray-300">
                     <MoreVertical size={24} />
                 </button>
             )}
+
             {showMenu && (
                 <div ref={menuRef} className="absolute right-4 top-12 w-40 bg-gray-700 text-gray-300 rounded-lg shadow-lg z-10">
                     <ul>
@@ -93,6 +93,7 @@ const TopBar = ({ setRefreshRooms }) => { // Accept setRefreshRooms as a prop
                     </ul>
                 </div>
             )}
+
             {showRoomDetails && selectedRoom && (
                 <div
                     ref={roomDetailsRef}
@@ -107,6 +108,7 @@ const TopBar = ({ setRefreshRooms }) => { // Accept setRefreshRooms as a prop
                     <RoomDetails roomDetails={roomDetails} loading={loading} error={error} />
                 </div>
             )}
+
             <ConfirmDialog
                 isOpen={showLeaveConfirmation}
                 onClose={() => setShowLeaveConfirmation(false)}

@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import api from '../config/api';
+import { RoomContext } from '../context/RoomContext';
 
-const useLeaveRoom = (selectedRoom, setSelectedRoom, setShowLeaveConfirmation) => {
+const useLeaveRoom = () => {
+  const { selectedRoom, setSelectedRoom, refreshRoomList } = useContext(RoomContext);
   const [loading, setLoading] = useState(false);
 
   const handleLeaveRoom = async () => {
@@ -12,12 +14,11 @@ const useLeaveRoom = (selectedRoom, setSelectedRoom, setShowLeaveConfirmation) =
     setLoading(true);
     try {
       await api.delete(`/rooms/${selectedRoom.roomId}/leave`);
-      setSelectedRoom(null);
-      setShowLeaveConfirmation(false);
+      setSelectedRoom(null);  // Clear the selected room
+      refreshRoomList();  // Trigger room list refresh
       return { success: true, message: "You have successfully left the room." };
     } catch (error) {
       console.error('Error leaving room:', error.response?.data?.message || "Unexpected error");
-      setShowLeaveConfirmation(false);
       return { success: false, message: "Failed to leave the room. Please try again." };
     } finally {
       setLoading(false);
