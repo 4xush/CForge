@@ -1,10 +1,8 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import api from '../config/api';
 
-// Create RoomContext
 export const RoomContext = createContext();
 
-// Custom hook to use the RoomContext
 export const useRoomContext = () => {
     const context = useContext(RoomContext);
     if (!context) {
@@ -13,17 +11,27 @@ export const useRoomContext = () => {
     return context;
 };
 
-// RoomProvider component
 export const RoomProvider = ({ children }) => {
     const [rooms, setRooms] = useState([]);  // Store room list
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [refreshRooms, setRefreshRooms] = useState(false);
 
-    // Fetch room list whenever refreshRooms changes
     useEffect(() => {
         const fetchRooms = async () => {
+            const token = localStorage.getItem('token');
+
+            if (!token) {
+                console.log('User not logged in, skipping fetch rooms.');
+                return;
+            }
+
             try {
-                const response = await api.get('/rooms');
+                // Attach the token to the request if available
+                const response = await api.get('/rooms', {
+                    headers: {
+                        Authorization: `Bearer ${token}`,  // Include the token in the request
+                    },
+                });
                 setRooms(response.data.rooms);  // Update room list
             } catch (error) {
                 console.error('Failed to fetch rooms:', error);

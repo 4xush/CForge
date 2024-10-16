@@ -92,7 +92,7 @@ const CodingDashboard = () => {
                         </div>
                         <div className="flex justify-between w-full text-xs mb-2">
                             <div>
-                                <p className="text-gray-400">Global Ranking</p>
+                                <p className="text-gray-400">Attended Contest </p>
                                 <p className="font-bold">{user.globalRanking}</p>
                             </div>
                             <div className="text-right">
@@ -131,8 +131,8 @@ const CodingDashboard = () => {
                         <th className="p-2">EASY</th>
                         <th className="p-2">MEDIUM</th>
                         <th className="p-2">HARD</th>
+                        <th className="p-2">Attended Contest</th>
                         <th className="p-2">Contest Rating</th>
-                        <th className="p-2">Global Ranking</th>
                     </tr>
                 </thead>
                 <tbody>
