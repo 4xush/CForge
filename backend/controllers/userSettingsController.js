@@ -1,7 +1,6 @@
-// controllers/userController.js
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
-const checkLeetCodeUsername = require("../controllers/authController");
+const checkLeetCodeUsername = require("./authController");
 
 // Update user password
 exports.updatePassword = async (req, res) => {
@@ -73,28 +72,26 @@ exports.updateLeetCodeUsername = async (req, res) => {
   const { leetcodeUsername } = req.body;
 
   try {
-    const isLeetCodeUsernameValid = await checkLeetCodeUsername(
-      leetcodeUsername
-    );
+    // Validate if the LeetCode username exists
+    const isLeetCodeUsernameValid = await checkLeetCodeUsername(leetcodeUsername);
     if (!isLeetCodeUsernameValid) {
       return res
         .status(400)
         .json({ message: "LeetCode username does not exist" });
     }
 
-    const existingUser = await User.findOne({ leetcodeUsername });
-    if (
-      existingUser &&
-      existingUser._id.toString() !== req.user.id.toString()
-    ) {
+    // Check if the LeetCode username is already taken
+    const existingUser = await User.findOne({ "platforms.leetcode.username": leetcodeUsername });
+    if (existingUser && existingUser._id.toString() !== req.user.id.toString()) {
       return res
         .status(400)
         .json({ message: "LeetCode username is already taken" });
     }
 
+    // Update the user's LeetCode username
     const user = await User.findByIdAndUpdate(
       req.user.id,
-      { leetcodeUsername },
+      { "platforms.leetcode.username": leetcodeUsername },
       { new: true }
     );
     res

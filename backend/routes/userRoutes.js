@@ -1,32 +1,41 @@
 const express = require("express");
-const { getAllRoomsForUser } = require("../controllers/roomController");
-const { protect } = require("../middleware/authMiddleware");
+const router = express.Router();
+const { protect, adminProtect } = require("../middleware/authMiddleware");
+
+// Controller imports
 const { updateLeetCodeStats } = require("../jobs/leetCodeUpdater");
+const {
+  getUserDetails,
+  deleteUserAccount,
+  getAllUsers,
+} = require("../controllers/userController");
 const {
   updatePassword,
   updateUsername,
   updateEmail,
   updateLeetCodeUsername,
   updateProfilePicture,
-} = require("../controllers/userupdateSettings");
-const {
-  getUserDetails,
-  deleteUserAccount,
-  getAllUsers,
-} = require("../controllers/userController");
+} = require("../controllers/userSettingsController");
+const { getAllRoomsForUser } = require("../controllers/roomController");
 
-const router = express.Router();
+// User profile routes
+router.get("/profile", protect, getUserDetails);
+router.delete("/profile", protect, deleteUserAccount);
 
-router.put("/update/stats", protect, updateLeetCodeStats);
-router.get("/detail", protect, getUserDetails); // New route for getting user details
-router.delete("/delete", protect, deleteUserAccount); // New route for deleting user account
+// User settings routes
+router.put("/settings/password", protect, updatePassword);
+router.route("/settings/username").put(protect, updateUsername);
+router.route("/settings/email").put(protect, updateEmail);
+router.route("/settings/leetcode").put(protect, updateLeetCodeUsername);
+router.route("/settings/avatar").put(protect, updateProfilePicture);
 
+// Room routes
 router.get("/rooms", protect, getAllRoomsForUser);
-router.get("/admin/getAll", protect, getAllUsers);
-router.put("/update/password", protect, updatePassword);
-router.put("/update/username", protect, updateUsername);
-router.put("/update/email", protect, updateEmail);
-router.put("/update/lc/username", protect, updateLeetCodeUsername);
-router.put("/update/avtar", protect, updateProfilePicture);
+
+// Stats routes
+router.put("/stats/leetcode", protect, updateLeetCodeStats);
+
+// Admin routes
+router.get("/admin/users", protect, getAllUsers);
 
 module.exports = router;

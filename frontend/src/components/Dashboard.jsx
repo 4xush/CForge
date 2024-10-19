@@ -4,6 +4,9 @@ import LeftSidebar from './LeftSidebar';
 import MainContent from './MainContent';
 import RightSidebar from './RightSidebar';
 import { RoomContext } from '../context/RoomContext'; // Access RoomContext
+import { DashboardContext } from '../context/DashboardContext'; // Import DashboardContext
+import UserSettings from './UserSettings'; // Import UserSettings overlay component
+import HelpFAQ from './HelpFAQ';
 
 const CForgeUI = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -14,6 +17,9 @@ const CForgeUI = () => {
 
     // Access selectedRoom and refreshRoomList from RoomContext
     const { selectedRoom, refreshRoomList } = useContext(RoomContext);
+
+    // Access activeSection from DashboardContext to manage sections
+    const { activeSection } = useContext(DashboardContext);
 
     // Trigger room list fetching when the component mounts
     useEffect(() => {
@@ -48,9 +54,14 @@ const CForgeUI = () => {
                 setIsRoomsListVisible={setIsRoomsListVisible}
             />
 
-            {/* Main Content, rendered conditionally based on selectedRoom */}
+            {/* Main Layout */}
             <div className="flex-1 flex flex-col md:flex-row">
-                {selectedRoom ? (
+                {/* Conditional Rendering based on active section */}
+                {activeSection === 'settings' ? (
+                    <UserSettings />
+                ) : activeSection === 'help' ? (
+                    <HelpFAQ /> // Render HelpFAQ when active section is 'help'
+                ) : selectedRoom ? (
                     <MainContent
                         activeTab={activeTab}
                         setActiveTab={setActiveTab}
