@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import useSignup from '../hooks/useSignup';
+import useSignup, { handleInputErrors } from '../hooks/useSignup';
+import toast from 'react-hot-toast';
 
 const CustomAlert = ({ message }) => (
     <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
@@ -18,6 +19,7 @@ const SignUp = () => {
         username: '',
         email: '',
         password: '',
+        confirmPassword: '',
         gender: '',
         leetcodeUsername: '',
     });
@@ -33,6 +35,10 @@ const SignUp = () => {
         e.preventDefault();
         setError('');
 
+        if (!handleInputErrors(formData)) {
+            return;
+        }
+
         try {
             await signup({
                 Fullname: formData.fullName,
@@ -42,9 +48,11 @@ const SignUp = () => {
                 gender: formData.gender,
                 leetcodeUsername: formData.leetcodeUsername
             });
+            toast.success('Signup successful!');
             navigate('/dashboard');
         } catch (error) {
             setError(error.message || 'An unexpected error occurred');
+            toast.error(error.message || 'An unexpected error occurred');
         }
     };
 
@@ -78,7 +86,7 @@ const SignUp = () => {
                                     type="text"
                                     required
                                     className="appearance-none rounded-md bg-gray-700 relative block w-full px-3 py-1 border border-gray-600 text-white placeholder-gray-500 focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                                    placeholder=""
+                                    placeholder="John Doe"
                                     value={formData.fullName}
                                     onChange={handleInputChange}
                                 />
@@ -93,7 +101,7 @@ const SignUp = () => {
                                     type="text"
                                     required
                                     className="appearance-none rounded-md bg-gray-700 relative block w-full px-3 py-1 border border-gray-600 text-white placeholder-gray-500 focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                                    placeholder=""
+                                    placeholder="johndoe123"
                                     value={formData.username}
                                     onChange={handleInputChange}
                                 />
@@ -109,7 +117,7 @@ const SignUp = () => {
                                     autoComplete="email"
                                     required
                                     className="appearance-none rounded-md bg-gray-700 relative block w-full px-3 py-1 border border-gray-600 text-white placeholder-gray-500 focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                                    placeholder=""
+                                    placeholder="john@example.com"
                                     value={formData.email}
                                     onChange={handleInputChange}
                                 />
@@ -125,8 +133,24 @@ const SignUp = () => {
                                     autoComplete="new-password"
                                     required
                                     className="appearance-none rounded-md bg-gray-700 relative block w-full px-3 py-1 border border-gray-600 text-white placeholder-gray-500 focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                                    placeholder=""
+                                    placeholder="********"
                                     value={formData.password}
+                                    onChange={handleInputChange}
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-300">
+                                    Confirm Password
+                                </label>
+                                <input
+                                    id="confirm-password"
+                                    name="confirmPassword"
+                                    type="password"
+                                    autoComplete="new-password"
+                                    required
+                                    className="appearance-none rounded-md bg-gray-700 relative block w-full px-3 py-1 border border-gray-600 text-white placeholder-gray-500 focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
+                                    placeholder="********"
+                                    value={formData.confirmPassword}
                                     onChange={handleInputChange}
                                 />
                             </div>
@@ -145,6 +169,7 @@ const SignUp = () => {
                                     <option value="">Select Gender</option>
                                     <option value="male">Male</option>
                                     <option value="female">Female</option>
+                                    <option value="other">Other</option>
                                 </select>
                             </div>
                             <div>
@@ -157,14 +182,14 @@ const SignUp = () => {
                                     type="text"
                                     required
                                     className="appearance-none rounded-md bg-gray-700 relative block w-full px-3 py-1 border border-gray-600 text-white placeholder-gray-500 focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                                    placeholder=""
+                                    placeholder="leetcode_username"
                                     value={formData.leetcodeUsername}
                                     onChange={handleInputChange}
                                 />
                             </div>
                         </div>
 
-                        {error && <CustomAlert message={error} />}
+                        {/* {error && <CustomAlert message={error} />} */}
 
                         <div>
                             <button

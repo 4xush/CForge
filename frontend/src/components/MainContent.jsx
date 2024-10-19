@@ -5,8 +5,8 @@ import TopBar from './TopBar';
 import { useRoomContext } from '../context/RoomContext';
 
 const MainContent = ({ activeTab, setActiveTab, isMobile }) => {
-    const { refreshRoomList } = useRoomContext(); // Access refreshRoomList directly
-
+    const { refreshRoomList } = useRoomContext();
+    const { selectedRoom } = useRoomContext();
     return (
         <div className="flex-1 flex flex-col bg-gray-900">
             <TopBar setRefreshRooms={refreshRoomList} /> {/* Pass refreshRoomList to TopBar */}
@@ -25,7 +25,7 @@ const MainContent = ({ activeTab, setActiveTab, isMobile }) => {
                 </button>
             </div>
             <div className="flex-1 p-4 overflow-y-auto bg-gray-900">
-                {activeTab === 'leaderboard' ? <Leaderboard isMobile={isMobile} /> : <Chat />}
+                {activeTab === 'leaderboard' ? <Leaderboard selectedRoom={selectedRoom} isMobile={isMobile} /> : <Chat />}
             </div>
         </div>
     );

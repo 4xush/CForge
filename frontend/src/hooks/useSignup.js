@@ -1,5 +1,6 @@
 import { useState } from "react";
 import api from '../config/api';
+import toast from 'react-hot-toast';
 
 const useSignup = () => {
     const [loading, setLoading] = useState(false);
@@ -21,10 +22,7 @@ const useSignup = () => {
     return { loading, signup };
 };
 
-export default useSignup;
-
-// This function doesn't need to be changed as it doesn't involve API calls
-function handleInputErrors({ fullName, username, password, confirmPassword, gender }) {
+export function handleInputErrors({ fullName, username, password, confirmPassword, gender }) {
     if (!fullName || !username || !password || !confirmPassword || !gender) {
         toast.error("Please fill in all fields");
         return false;
@@ -33,5 +31,11 @@ function handleInputErrors({ fullName, username, password, confirmPassword, gend
         toast.error("Password must be at least 6 characters");
         return false;
     }
+    if (password !== confirmPassword) {
+        toast.error("Passwords do not match");
+        return false;
+    }
     return true;
 }
+
+export default useSignup;

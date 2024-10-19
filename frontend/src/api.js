@@ -1,11 +1,9 @@
 import axios from "axios";
 
-// Set up the base URL for your API requests
 const API_URL = "http://localhost:5000/api";
 
-// src/api.js
 export const login = async (email, password) => {
-  const response = await fetch("http://localhost:5000/api/auth/login", {
+  const response = await fetch(`${API_URL}/auth/login`, {  // Fixed template literal
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -19,15 +17,11 @@ export const login = async (email, password) => {
   }
 
   const data = await response.json();
-  const token = data.token; // Assuming the backend returns a token in the response
-
-  // Store the token in localStorage for future use
+  const token = data.token;
   localStorage.setItem("token", token);
-
   return data;
 };
 
-// You can add more API functions here, such as registration, fetching data, etc.
 export const register = async (userData) => {
   try {
     const response = await axios.post(`${API_URL}/users/register`, userData);
@@ -35,5 +29,40 @@ export const register = async (userData) => {
   } catch (error) {
     console.error("Error during registration:", error);
     throw error.response?.data || "An error occurred during registration";
+  }
+};
+
+export const getLeaderboard = async (roomId, sortBy, limit, page) => {
+  try {
+    const response = await axios.get(`${API_URL}/rooms/${roomId}/leaderboard`, {
+      params: { sortBy, limit, page }
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching leaderboard:", error);
+    throw error.response?.data || "An error occurred while fetching the leaderboard";
+  }
+};
+
+export const updateLeetCodeStats = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await axios.put(
+      `${API_URL}/users/update/stats`,
+      {}, // Empty body for the PUT request
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating LeetCode stats:", error);
+    throw error.response?.data?.message || "An error occurred while updating LeetCode stats";
   }
 };
