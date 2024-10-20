@@ -57,9 +57,10 @@ const CForgeUI = () => {
             {/* Main Layout */}
             <div className="flex-1 flex flex-col md:flex-row">
                 {/* Conditional Rendering based on active section */}
-                {activeSection === 'settings' ? (
+                {/* {activeSection === 'settings' ? (
                     <UserSettings />
-                ) : activeSection === 'help' ? (
+                ) : activeSection === 'help' ? ( */}
+                {activeSection === 'help' ? (
                     <HelpFAQ /> // Render HelpFAQ when active section is 'help'
                 ) : selectedRoom ? (
                     <MainContent

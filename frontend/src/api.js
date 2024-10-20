@@ -66,3 +66,43 @@ export const updateLeetCodeStats = async () => {
     throw error.response?.data?.message || "An error occurred while updating LeetCode stats";
   }
 };
+
+export const updateProfile = async (type, data, token) => {
+  try {
+    const response = await fetch(`${API_URL}/users/settings/${type}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || 'Something went wrong');
+    }
+
+    return result.data.user;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteAccount = async (token) => {
+  try {
+    const response = await fetch(`${API_URL}/users/profile`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to delete account');
+    }
+  } catch (error) {
+    throw error;
+  }
+};

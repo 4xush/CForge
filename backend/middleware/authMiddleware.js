@@ -8,16 +8,13 @@ const protect = async (req, res, next) => {
     try {
       token = req.headers.authorization.split(" ")[1];
 
-      // Check if token exists
       if (!token) {
         return res.status(401).json({ message: "Not authorized, token missing" });
       }
 
-      // Verify the token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       console.log('(MiddleW)Decoded Token:', decoded);
 
-      // Retrieve the user from the decoded token
       req.user = await User.findById(decoded.id).select("-password");
 
       // Check if user exists

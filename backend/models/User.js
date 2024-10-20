@@ -33,7 +33,6 @@ const userSchema = new mongoose.Schema(
       leetcode: {
         username: {
           type: String,
-          unique: true,
           sparse: true,
         },
         totalQuestionsSolved: {

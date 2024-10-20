@@ -3,6 +3,21 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
 
+// Function to generate a random username based on full name
+const generateUsername = (fullName) => {
+  const nameParts = fullName.toLowerCase().split(' ');
+  const firstName = nameParts[0];
+  const lastName = nameParts[nameParts.length - 1];
+  const randomNum = Math.floor(Math.random() * 10000);
+  return `${firstName}${lastName}${randomNum}`;
+};
+
+// Function to check if a username already exists
+const checkUsernameExists = async (username) => {
+  const existingUser = await User.findOne({ username });
+  return !!existingUser;
+};
+
 const checkLeetCodeUsername = async (username) => {
   const query = `
     {
@@ -12,9 +27,7 @@ const checkLeetCodeUsername = async (username) => {
     }
   `;
   try {
-    const response = await axios.post("https://leetcode.com/graphql", {
-      query,
-    });
+    const response = await axios.post("https://leetcode.com/graphql", { query });
     return response.data.data.matchedUser !== null;
   } catch (error) {
     throw new Error("Error verifying LeetCode username");
@@ -22,27 +35,19 @@ const checkLeetCodeUsername = async (username) => {
 };
 
 const signupUser = async (req, res) => {
-  const { Fullname, username, email, password, gender, leetcodeUsername } =
-    req.body;
-
+  const { Fullname, email, password, gender, leetcodeUsername } = req.body;
   try {
     const existingEmailUser = await User.findOne({ email });
     if (existingEmailUser) {
       return res.status(400).json({ message: "Email is already registered" });
     }
 
-    const existingUsernameUser = await User.findOne({ username });
-    if (existingUsernameUser) {
-      return res.status(400).json({ message: "Username is already taken" });
-    }
-
-    const existingLeetCodeUser = await User.findOne({
-      "platforms.leetcode.username": leetcodeUsername,
-    });
-    if (existingLeetCodeUser) {
-      return res.status(400).json({
-        message: `LeetCode username "${leetcodeUsername}" is already registered with another email. Please use a different LeetCode username.`,
-      });
+    // Generate a unique username
+    let username;
+    let usernameExists = true;
+    while (usernameExists) {
+      username = generateUsername(Fullname);
+      usernameExists = await checkUsernameExists(username);
     }
 
     const leetcodeExists = await checkLeetCodeUsername(leetcodeUsername);
@@ -50,7 +55,6 @@ const signupUser = async (req, res) => {
       return res.status(400).json({ message: "LeetCode username not found" });
     }
 
-    // Validate gender
     if (!["male", "female"].includes(gender)) {
       return res.status(400).json({ message: "Invalid gender value" });
     }
@@ -62,7 +66,7 @@ const signupUser = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({
       Fullname,
-      username,
+      username, // Auto-generated username
       email,
       password: hashedPassword,
       gender,
@@ -86,6 +90,7 @@ const signupUser = async (req, res) => {
     res.status(201).json({
       message: "User registered successfully",
       token,
+      username, // Include the generated username in the response
     });
   } catch (error) {
     console.error("Error registering user:", error.message);
@@ -118,5 +123,5 @@ const loginUser = async (req, res) => {
 
 module.exports = {
   signupUser,
-  loginUser,
+  loginUser, // Assuming loginUser function remains unchanged
 };

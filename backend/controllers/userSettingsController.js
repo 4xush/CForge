@@ -80,14 +80,6 @@ exports.updateLeetCodeUsername = async (req, res) => {
         .json({ message: "LeetCode username does not exist" });
     }
 
-    // Check if the LeetCode username is already taken
-    const existingUser = await User.findOne({ "platforms.leetcode.username": leetcodeUsername });
-    if (existingUser && existingUser._id.toString() !== req.user.id.toString()) {
-      return res
-        .status(400)
-        .json({ message: "LeetCode username is already taken" });
-    }
-
     // Update the user's LeetCode username
     const user = await User.findByIdAndUpdate(
       req.user.id,

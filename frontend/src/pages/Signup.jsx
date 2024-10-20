@@ -1,29 +1,18 @@
 import React, { useState } from 'react';
-import { AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import useSignup, { handleInputErrors } from '../hooks/useSignup';
+import useSignup from '../hooks/useSignup';
 import toast from 'react-hot-toast';
-
-const CustomAlert = ({ message }) => (
-    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-        <div className="flex">
-            <AlertCircle className="h-5 w-5 mr-2" />
-            <span>{message}</span>
-        </div>
-    </div>
-);
+import BrandingSection from './BrandingSection';
 
 const SignUp = () => {
     const [formData, setFormData] = useState({
         fullName: '',
-        username: '',
         email: '',
         password: '',
         confirmPassword: '',
         gender: '',
         leetcodeUsername: '',
     });
-    const [error, setError] = useState('');
     const navigate = useNavigate();
     const { loading, signup } = useSignup();
 
@@ -33,16 +22,15 @@ const SignUp = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
 
-        if (!handleInputErrors(formData)) {
+        if (formData.password !== formData.confirmPassword) {
+            toast.error("Passwords don't match");
             return;
         }
 
         try {
             await signup({
                 Fullname: formData.fullName,
-                username: formData.username,
                 email: formData.email,
                 password: formData.password,
                 gender: formData.gender,
@@ -51,155 +39,84 @@ const SignUp = () => {
             toast.success('Signup successful!');
             navigate('/dashboard');
         } catch (error) {
-            setError(error.message || 'An unexpected error occurred');
             toast.error(error.message || 'An unexpected error occurred');
         }
     };
 
     return (
         <div className="min-h-screen flex items-stretch bg-gray-900">
-            <div className="w-full md:w-1/2 flex flex-col justify-center items-center p-20">
-                <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 text-center" style={{ fontFamily: "'Press Start 2P', cursive" }}>
-                    Cforge
-                </h1>
-                <p className="text-4xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 italic">
-                    Empowering Coders, Connecting Minds, Ranking Excellence
-                </p>
-            </div>
-
+            <BrandingSection />
             <div className="w-full md:w-1/2 flex items-center justify-center p-8">
                 <div className="max-w-md w-full space-y-8 bg-gray-800 p-8 rounded-lg shadow-lg">
-                    <div>
-                        <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
-                            Sign Up
-                        </h2>
-                    </div>
+                    <h2 className="text-center text-3xl font-bold text-white">Sign Up</h2>
                     <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-                        <div className="rounded-md shadow-sm -space-y-px">
-                            <div>
-                                <label htmlFor="full-name" className="block text-sm font-medium text-gray-300">
-                                    Full Name
-                                </label>
-                                <input
-                                    id="full-name"
-                                    name="fullName"
-                                    type="text"
-                                    required
-                                    className="appearance-none rounded-md bg-gray-700 relative block w-full px-3 py-1 border border-gray-600 text-white placeholder-gray-500 focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                                    placeholder="John Doe"
-                                    value={formData.fullName}
-                                    onChange={handleInputChange}
-                                />
-                            </div>
-                            <div>
-                                <label htmlFor="username" className="block text-sm font-medium text-gray-300">
-                                    Username
-                                </label>
-                                <input
-                                    id="username"
-                                    name="username"
-                                    type="text"
-                                    required
-                                    className="appearance-none rounded-md bg-gray-700 relative block w-full px-3 py-1 border border-gray-600 text-white placeholder-gray-500 focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                                    placeholder="johndoe123"
-                                    value={formData.username}
-                                    onChange={handleInputChange}
-                                />
-                            </div>
-                            <div>
-                                <label htmlFor="email-address" className="block text-sm font-medium text-gray-300">
-                                    Email address
-                                </label>
-                                <input
-                                    id="email-address"
-                                    name="email"
-                                    type="email"
-                                    autoComplete="email"
-                                    required
-                                    className="appearance-none rounded-md bg-gray-700 relative block w-full px-3 py-1 border border-gray-600 text-white placeholder-gray-500 focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                                    placeholder="john@example.com"
-                                    value={formData.email}
-                                    onChange={handleInputChange}
-                                />
-                            </div>
-                            <div>
-                                <label htmlFor="password" className="block text-sm font-medium text-gray-300">
-                                    Password
-                                </label>
-                                <input
-                                    id="password"
-                                    name="password"
-                                    type="password"
-                                    autoComplete="new-password"
-                                    required
-                                    className="appearance-none rounded-md bg-gray-700 relative block w-full px-3 py-1 border border-gray-600 text-white placeholder-gray-500 focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                                    placeholder="********"
-                                    value={formData.password}
-                                    onChange={handleInputChange}
-                                />
-                            </div>
-                            <div>
-                                <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-300">
-                                    Confirm Password
-                                </label>
-                                <input
-                                    id="confirm-password"
-                                    name="confirmPassword"
-                                    type="password"
-                                    autoComplete="new-password"
-                                    required
-                                    className="appearance-none rounded-md bg-gray-700 relative block w-full px-3 py-1 border border-gray-600 text-white placeholder-gray-500 focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                                    placeholder="********"
-                                    value={formData.confirmPassword}
-                                    onChange={handleInputChange}
-                                />
-                            </div>
-                            <div>
-                                <label htmlFor="gender" className="block text-sm font-medium text-gray-300">
-                                    Gender
-                                </label>
-                                <select
-                                    id="gender"
-                                    name="gender"
-                                    required
-                                    className="appearance-none rounded-md bg-gray-700 relative block w-full px-3 py-1 border border-gray-600 text-white placeholder-gray-500 focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                                    value={formData.gender}
-                                    onChange={handleInputChange}
-                                >
-                                    <option value="">Select Gender</option>
-                                    <option value="male">Male</option>
-                                    <option value="female">Female</option>
-                                    <option value="other">Other</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label htmlFor="leetcode-username" className="block text-sm font-medium text-gray-300">
-                                    LeetCode Username
-                                </label>
-                                <input
-                                    id="leetcode-username"
-                                    name="leetcodeUsername"
-                                    type="text"
-                                    required
-                                    className="appearance-none rounded-md bg-gray-700 relative block w-full px-3 py-1 border border-gray-600 text-white placeholder-gray-500 focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                                    placeholder="leetcode_username"
-                                    value={formData.leetcodeUsername}
-                                    onChange={handleInputChange}
-                                />
-                            </div>
-                        </div>
-
-                        {/* {error && <CustomAlert message={error} />} */}
-
-                        <div>
-                            <button
-                                type="submit"
-                                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-                                disabled={loading}
+                        <div className="space-y-4">
+                            <input
+                                name="fullName"
+                                type="text"
+                                required
+                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                placeholder="Full Name"
+                                value={formData.fullName}
+                                onChange={handleInputChange}
+                            />
+                            <input
+                                name="email"
+                                type="email"
+                                required
+                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                placeholder="Email address"
+                                value={formData.email}
+                                onChange={handleInputChange}
+                            />
+                            <input
+                                name="password"
+                                type="password"
+                                required
+                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                placeholder="Password"
+                                value={formData.password}
+                                onChange={handleInputChange}
+                            />
+                            <input
+                                name="confirmPassword"
+                                type="password"
+                                required
+                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                placeholder="Confirm Password"
+                                value={formData.confirmPassword}
+                                onChange={handleInputChange}
+                            />
+                            <select
+                                name="gender"
+                                required
+                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                value={formData.gender}
+                                onChange={handleInputChange}
                             >
-                                {loading ? <span className="loading loading-spinner"></span> : 'Sign Up'}
-                            </button>
+                                <option value="">Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <input
+                                name="leetcodeUsername"
+                                type="text"
+                                required
+                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                placeholder="LeetCode Username"
+                                value={formData.leetcodeUsername}
+                                onChange={handleInputChange}
+                            />
                         </div>
+
+                        <button
+                            type="submit"
+                            className="w-full py-2 px-4 border border-transparent rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                            disabled={loading}
+                        >
+                            {loading ? 'Signing Up...' : 'Sign Up'}
+                        </button>
                     </form>
                     <div className="text-center">
                         <button
