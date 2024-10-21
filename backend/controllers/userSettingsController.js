@@ -1,6 +1,25 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
-const checkLeetCodeUsername = require("./authController");
+const axios = require("axios");
+
+const checkLeetCodeUsername = async (username) => {
+  const query = `
+    {
+      matchedUser(username: "${username}") {
+        username
+      }
+    }
+  `;
+
+  try {
+    const response = await axios.post("https://leetcode.com/graphql", { query });
+    return response.data.data.matchedUser !== null;
+  } catch (error) {
+    console.error("LeetCode API Error:", error.message);
+    throw new Error("Error verifying LeetCode username");
+  }
+};
+
 
 // Update user password
 exports.updatePassword = async (req, res) => {

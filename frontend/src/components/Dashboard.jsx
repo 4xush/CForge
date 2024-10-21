@@ -74,14 +74,14 @@ const CForgeUI = () => {
                     </div>
                 )}
 
-                {/* Right Sidebar only when "chat" tab is selected and a room is active */}
+                {/* Right Sidebar only when "chat" tab is selected and a room is active
                 {activeTab === 'chat' && selectedRoom && (
                     <RightSidebar
                         isMobile={isMobile}
                         isRightSidebarOpen={isRightSidebarOpen}
                         activeTab={activeTab}
                     />
-                )}
+                )} */}
             </div>
         </div>
     );

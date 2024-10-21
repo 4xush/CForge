@@ -33,7 +33,7 @@ router.route("/settings/avatar").put(protect, updateProfilePicture);
 router.get("/rooms", protect, getAllRoomsForUser);
 
 // Stats routes
-router.put("/stats/leetcode", protect, updateLeetCodeStats);
+router.put("/update/lcstats", protect, updateLeetCodeStats);
 
 // Admin routes
 router.get("/admin/users", protect, getAllUsers);

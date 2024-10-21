@@ -23,7 +23,7 @@ const LeftSidebar = ({ isMobileMenuOpen, isRoomsListVisible, setIsRoomsListVisib
     return (
         <>
             <div
-                className={`w-full md:w-68 bg-gray-800 p-3 flex flex-col justify-between
+                className={`w-full md:w-80 bg-gray-800 p-3 flex flex-col justify-between
         ${isMobileMenuOpen ? 'block' : 'hidden'} md:block border-r border-gray-700 relative`}
                 onMouseEnter={() => setIsRoomsListVisible(true)}
                 onMouseLeave={() => setIsRoomsListVisible(false)}

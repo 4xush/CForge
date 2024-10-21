@@ -112,7 +112,7 @@ const CodingDashboard = () => {
                         <div className="my-2">
                             <CircularProgress
                                 solved={user.platforms.leetcode.totalQuestionsSolved}
-                                total={3263} // Assuming this is a constant value
+                                total={3263}
                             />
                             <p className="text-center text-xs text-gray-400 mt-1">
                                 /3263 Solved

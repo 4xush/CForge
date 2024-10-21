@@ -20,7 +20,9 @@ const Login = () => {
         e.preventDefault();
 
         try {
-            await login(formData.email, formData.password);
+            // await login(formData.email, formData.password);
+            const data = await login(formData.email, formData.password); // Call the hook's login function
+            console.log(data.token);
             toast.success('Login successful!');
             navigate('/dashboard');
         } catch (error) {

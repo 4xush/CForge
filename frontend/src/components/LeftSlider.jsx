@@ -23,7 +23,7 @@ const LeftSlider = ({ isRoomsListVisible, setIsRoomsListVisible }) => {
     return (
         <>
             <div
-                className={`absolute left-full top-0 h-full w-48 bg-gray-800 p-3 transition-transform duration-300 ease-in-out transform ${isRoomsListVisible ? 'translate-x-0' : '-translate-x-full'}`}
+                className={`absolute left-full top-0 h-full w-48 bg-gray-800 p-3 transition-transform duration-300 ease-in-out transform z-10 ${isRoomsListVisible ? 'translate-x-0' : '-translate-x-full'}`}
                 style={{
                     boxShadow: isRoomsListVisible ? '5px 0 10px rgba(0,0,0,0.1)' : 'none',
                 }}

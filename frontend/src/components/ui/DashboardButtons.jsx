@@ -1,20 +1,32 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 
-const DashboardButton = ({ icon: Icon, label, badge, onClick }) => {
+const DashboardButton = forwardRef(({ icon: Icon, label, badge, isActive, onClick }, ref) => {
     return (
         <button
-            className="flex items-center mb-3 text-blue-200 hover:bg-gray-700 p-2 rounded transition-colors"
-            onClick={onClick} // Attach click handler
+            ref={ref}
+            onClick={onClick}
+            className={`w-full flex items-center gap-2 px-3 py-5 rounded-lg transition-colors duration-200 
+        ${isActive
+                    ? 'bg-gray-700 text-white'
+                    : 'text-gray-400 hover:bg-gray-700 hover:text-white'
+                }`}
         >
-            {Icon && <Icon className="mr-2" size={18} />}
-            <span className="text-sm">{label}</span>
-            {badge && (
-                <span className="ml-auto bg-pink-500 text-xs px-2 rounded-full">
-                    {badge}
-                </span>
-            )}
+            <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-2">
+                    <Icon className="w-5 h-5" />
+                    <span className="text-sm font-medium">{label}</span>
+                </div>
+                {badge && (
+                    <span className="px-2 py-1 text-xs font-medium bg-gray-700 text-gray-300 rounded-full">
+                        {badge}
+                    </span>
+                )}
+            </div>
         </button>
     );
-};
+});
+
+// Add a display name for better debugging
+DashboardButton.displayName = 'DashboardButton';
 
 export default DashboardButton;

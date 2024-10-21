@@ -4,8 +4,14 @@ import { X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { useAuthContext } from '../context/AuthContext.jsx';
-
-const API_URL = "http://localhost:5000/api";
+import {
+  updateUsername,
+  updateEmail,
+  updatePassword,
+  updateLeetCodeUsername,
+  updateProfilePicture,
+  deleteUserAccount,
+} from '../api/userroutes.js';
 
 const SettingsOverlay = ({ isOpen, onClose, triggerRef }) => {
   const [position, setPosition] = useState({ top: 0, left: 0 });
@@ -35,74 +41,77 @@ const SettingsOverlay = ({ isOpen, onClose, triggerRef }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const updateProfile = async (type, data) => {
-    setIsLoading(true);
+  const handleUpdateProfile = async (updateFn, data) => {
     try {
-      const response = await fetch(`${API_URL}/users/settings/${type}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(data)
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || 'Something went wrong');
-      }
-
-      setUser(result.data.user);
-      toast.success(result.message);
+      const token = localStorage.getItem('token');
+      const response = await updateFn(data, token);
+      setUser(response.data.user);
+      toast.success(response.message || 'Update successful');
+      return true;
     } catch (error) {
-      toast.error(error.message);
-    } finally {
-      setIsLoading(false);
+      toast.error(error.response?.data?.message || 'Update failed');
+      return false;
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    switch (activeTab) {
-      case 'profile':
-        await updateProfile('username', { username: formData.username });
-        await updateProfile('email', { email: formData.email });
-        break;
-      case 'security':
-        if (formData.newPassword !== formData.confirmPassword) {
-          return toast.error('Passwords do not match');
-        }
-        await updateProfile('password', {
-          oldPassword: formData.oldPassword,
-          newPassword: formData.newPassword
-        });
-        break;
-      case 'integrations':
-        await updateProfile('leetcode', { leetcodeUsername: formData.leetcodeUsername });
-        break;
+    setIsLoading(true);
+
+    try {
+      switch (activeTab) {
+        case 'profile':
+          await Promise.all([
+            handleUpdateProfile(updateUsername, { username: formData.username }),
+            handleUpdateProfile(updateEmail, { email: formData.email }),
+            formData.profilePicture &&
+            handleUpdateProfile(updateProfilePicture, { profilePicture: formData.profilePicture })
+          ]);
+          break;
+
+        case 'security':
+          if (formData.newPassword !== formData.confirmPassword) {
+            toast.error('Passwords do not match');
+            return;
+          }
+          await handleUpdateProfile(updatePassword, {
+            oldPassword: formData.oldPassword,
+            newPassword: formData.newPassword
+          });
+          // Clear password fields after successful update
+          setFormData(prev => ({
+            ...prev,
+            oldPassword: '',
+            newPassword: '',
+            confirmPassword: ''
+          }));
+          break;
+
+        case 'integrations':
+          await handleUpdateProfile(updateLeetCodeUsername, {
+            leetcodeUsername: formData.leetcodeUsername
+          });
+          break;
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleDeleteAccount = async () => {
     if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
       try {
-        const response = await fetch(`${API_URL}/users/profile`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-
-        if (response.ok) {
-          localStorage.removeItem('token');
-          setUser(null);
-          navigate('/');
-          toast.success('Account deleted successfully');
-          onClose();
-        }
+        const token = localStorage.getItem('token');
+        await deleteUserAccount(token);
+        localStorage.removeItem('token');
+        setUser(null);
+        navigate('/');
+        toast.success('Account deleted successfully');
+        onClose();
       } catch (error) {
-        toast.error('Failed to delete account');
+        toast.error(error.response?.data?.message || 'Failed to delete account');
       }
     }
   };
@@ -116,7 +125,7 @@ const SettingsOverlay = ({ isOpen, onClose, triggerRef }) => {
           ? `circle(150% at ${position.left}px ${position.top}px)`
           : `circle(0% at ${position.left}px ${position.top}px)`,
       }}
-      transition={{ type: "spring", stiffness: 20, damping: 3 }}
+      transition={{ type: "spring", stiffness: 20, damping: 10 }}
       className={`fixed inset-0 bg-[#101723] bg-opacity-95 z-50 ${isOpen ? '' : 'pointer-events-none'} overflow-y-auto`}
     >
       <div className="container mx-auto px-4 py-8">
