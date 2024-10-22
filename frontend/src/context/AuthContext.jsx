@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { updateLeetCodeStats, login, register } from "../api";
+import { login, register } from "../api";
 import toast from 'react-hot-toast';
 
 export const AuthContext = createContext();
@@ -19,16 +19,6 @@ export const AuthContextProvider = ({ children }) => {
       const userData = await login(email, password);
       setAuthUser(userData);
       localStorage.setItem("chat-user", JSON.stringify(userData));
-
-      // Update LeetCode stats after successful login
-      try {
-        await updateLeetCodeStats();
-        toast.success("LeetCode stats updated successfully!");
-      } catch (error) {
-        console.error("Failed to update LeetCode stats:", error);
-        toast.error("Error updating LeetCode stats");
-      }
-
       return userData;
     } catch (error) {
       toast.error(error.message || "Login failed");
@@ -41,16 +31,6 @@ export const AuthContextProvider = ({ children }) => {
       const newUser = await register(userData);
       setAuthUser(newUser);
       localStorage.setItem("chat-user", JSON.stringify(newUser));
-
-      // Update LeetCode stats after successful registration
-      try {
-        await updateLeetCodeStats();
-        toast.success("LeetCode stats updated successfully!");
-      } catch (error) {
-        console.error("Failed to update LeetCode stats:", error);
-        toast.error("Error updating LeetCode stats");
-      }
-
       return newUser;
     } catch (error) {
       toast.error(error.message || "Registration failed");

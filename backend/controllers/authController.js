@@ -123,13 +123,10 @@ const signupUser = async (req, res) => {
 
     // Generate username
     const username = await generateUsername(fullName);
-
+    // Add a default avatar URL
+    const defaultAvatar = "https://ui-avatars.com/api/?background=random";
     // Generate avatar URL
-    let avatarUrl = '';
-    if (['male', 'female'].includes(gender.toLowerCase())) {
-      avatarUrl = generateAvatarUrl(gender, username);
-    }
-
+    let avatarUrl = `${defaultAvatar}&name=${encodeURIComponent(fullName)}`;
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 

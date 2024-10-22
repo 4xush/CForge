@@ -44,16 +44,9 @@ const checkLeetCodeUsername = async (username) => {
   }
 };
 
-// Generate avatar URL based on gender and username
-const generateAvatarUrl = (gender, username) => {
-  const normalizedGender = gender.toLowerCase();
-  return `https://avatar.iran.liara.run/public/${normalizedGender === "male" ? "boy" : "girl"}?username=${username}`;
-};
-
 module.exports = {
   validateEmail,
   validatePassword,
   validatefullName,
-  checkLeetCodeUsername,
-  generateAvatarUrl
+  checkLeetCodeUsername
 };

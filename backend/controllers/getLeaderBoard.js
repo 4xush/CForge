@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
-const Room = require('../models/Room'); // Adjust the path as needed
-const User = require('../models/User'); // Adjust the path as needed
+const Room = require('../models/Room');
+const User = require('../models/User');
 
 exports.getLeaderboard = async (req, res) => {
     console.log("Fetched LeaderBoard");
@@ -36,23 +36,48 @@ exports.getLeaderboard = async (req, res) => {
 
         // Aggregate pipeline for leaderboard
         const pipeline = [
-            { $match: { _id: { $in: room.members } } },
-            { $sort: { [sortBy]: order === "asc" ? 1 : -1 } },
-            { $skip: skip },
-            { $limit: parsedLimit },
+            {
+                $match: {
+                    _id: { $in: room.members }
+                }
+            },
+            {
+                $sort: {
+                    [sortBy]: order === "asc" ? 1 : -1
+                }
+            },
+            {
+                $skip: skip
+            },
+            {
+                $limit: parsedLimit
+            },
             {
                 $project: {
                     username: 1,
-                    "platforms.leetcode": 1
+                    fullName: 1,
+                    profilePicture: 1,
+                    email: 1,  // Include if needed
+                    "platforms.leetcode": 1,
+                    createdAt: 1,  // Include if needed
+                    updatedAt: 1   // Include if needed
                 }
             }
         ];
 
+        // Execute aggregation
         const members = await User.aggregate(pipeline);
         const totalCount = await User.countDocuments({ _id: { $in: room.members } });
 
+        // Add data validation before sending response
+        const validatedMembers = members.map(member => ({
+            ...member,
+            fullName: member.fullName || member.username || 'Anonymous User',
+            profilePicture: member.profilePicture || null
+        }));
+
         res.status(200).json({
-            members,
+            members: validatedMembers,
             totalCount,
             page: parsedPage,
             limit: parsedLimit,

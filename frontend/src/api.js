@@ -44,29 +44,6 @@ export const getLeaderboard = async (roomId, sortBy, limit, page) => {
   }
 };
 
-export const updateLeetCodeStats = async () => {
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      throw new Error("No authentication token found");
-    }
-
-    const response = await axios.put(
-      `${API_URL}/users/update/stats`,
-      {}, // Empty body for the PUT request
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        }
-      }
-    );
-    return response.data;
-  } catch (error) {
-    console.error("Error updating LeetCode stats:", error);
-    throw error.response?.data?.message || "An error occurred while updating LeetCode stats";
-  }
-};
-
 export const updateProfile = async (type, data, token) => {
   try {
     const response = await fetch(`${API_URL}/users/settings/${type}`, {
