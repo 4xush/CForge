@@ -1,127 +1,310 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const axios = require("axios");
+const { validateEmail, validatePassword, validatefullName, checkLeetCodeUsername, generateAvatarUrl } = require("../utils/authHelpers.js");
+const generateUsername = require("../utils/usernameGenerator");
+const { getLeetCodeStats } = require("../services/leetcodeService");
 
-// Function to generate a random username based on full name
-const generateUsername = (fullName) => {
-  const nameParts = fullName.toLowerCase().split(' ');
-  const firstName = nameParts[0];
-  const lastName = nameParts[nameParts.length - 1];
-  const randomNum = Math.floor(Math.random() * 10000);
-  return `${firstName}${lastName}${randomNum}`;
-};
-
-// Function to check if a username already exists
-const checkUsernameExists = async (username) => {
-  const existingUser = await User.findOne({ username });
-  return !!existingUser;
-};
-
-const checkLeetCodeUsername = async (username) => {
-  const query = `
-    {
-      matchedUser(username: "${username}") {
-        username
-      }
-    }
-  `;
+const updateUserLeetCodeStats = async (user, throwError = false) => {
   try {
-    const response = await axios.post("https://leetcode.com/graphql", { query });
-    return response.data.data.matchedUser !== null;
+    // Validate user object
+    if (!user?._id || !user?.platforms?.leetcode?.username) {
+      const error = new Error("Invalid user data or missing LeetCode username");
+      error.code = "INVALID_USER_DATA";
+      throw error;
+    }
+
+    const leetcodeUsername = user.platforms.leetcode.username;
+
+    // Fetch LeetCode stats
+    const stats = await getLeetCodeStats(leetcodeUsername);
+
+    // Validate stats response
+    if (!stats || typeof stats.totalQuestionsSolved !== 'number') {
+      const error = new Error("Invalid LeetCode API response");
+      error.code = "INVALID_LEETCODE_RESPONSE";
+      throw error;
+    }
+
+    // Prepare stats update object with default values as fallback
+    const statsToUpdate = {
+      "platforms.leetcode.totalQuestionsSolved": stats.totalQuestionsSolved || 0,
+      "platforms.leetcode.questionsSolvedByDifficulty.easy": stats.questionsSolvedByDifficulty?.easy || 0,
+      "platforms.leetcode.questionsSolvedByDifficulty.medium": stats.questionsSolvedByDifficulty?.medium || 0,
+      "platforms.leetcode.questionsSolvedByDifficulty.hard": stats.questionsSolvedByDifficulty?.hard || 0,
+      "platforms.leetcode.attendedContestsCount": stats.attendedContestsCount || 0,
+      "platforms.leetcode.contestRating": stats.contestRating || 0,
+      "platforms.leetcode.lastUpdated": new Date()
+    };
+
+    // Update user document
+    const updatedUser = await User.findByIdAndUpdate(
+      user._id,
+      { $set: statsToUpdate },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedUser) {
+      const error = new Error("User not found during stats update");
+      error.code = "USER_NOT_FOUND";
+      throw error;
+    }
+
+    return updatedUser;
+
   } catch (error) {
-    throw new Error("Error verifying LeetCode username");
+    console.error(`LeetCode stats update failed for user ${user?._id}:`, {
+      error: error.message,
+      code: error.code,
+      stack: error.stack
+    });
+
+    if (throwError) {
+      throw error;
+    }
+
+    // Return original user if update fails and throwError is false
+    return user;
   }
 };
 
 const signupUser = async (req, res) => {
-  const { Fullname, email, password, gender, leetcodeUsername } = req.body;
+  const { fullName, email, password, gender, leetcodeUsername } = req.body;
+
   try {
-    const existingEmailUser = await User.findOne({ email });
+    // Input validation
+    const validationErrors = [];
+
+    if (!validateEmail(email)) {
+      validationErrors.push("Invalid email format");
+    }
+    if (!validatePassword(password)) {
+      validationErrors.push("Password must be at least 8 characters long");
+    }
+    if (!validatefullName(fullName)) {
+      validationErrors.push("Full name must be between 2 and 50 characters");
+    }
+    if (!leetcodeUsername?.trim()) {
+      validationErrors.push("LeetCode username is required");
+    }
+
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
+        message: "Validation failed",
+        errors: validationErrors
+      });
+    }
+
+    // Check for existing email (case-insensitive)
+    const existingEmailUser = await User.findOne({
+      email: new RegExp(`^${email}$`, 'i')
+    });
+
     if (existingEmailUser) {
-      return res.status(400).json({ message: "Email is already registered" });
+      return res.status(400).json({
+        message: "Email is already registered"
+      });
     }
 
-    // Generate a unique username
-    let username;
-    let usernameExists = true;
-    while (usernameExists) {
-      username = generateUsername(Fullname);
-      usernameExists = await checkUsernameExists(username);
+    // Verify LeetCode username existence
+    try {
+      const isValidLeetCodeUsername = await checkLeetCodeUsername(leetcodeUsername);
+      if (!isValidLeetCodeUsername) {
+        return res.status(400).json({
+          message: "LeetCode username not found or invalid"
+        });
+      }
+    } catch (error) {
+      console.error("LeetCode username verification failed:", error);
+      return res.status(503).json({
+        message: "Unable to verify LeetCode username. Please try again later."
+      });
     }
 
-    const leetcodeExists = await checkLeetCodeUsername(leetcodeUsername);
-    if (!leetcodeExists) {
-      return res.status(400).json({ message: "LeetCode username not found" });
+    // Generate username
+    const username = await generateUsername(fullName);
+
+    // Generate avatar URL
+    let avatarUrl = '';
+    if (['male', 'female'].includes(gender.toLowerCase())) {
+      avatarUrl = generateAvatarUrl(gender, username);
     }
 
-    if (!["male", "female"].includes(gender)) {
-      return res.status(400).json({ message: "Invalid gender value" });
-    }
-
-    const boyProfilePic = `https://avatar.iran.liara.run/public/boy?username=${username}`;
-    const girlProfilePic = `https://avatar.iran.liara.run/public/girl?username=${username}`;
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     // Create new user
-    const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({
-      Fullname,
-      username, // Auto-generated username
-      email,
+      fullName: fullName.trim(),
+      username,
+      email: email.toLowerCase(),
       password: hashedPassword,
-      gender,
-      profilePicture: gender === "male" ? boyProfilePic : girlProfilePic,
+      gender: gender.toLowerCase(),
+      profilePicture: avatarUrl,
       platforms: {
         leetcode: {
-          username: leetcodeUsername,
+          username: leetcodeUsername.trim(),
           totalQuestionsSolved: 0,
           questionsSolvedByDifficulty: { easy: 0, medium: 0, hard: 0 },
           attendedContestsCount: 0,
-        },
+          contestRating: 0,
+          lastUpdated: new Date()
+        }
       },
+      createdAt: new Date(),
+      lastLogin: new Date()
     });
 
     await newUser.save();
 
-    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
-      expiresIn: "30d",
-    });
+    // Update LeetCode stats
+    let updatedUser = newUser;
+    try {
+      updatedUser = await updateUserLeetCodeStats(newUser, false);
+    } catch (statsError) {
+      console.error("Initial LeetCode stats fetch failed:", statsError);
+      // Continue with signup process
+    }
+
+    // Generate JWT
+    const token = jwt.sign(
+      {
+        id: updatedUser._id,
+        username: updatedUser.username
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "30d" }
+    );
 
     res.status(201).json({
       message: "User registered successfully",
       token,
-      username, // Include the generated username in the response
+      user: {
+        username: updatedUser.username,
+        email: updatedUser.email,
+        profilePicture: updatedUser.profilePicture,
+        leetcodeStats: updatedUser.platforms.leetcode
+      }
     });
+
   } catch (error) {
-    console.error("Error registering user:", error.message);
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Signup error:", error);
+    if (error.code === 11000) {
+      return res.status(400).json({
+        message: "Username already exists"
+      });
+    }
+    res.status(500).json({
+      message: "Registration failed. Please try again later."
+    });
   }
 };
 
 const loginUser = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email });
-    const isMatch = await bcrypt.compare(password, user.password);
+  const { email, password } = req.body;
 
-    if (!user || !isMatch) {
-      return res.status(400).json({ message: "Invalid credentials" });
+  try {
+    // Input validation
+    if (!email?.trim() || !password?.trim()) {
+      return res.status(400).json({
+        message: "Email and password are required"
+      });
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
+    if (!validateEmail(email)) {
+      return res.status(400).json({
+        message: "Invalid email format"
+      });
+    }
+
+    // Find user (case-insensitive)
+    const user = await User.findOne({
+      email: new RegExp(`^${email}$`, 'i')
     });
 
-    console.log("JWT token generated for user:", user._id);
+    if (!user) {
+      return res.status(401).json({
+        message: "Invalid credentials"
+      });
+    }
 
-    res.status(200).json({ message: "User logged in successfully", token });
+    // Check account lock
+    const lockoutDuration = 15 * 60 * 1000; // 15 minutes
+    if (user.failedLoginAttempts >= 5 &&
+      user.lastFailedLogin &&
+      (Date.now() - user.lastFailedLogin.getTime()) < lockoutDuration) {
+      const remainingLockTime = Math.ceil(
+        (lockoutDuration - (Date.now() - user.lastFailedLogin.getTime())) / 60000
+      );
+      return res.status(429).json({
+        message: `Account temporarily locked. Please try again in ${remainingLockTime} minutes.`
+      });
+    }
+
+    // Verify password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      // Update failed login attempts
+      user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
+      user.lastFailedLogin = new Date();
+      await user.save();
+
+      return res.status(401).json({
+        message: "Invalid credentials"
+      });
+    }
+
+    // Reset failed attempts and update last login
+    user.failedLoginAttempts = 0;
+    user.lastLogin = new Date();
+    await user.save();
+
+    // Update LeetCode stats
+    let updatedUser = user;
+    try {
+      // Check if stats are stale (more than 1 hour old)
+      const isStale = !user.platforms?.leetcode?.lastUpdated ||
+        (Date.now() - user.platforms.leetcode.lastUpdated.getTime()) > 3600000;
+
+      if (isStale) {
+        updatedUser = await updateUserLeetCodeStats(user, false);
+      }
+    } catch (statsError) {
+      console.error("LeetCode stats update failed during login:", statsError);
+      // Continue with login process
+    }
+
+    // Generate JWT
+    const token = jwt.sign(
+      {
+        id: updatedUser._id,
+        username: updatedUser.username,
+        email: updatedUser.email
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    res.status(200).json({
+      message: "Login successful",
+      token,
+      user: {
+        username: updatedUser.username,
+        email: updatedUser.email,
+        profilePicture: updatedUser.profilePicture,
+        leetcodeStats: updatedUser.platforms.leetcode
+      }
+    });
+
   } catch (error) {
-    console.error("Server error during login:", error.message);
-    res.status(500).json({ message: "Server error" });
+    console.error("Login error:", error);
+    res.status(500).json({
+      message: "Login failed. Please try again later."
+    });
   }
 };
 
 module.exports = {
   signupUser,
-  loginUser, // Assuming loginUser function remains unchanged
+  loginUser
 };

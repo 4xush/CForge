@@ -3,7 +3,7 @@ const Room = require('../models/Room'); // Adjust the path as needed
 const User = require('../models/User'); // Adjust the path as needed
 
 exports.getLeaderboard = async (req, res) => {
-    console.log("inmm innn");
+    console.log("Fetched LeaderBoard");
     const {
         sortBy = "platforms.leetcode.totalQuestionsSolved",
         order = "desc",

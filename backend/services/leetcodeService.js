@@ -42,8 +42,7 @@ const getLeetCodeStats = async (leetcodeUsername) => {
     );
 
     console.log(
-      "Received response from LeetCode API:",
-      JSON.stringify(response.data, null, 2)
+      "Received response from LeetCode API"
     );
 
     const { matchedUser, userContestRanking } = response.data.data;

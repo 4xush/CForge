@@ -30,7 +30,7 @@ const SignUp = () => {
 
         try {
             await signup({
-                Fullname: formData.fullName,
+                fullName: formData.fullName,
                 email: formData.email,
                 password: formData.password,
                 gender: formData.gender,

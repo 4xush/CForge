@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
   {
-    Fullname: {
+    fullName: {
       type: String,
       required: true,
     },
@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema(
     gender: {
       type: String,
       required: true,
-      enum: ["male", "female"],
+      enum: ["male", "female", "other"],
     },
     profilePicture: {
       type: String,
@@ -78,7 +78,7 @@ userSchema.virtual("createdRooms", {
 // Indexes for performance optimization
 userSchema.index({ "platforms.leetcode.totalQuestionsSolved": -1 });
 userSchema.index({ "platforms.leetcode.contestRating": -1 });
-userSchema.index({ "platforms.leetcode.username": 1 }, { sparse: true });
+userSchema.index({ "platforms.leetcode.username": 1 }, { sparse: false }); // allow duplicate Leetcode username
 userSchema.index({ "platforms.leetcode.attendedContestsCount": -1 });
 
 const User = mongoose.model("User", userSchema);
