@@ -9,6 +9,7 @@ import DashboardPage from './components/Dashboard.jsx';
 import { DashboardProvider } from './context/DashboardContext.jsx';
 import { AuthProvider } from './context/AuthContext';
 import { Toaster } from 'react-hot-toast';
+import UserInfo from './components/User';
 
 const App = () => {
   return (
@@ -20,6 +21,7 @@ const App = () => {
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/welcome" element={<WelcomePage />} />
+            <Route path="/profile" element={<UserInfo />} />
             <Route
               path="/dashboard"
               element={

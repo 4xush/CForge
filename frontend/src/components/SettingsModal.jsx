@@ -13,7 +13,7 @@ import {
   deleteUserAccount,
 } from '../api/userroutes.js';
 
-const SettingsOverlay = ({ isOpen, onClose, triggerRef }) => {
+const SettingsModal = ({ isOpen, onClose, triggerRef }) => {
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const { user, setUser } = useAuthContext();
   const navigate = useNavigate();
@@ -125,7 +125,7 @@ const SettingsOverlay = ({ isOpen, onClose, triggerRef }) => {
           ? `circle(150% at ${position.left}px ${position.top}px)`
           : `circle(0% at ${position.left}px ${position.top}px)`,
       }}
-      transition={{ type: "spring", stiffness: 20, damping: 10 }}
+      transition={{ type: "spring", stiffness: 20, damping: 5 }}
       className={`fixed inset-0 bg-[#101723] bg-opacity-95 z-50 ${isOpen ? '' : 'pointer-events-none'} overflow-y-auto`}
     >
       <div className="container mx-auto px-4 py-8">
@@ -263,4 +263,4 @@ const Input = ({ label, ...props }) => (
   </div>
 );
 
-export default SettingsOverlay;
+export default SettingsModal;

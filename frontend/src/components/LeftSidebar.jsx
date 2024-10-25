@@ -1,13 +1,17 @@
 import React, { useContext, useRef } from 'react';
-import { PanelRightIcon, MessageSquareIcon, SettingsIcon, HelpCircleIcon, LogOutIcon } from 'lucide-react';
+import { PanelRightIcon, MessageSquareIcon, SettingsIcon, HelpCircleIcon, UserIcon } from 'lucide-react';
 import DashboardButton from './ui/DashboardButtons';
 import LeftSlider from './LeftSlider';
 import { DashboardContext } from '../context/DashboardContext';
-import SettingsOverlay from './SettingsOverlay.jsx';
+import { useAuthContext } from '../context/AuthContext';
+import SettingsModal from './SettingsModal.jsx';
+import MiniProfileModal from './ProfileModal.jsx';
 
 const LeftSidebar = ({ isMobileMenuOpen, isRoomsListVisible, setIsRoomsListVisible }) => {
     const { activeSection, setActiveSection, isSettingsOpen, setIsSettingsOpen } = useContext(DashboardContext);
+    const { authUser } = useAuthContext();
     const settingsButtonRef = useRef(null);
+    const [isProfileOpen, setIsProfileOpen] = React.useState(false);
 
     const handleLogout = () => {
         localStorage.removeItem('app-token');
@@ -16,6 +20,7 @@ const LeftSidebar = ({ isMobileMenuOpen, isRoomsListVisible, setIsRoomsListVisib
     };
 
     const handleSettingsClick = () => {
+        setIsProfileOpen(false);
         setIsSettingsOpen(true);
         setActiveSection('settings');
     };
@@ -24,12 +29,15 @@ const LeftSidebar = ({ isMobileMenuOpen, isRoomsListVisible, setIsRoomsListVisib
         <>
             <div
                 className={`w-full md:w-80 bg-gray-800 p-3 flex flex-col justify-between
-        ${isMobileMenuOpen ? 'block' : 'hidden'} md:block border-r border-gray-700 relative`}
+        ${isMobileMenuOpen ? 'block' : 'hidden'} md:block border-r border-gray-700 relative h-screen`}
                 onMouseEnter={() => setIsRoomsListVisible(true)}
                 onMouseLeave={() => setIsRoomsListVisible(false)}
             >
-                <div>
+                <div className="flex flex-col h-full">
+                    {/* Top section with logo */}
                     <h1 className="text-xl font-bold mb-6 text-white">CForge</h1>
+
+                    {/* Main navigation buttons */}
                     <div className="flex-1">
                         <DashboardButton
                             icon={PanelRightIcon}
@@ -59,17 +67,22 @@ const LeftSidebar = ({ isMobileMenuOpen, isRoomsListVisible, setIsRoomsListVisib
                             onClick={() => setActiveSection('help')}
                         />
                     </div>
+
+                    {/* LeftSlider component */}
                     <LeftSlider isRoomsListVisible={isRoomsListVisible} />
-                </div>
-                <div className="flex items-center mt-4">
-                    <DashboardButton
-                        icon={LogOutIcon}
-                        label="Logout"
-                        onClick={handleLogout}
-                    />
+
+                    {/* Help button at bottom */}
+                    <div className="mt-auto pt-4 border-t border-gray-700">
+                        <MiniProfileModal
+                            user={authUser}
+                            onLogout={handleLogout}
+                        />
+
+                    </div>
                 </div>
             </div>
-            <SettingsOverlay
+
+            <SettingsModal
                 isOpen={isSettingsOpen}
                 onClose={() => setIsSettingsOpen(false)}
                 triggerRef={settingsButtonRef}
