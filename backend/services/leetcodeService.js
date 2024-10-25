@@ -66,7 +66,8 @@ const getLeetCodeStats = async (leetcodeUsername) => {
     // Handle null userContestRanking
     const attendedContestsCount =
       userContestRanking?.attendedContestsCount || 0;
-    const contestRating = userContestRanking?.rating || 0;
+    const contestRating = Math.floor(userContestRanking?.rating || 0);
+
 
     return {
       leetcodeUsername,

@@ -114,7 +114,7 @@ const TopBar = () => {
                 onClose={() => setShowLeaveConfirmation(false)}
                 onConfirm={onLeaveRoom}
                 title="Leave Room"
-                message="Are you sure you want to leave this room? You'll need to be invited back to rejoin."
+                message="Are you sure you want to leave this room?"
             />
         </div>
     );

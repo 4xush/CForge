@@ -29,13 +29,8 @@ router.route("/settings/email").put(protect, updateEmail);
 router.route("/settings/leetcode").put(protect, updateLeetCodeUsername);
 router.route("/settings/avatar").put(protect, updateProfilePicture);
 
-// Room routes
 router.get("/rooms", protect, getAllRoomsForUser);
-
-// Stats routes
 router.put("/me/leetcode", protect, updateLeetCodeStats);
-
-// Admin routes
 router.get("/admin/users", protect, getAllUsers);
 
 module.exports = router;

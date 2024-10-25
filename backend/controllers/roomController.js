@@ -171,30 +171,6 @@ exports.getRoomDetails = async (req, res) => {
   }
 };
 
-
-exports.deleteRoom = async (req, res) => {
-  try {
-    const room = await Room.findOne({ roomId: req.params.roomId });
-
-    if (!room) {
-      return res.status(404).json({ message: "Room not found" });
-    }
-
-    if (room.creator.toString() !== req.user._id.toString()) {
-      return res
-        .status(403)
-        .json({ message: "Only the room creator can delete the room" });
-    }
-
-    await Room.findByIdAndDelete(room._id);
-    res.json({ message: "Room deleted successfully" });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error deleting room", error: error.message });
-  }
-};
-
 exports.getLeaderboard = async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.query;
@@ -284,3 +260,51 @@ exports.sendJoinRequest = async (req, res) => {
   }
 };
 
+exports.joinViaInvite = async (req, res) => {
+  try {
+    const { inviteCode } = req.params;
+    const userId = req.user._id;
+
+    // Find room with this invite code
+    const room = await Room.findOne({
+      'invites.code': inviteCode
+    });
+
+    if (!room) {
+      return res.status(404).json({ message: "Invalid invite link" });
+    }
+
+    // Check if user is already a member
+    if (room.members.includes(userId)) {
+      return res.status(400).json({ message: "You are already a member of this room" });
+    }
+
+    // Find the specific invite
+    const invite = room.invites.find(inv => inv.code === inviteCode);
+
+    // Validate invite
+    if (!isInviteValid(invite)) {
+      return res.status(400).json({ message: "This invite link has expired or is no longer valid" });
+    }
+
+    // Check room capacity
+    if (room.members.length >= room.maxMembers) {
+      return res.status(400).json({ message: "Room is full" });
+    }
+
+    // Add member and update invite usage
+    room.members.push(userId);
+    invite.uses += 1;
+
+    // Disable invite if max uses reached
+    if (invite.maxUses > 0 && invite.uses >= invite.maxUses) {
+      invite.isActive = false;
+    }
+
+    await room.save();
+
+    res.json({ message: "Successfully joined the room" });
+  } catch (error) {
+    res.status(500).json({ message: "Error joining room", error: error.message });
+  }
+};

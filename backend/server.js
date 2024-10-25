@@ -4,6 +4,7 @@ const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const roomRoutes = require("./routes/roomRoutes");
+const adminRoomRoutes = require("./routes/adminRoomRoutes");
 const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
@@ -33,6 +34,7 @@ connectDB();
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/rooms", roomRoutes);
+app.use("/api/rooms/admin", adminRoomRoutes);
 
 const PORT = process.env.PORT || 5000;
 

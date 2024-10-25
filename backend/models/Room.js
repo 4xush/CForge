@@ -1,15 +1,18 @@
 const mongoose = require("mongoose");
-
 const roomSchema = new mongoose.Schema(
   {
     roomId: {
       type: String,
       required: true,
-      unique: true, // Ensures the roomId is unique
-      index: true, // Creates an index on roomId for faster lookups
+      unique: true,
+      index: true,
     },
     name: { type: String, required: true },
     description: { type: String },
+    displayPicture: {
+      type: String,  // URL to the image stored in your cloud storage
+      default: null
+    },
     creator: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -21,7 +24,7 @@ const roomSchema = new mongoose.Schema(
     admins: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     isAdminOnlyMode: {
       type: Boolean,
-      default: false, // By default, room is not in admin-only mode
+      default: false,
     },
     mutedUsers: [
       {
@@ -30,7 +33,7 @@ const roomSchema = new mongoose.Schema(
           ref: "User",
         },
         muteUntil: {
-          type: Date, // The time until the user is muted
+          type: Date,
         },
       },
     ],
@@ -40,10 +43,22 @@ const roomSchema = new mongoose.Schema(
         requestedAt: { type: Date, default: Date.now },
       },
     ],
+    invite: {
+      code: {
+        type: String,
+        unique: true,
+        sparse: true,
+      },
+      createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      expiresAt: {
+        type: Date,
+      },
+    },
   },
   { timestamps: true }
 );
-
 const Room = mongoose.model("Room", roomSchema);
-
 module.exports = Room;
