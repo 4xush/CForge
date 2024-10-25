@@ -1,72 +1,10 @@
+// controllers/authController.js
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { validateEmail, validatePassword, validatefullName, checkLeetCodeUsername, generateAvatarUrl } = require("../utils/authHelpers.js");
+const { validateEmail, validatePassword, validatefullName, checkLeetCodeUsername } = require("../utils/authHelpers.js");
 const generateUsername = require("../utils/usernameGenerator");
-const { getLeetCodeStats } = require("../services/leetcodeService");
-
-const updateUserLeetCodeStats = async (user, throwError = false) => {
-  try {
-    // Validate user object
-    if (!user?._id || !user?.platforms?.leetcode?.username) {
-      const error = new Error("Invalid user data or missing LeetCode username");
-      error.code = "INVALID_USER_DATA";
-      throw error;
-    }
-
-    const leetcodeUsername = user.platforms.leetcode.username;
-
-    // Fetch LeetCode stats
-    const stats = await getLeetCodeStats(leetcodeUsername);
-
-    // Validate stats response
-    if (!stats || typeof stats.totalQuestionsSolved !== 'number') {
-      const error = new Error("Invalid LeetCode API response");
-      error.code = "INVALID_LEETCODE_RESPONSE";
-      throw error;
-    }
-
-    // Prepare stats update object with default values as fallback
-    const statsToUpdate = {
-      "platforms.leetcode.totalQuestionsSolved": stats.totalQuestionsSolved || 0,
-      "platforms.leetcode.questionsSolvedByDifficulty.easy": stats.questionsSolvedByDifficulty?.easy || 0,
-      "platforms.leetcode.questionsSolvedByDifficulty.medium": stats.questionsSolvedByDifficulty?.medium || 0,
-      "platforms.leetcode.questionsSolvedByDifficulty.hard": stats.questionsSolvedByDifficulty?.hard || 0,
-      "platforms.leetcode.attendedContestsCount": stats.attendedContestsCount || 0,
-      "platforms.leetcode.contestRating": stats.contestRating || 0,
-      "platforms.leetcode.lastUpdated": new Date()
-    };
-
-    // Update user document
-    const updatedUser = await User.findByIdAndUpdate(
-      user._id,
-      { $set: statsToUpdate },
-      { new: true, runValidators: true }
-    );
-
-    if (!updatedUser) {
-      const error = new Error("User not found during stats update");
-      error.code = "USER_NOT_FOUND";
-      throw error;
-    }
-
-    return updatedUser;
-
-  } catch (error) {
-    console.error(`LeetCode stats update failed for user ${user?._id}:`, {
-      error: error.message,
-      code: error.code,
-      stack: error.stack
-    });
-
-    if (throwError) {
-      throw error;
-    }
-
-    // Return original user if update fails and throwError is false
-    return user;
-  }
-};
+const { updateUserLeetCodeStats } = require("../services/leetcodeStatsService");
 
 const signupUser = async (req, res) => {
   const { fullName, email, password, gender, leetcodeUsername } = req.body;
@@ -121,12 +59,11 @@ const signupUser = async (req, res) => {
       });
     }
 
-    // Generate username
+    // Generate username and avatar
     const username = await generateUsername(fullName);
-    // Add a default avatar URL
     const defaultAvatar = "https://ui-avatars.com/api/?background=random";
-    // Generate avatar URL
-    let avatarUrl = `${defaultAvatar}&name=${encodeURIComponent(fullName)}`;
+    const avatarUrl = `${defaultAvatar}&name=${encodeURIComponent(fullName)}`;
+
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
@@ -154,10 +91,10 @@ const signupUser = async (req, res) => {
 
     await newUser.save();
 
-    // Update LeetCode stats
+    // Update LeetCode stats using the imported service
     let updatedUser = newUser;
     try {
-      updatedUser = await updateUserLeetCodeStats(newUser, false);
+      updatedUser = await updateUserLeetCodeStats(newUser, false, true); // Force update for new users
     } catch (statsError) {
       console.error("Initial LeetCode stats fetch failed:", statsError);
       // Continue with signup process
@@ -177,10 +114,11 @@ const signupUser = async (req, res) => {
       message: "User registered successfully",
       token,
       user: {
+        fullName: updatedUser.fullName,
         username: updatedUser.username,
         email: updatedUser.email,
         profilePicture: updatedUser.profilePicture,
-        leetcodeStats: updatedUser.platforms.leetcode
+        platforms: updatedUser.platforms
       }
     });
 
@@ -224,20 +162,6 @@ const loginUser = async (req, res) => {
         message: "Invalid credentials"
       });
     }
-
-    // Check account lock
-    const lockoutDuration = 15 * 60 * 1000; // 15 minutes
-    if (user.failedLoginAttempts >= 5 &&
-      user.lastFailedLogin &&
-      (Date.now() - user.lastFailedLogin.getTime()) < lockoutDuration) {
-      const remainingLockTime = Math.ceil(
-        (lockoutDuration - (Date.now() - user.lastFailedLogin.getTime())) / 60000
-      );
-      return res.status(429).json({
-        message: `Account temporarily locked. Please try again in ${remainingLockTime} minutes.`
-      });
-    }
-
     // Verify password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
@@ -256,16 +180,10 @@ const loginUser = async (req, res) => {
     user.lastLogin = new Date();
     await user.save();
 
-    // Update LeetCode stats
+    // Update LeetCode stats using the imported service
     let updatedUser = user;
     try {
-      // Check if stats are stale (more than 1 hour old)
-      const isStale = !user.platforms?.leetcode?.lastUpdated ||
-        (Date.now() - user.platforms.leetcode.lastUpdated.getTime()) > 3600000;
-
-      if (isStale) {
-        updatedUser = await updateUserLeetCodeStats(user, false);
-      }
+      updatedUser = await updateUserLeetCodeStats(user); // Uses built-in staleness check
     } catch (statsError) {
       console.error("LeetCode stats update failed during login:", statsError);
       // Continue with login process
@@ -286,10 +204,11 @@ const loginUser = async (req, res) => {
       message: "Login successful",
       token,
       user: {
+        fullName: updatedUser.fullName,
         username: updatedUser.username,
         email: updatedUser.email,
         profilePicture: updatedUser.profilePicture,
-        leetcodeStats: updatedUser.platforms.leetcode
+        platforms: updatedUser.platforms
       }
     });
 

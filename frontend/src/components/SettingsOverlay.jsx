@@ -43,7 +43,7 @@ const SettingsOverlay = ({ isOpen, onClose, triggerRef }) => {
 
   const handleUpdateProfile = async (updateFn, data) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('app-token');
       const response = await updateFn(data, token);
       setUser(response.data.user);
       toast.success(response.message || 'Update successful');
@@ -103,9 +103,9 @@ const SettingsOverlay = ({ isOpen, onClose, triggerRef }) => {
   const handleDeleteAccount = async () => {
     if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('app-token');
         await deleteUserAccount(token);
-        localStorage.removeItem('token');
+        localStorage.removeItem('app-token');
         setUser(null);
         navigate('/');
         toast.success('Account deleted successfully');

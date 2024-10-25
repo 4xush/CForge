@@ -1,85 +1,92 @@
+// api.js
 import axios from "axios";
 
 const API_URL = "http://localhost:5000/api";
 
-export const login = async (email, password) => {
-  const response = await fetch(`${API_URL}/auth/login`, {  // Fixed template literal
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ email, password }),
-  });
+// Create axios instance with default config
+const api = axios.create({
+  baseURL: API_URL,
+  timeout: 10000,
+});
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "Login failed");
+// Add response interceptor to handle common errors
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("app-token"); // Match storage key
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
+  return config;
+}, (error) => {
+  return Promise.reject(error);
+});
 
-  const data = await response.json();
-  const token = data.token;
-  localStorage.setItem("token", token);
-  return data;
+export const login = async (email, password) => {
+  try {
+    const { data } = await api.post("/auth/login", { email, password });
+    console.log("API Response:", data); // Debug log 1
+
+    const { token, user } = data;
+    if (!token || !user) {
+      console.error("Missing token or user in response:", data);
+      throw new Error("Invalid server response");
+    }
+
+    console.log("Saving token:", token); // Debug log 2
+    localStorage.setItem("app-token", token);
+
+    console.log("Processed user data:", user); // Debug log 3
+    return { user, token };
+  } catch (error) {
+    console.error("Login error details:", error); // Debug log 4
+    throw error.response?.data || { message: "Login failed" };
+  }
 };
-
 export const register = async (userData) => {
   try {
-    const response = await axios.post(`${API_URL}/users/register`, userData);
-    return response.data;
+    const { data } = await api.post("/auth/signup", userData);
+    const { token, user } = data;
+    localStorage.setItem("app-token", token); // Standardized key
+    return {
+      user: {
+        fullName: user.fullName,
+        username: user.username,
+        email: user.email,
+        profilePicture: user.profilePicture,
+        // leetcodeStats: user.leetcodeStats
+        platforms: user.platforms
+      },
+      token
+    };
   } catch (error) {
-    console.error("Error during registration:", error);
-    throw error.response?.data || "An error occurred during registration";
+    throw error.response?.data || { message: "Registration failed" };
   }
 };
+
 
 export const getLeaderboard = async (roomId, sortBy, limit, page) => {
   try {
-    const response = await axios.get(`${API_URL}/rooms/${roomId}/leaderboard`, {
+    const response = await api.get(`/rooms/${roomId}/leaderboard`, {
       params: { sortBy, limit, page }
     });
     return response.data;
   } catch (error) {
-    console.error("Error fetching leaderboard:", error);
-    throw error.response?.data || "An error occurred while fetching the leaderboard";
+    throw error.response?.data || new Error("Failed to fetch leaderboard");
   }
 };
 
-export const updateProfile = async (type, data, token) => {
+export const updateProfile = async (type, data) => {
   try {
-    const response = await fetch(`${API_URL}/users/settings/${type}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(data)
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.message || 'Something went wrong');
-    }
-
-    return result.data.user;
+    const response = await api.put(`/users/settings/${type}`, data);
+    return response.data.user;
   } catch (error) {
-    throw error;
+    throw error.response?.data || new Error("Failed to update profile");
   }
 };
 
-export const deleteAccount = async (token) => {
+export const deleteAccount = async () => {
   try {
-    const response = await fetch(`${API_URL}/users/profile`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to delete account');
-    }
+    await api.delete("/users/profile");
   } catch (error) {
-    throw error;
+    throw error.response?.data || new Error("Failed to delete account");
   }
 };

@@ -7,12 +7,12 @@ import SignupPage from './pages/Signup';
 import WelcomePage from './pages/Welcome';
 import DashboardPage from './components/Dashboard.jsx';
 import { DashboardProvider } from './context/DashboardContext.jsx';
-import { AuthContextProvider } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
 import { Toaster } from 'react-hot-toast';
 
 const App = () => {
   return (
-    <AuthContextProvider>
+    <AuthProvider>
       <Router>
         <RoomProvider>
           <Toaster position="top-right" reverseOrder={false} />
@@ -33,7 +33,7 @@ const App = () => {
           </Routes>
         </RoomProvider>
       </Router>
-    </AuthContextProvider>
+    </AuthProvider>
   );
 };
 

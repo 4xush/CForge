@@ -16,7 +16,7 @@ const handleLogin = async (event) => {
         const data = await response.json();
 
         if (response.ok) {
-            localStorage.setItem('token', data.token);  // Store JWT token
+            localStorage.setItem('app-token', data.token);  // Store JWT token
             // Redirect or update UI as needed
         } else {
             console.error('Login failed');

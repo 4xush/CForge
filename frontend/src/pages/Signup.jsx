@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import useSignup from '../hooks/useSignup';
+import { useAuthContext } from '../context/AuthContext'; // Update path as needed
 import toast from 'react-hot-toast';
 import BrandingSection from './BrandingSection';
 
@@ -14,7 +14,7 @@ const SignUp = () => {
         leetcodeUsername: '',
     });
     const navigate = useNavigate();
-    const { loading, signup } = useSignup();
+    const { registerUser, isLoading } = useAuthContext();
 
     const handleInputChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -29,17 +29,27 @@ const SignUp = () => {
         }
 
         try {
-            await signup({
+            // Transform the form data to match the expected user data structure
+            const userData = {
                 fullName: formData.fullName,
                 email: formData.email,
                 password: formData.password,
+                username: formData.email.split('@')[0], // Generate a default username from email
+                profilePicture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.fullName}`, // Generate avatar
                 gender: formData.gender,
-                leetcodeUsername: formData.leetcodeUsername
-            });
-            toast.success('Signup successful!');
+                leetcodeStats: {
+                    username: formData.leetcodeUsername,
+                    totalQuestionsSolved: 0, // Default value
+                    contestRating: 0 // Default value
+                }
+            };
+
+            await registerUser(userData);
+            toast.success('Registration successful!');
             navigate('/dashboard');
         } catch (error) {
-            toast.error(error.message || 'An unexpected error occurred');
+            // Error handling is managed by AuthContext, but we can add additional handling if needed
+            console.error('Registration error:', error);
         }
     };
 
@@ -113,9 +123,9 @@ const SignUp = () => {
                         <button
                             type="submit"
                             className="w-full py-2 px-4 border border-transparent rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-                            disabled={loading}
+                            disabled={isLoading}
                         >
-                            {loading ? 'Signing Up...' : 'Sign Up'}
+                            {isLoading ? 'Signing Up...' : 'Sign Up'}
                         </button>
                     </form>
                     <div className="text-center">

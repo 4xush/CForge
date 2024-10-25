@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import useLogin from '../hooks/useLogin';
+import { useAuthContext } from '../context/AuthContext'; // Update this path as needed
 import toast from 'react-hot-toast';
 import BrandingSection from './BrandingSection';
 
@@ -10,7 +10,9 @@ const Login = () => {
         password: '',
     });
     const navigate = useNavigate();
-    const { login, loading } = useLogin();
+
+    // Use the auth context instead of direct API call
+    const { loginUser, isLoading } = useAuthContext();
 
     const handleInputChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -20,13 +22,15 @@ const Login = () => {
         e.preventDefault();
 
         try {
-            // await login(formData.email, formData.password);
-            const data = await login(formData.email, formData.password); // Call the hook's login function
-            console.log(data.token);
+            await loginUser(formData.email, formData.password);
+
+            // No need to handle localStorage here as it's managed by AuthContext
             toast.success('Login successful!');
             navigate('/dashboard');
         } catch (error) {
-            toast.error(error.message || 'An unexpected error occurred');
+            // Error handling is now managed by AuthContext
+            console.error('Login error:', error);
+            // Additional error handling if needed
         }
     };
 
@@ -57,13 +61,12 @@ const Login = () => {
                                 onChange={handleInputChange}
                             />
                         </div>
-
                         <button
                             type="submit"
                             className="w-full py-2 px-4 border border-transparent rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-                            disabled={loading}
+                            disabled={isLoading}
                         >
-                            {loading ? 'Signing In...' : 'Sign In'}
+                            {isLoading ? 'Signing In...' : 'Sign In'}
                         </button>
                     </form>
                     <div className="text-center">

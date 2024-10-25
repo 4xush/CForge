@@ -29,7 +29,7 @@ const useTopBar = () => {
             return { success: false, message: "No room selected." };
         }
 
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('app-token');
         if (!token) {
             return { success: false, message: "Authentication failed. Please log in." };
         }

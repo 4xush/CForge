@@ -1,8 +1,6 @@
-// src/config/api.js
-
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5000/api'; // Adjust this to your actual API base URL
+const API_BASE_URL = 'http://localhost:5000/api';
 
 const api = axios.create({
     baseURL: API_BASE_URL,
@@ -11,7 +9,7 @@ const api = axios.create({
 // Add a request interceptor to include the auth token
 api.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('app-token');
         if (token) {
             config.headers['Authorization'] = `Bearer ${token}`;
         }

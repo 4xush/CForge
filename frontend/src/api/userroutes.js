@@ -1,9 +1,7 @@
 import axios from "axios";
 
-// Base URL for the API
-const API_URL = "http://localhost:5000/api";  // Updated base URL to match backend structure
+const API_URL = "http://localhost:5000/api";
 
-// Common headers configuration function to reduce repetition
 const getConfig = (token) => ({
     headers: {
         Authorization: `Bearer ${token}`,
@@ -11,7 +9,6 @@ const getConfig = (token) => ({
     }
 });
 
-// Function to get user profile details
 export const getUserProfile = async (token) => {
     try {
         const response = await axios.get(
@@ -24,7 +21,6 @@ export const getUserProfile = async (token) => {
     }
 };
 
-// Function to delete user account
 export const deleteUserAccount = async (token) => {
     try {
         const response = await axios.delete(
@@ -37,7 +33,6 @@ export const deleteUserAccount = async (token) => {
     }
 };
 
-// Function to update user password
 export const updatePassword = async (passwordData, token) => {
     try {
         const response = await axios.put(
@@ -51,7 +46,6 @@ export const updatePassword = async (passwordData, token) => {
     }
 };
 
-// Function to update username
 export const updateUsername = async (usernameData, token) => {
     try {
         const response = await axios.put(
@@ -65,7 +59,6 @@ export const updateUsername = async (usernameData, token) => {
     }
 };
 
-// Function to update email
 export const updateEmail = async (emailData, token) => {
     try {
         const response = await axios.put(
@@ -79,7 +72,6 @@ export const updateEmail = async (emailData, token) => {
     }
 };
 
-// Function to update LeetCode username
 export const updateLeetCodeUsername = async (leetcodeData, token) => {
     try {
         const response = await axios.put(
@@ -93,7 +85,6 @@ export const updateLeetCodeUsername = async (leetcodeData, token) => {
     }
 };
 
-// Function to update profile picture
 export const updateProfilePicture = async (pictureData, token) => {
     try {
         const response = await axios.put(
@@ -107,7 +98,6 @@ export const updateProfilePicture = async (pictureData, token) => {
     }
 };
 
-// Function to get all rooms for user
 export const getAllRoomsForUser = async (token) => {
     try {
         const response = await axios.get(
@@ -120,7 +110,6 @@ export const getAllRoomsForUser = async (token) => {
     }
 };
 
-// Function to update LeetCode stats for user
 export const updateLeetCodeStats = async (token) => {
     try {
         const response = await axios.put(
@@ -134,7 +123,6 @@ export const updateLeetCodeStats = async (token) => {
     }
 };
 
-// Function to get all users (admin route)
 export const getAllUsers = async (token) => {
     try {
         const response = await axios.get(

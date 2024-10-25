@@ -12,12 +12,11 @@ export const useRoomContext = () => {
 };
 
 export const RoomProvider = ({ children }) => {
-    const [rooms, setRooms] = useState([]);  // Store room list
+    const [rooms, setRooms] = useState([]);
     const [selectedRoom, setSelectedRoom] = useState(null);
 
-    // Function to fetch room data from the backend
     const refreshRoomList = useCallback(async () => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('app-token');
 
         if (!token) {
             console.log('User not logged in, skipping fetch rooms.');
@@ -34,7 +33,7 @@ export const RoomProvider = ({ children }) => {
         } catch (error) {
             console.error('Failed to fetch rooms:', error);
         }
-    }, []); // Dependency array is empty because this doesn't need to change
+    }, []);
 
     return (
         <RoomContext.Provider value={{ rooms, selectedRoom, setSelectedRoom, refreshRoomList }}>

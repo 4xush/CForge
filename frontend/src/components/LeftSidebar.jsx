@@ -10,7 +10,7 @@ const LeftSidebar = ({ isMobileMenuOpen, isRoomsListVisible, setIsRoomsListVisib
     const settingsButtonRef = useRef(null);
 
     const handleLogout = () => {
-        localStorage.removeItem('token');
+        localStorage.removeItem('app-token');
         localStorage.removeItem('user');
         window.location.href = '/login';
     };

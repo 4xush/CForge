@@ -2,15 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import { getLeaderboard } from '../api';
 import { useRoomContext } from '../context/RoomContext';
-import { useAuthContext } from '../context/AuthContext'; // Add this import
-import CircularProgress from './CircularProgress';
+import { useAuthContext } from '../context/AuthContext';
+import CircularProgress from './ui/CircularProgress';
 import SortButton from './Leaderboard/SortButton';
 import Pagination from './Leaderboard/Pagination';
 import toast from 'react-hot-toast';
 
 const CodingDashboard = () => {
     const { selectedRoom } = useRoomContext();
-    const { authUser } = useAuthContext(); // Get the authenticated user
+    const { authUser } = useAuthContext();
     const [users, setUsers] = useState([]);
     const [topUsers, setTopUsers] = useState([]);
     const [sortBy, setSortBy] = useState('platforms.leetcode.totalQuestionsSolved');
@@ -29,6 +29,18 @@ const CodingDashboard = () => {
         }
     }, [selectedRoom?.roomId, sortBy, limit, page]);
 
+    // Auto-highlight current user on initial load and data updates
+    useEffect(() => {
+        if (authUser && users.length > 0) {
+            const currentUserInLeaderboard = users.find(
+                user => user.platforms.leetcode.username === authUser.platforms.leetcode.username
+            );
+            if (currentUserInLeaderboard) {
+                setHighlightedUserId(currentUserInLeaderboard._id);
+            }
+        }
+    }, [users, authUser]);
+
     const fetchLeaderboard = async () => {
         if (!selectedRoom) return;
 
@@ -41,6 +53,7 @@ const CodingDashboard = () => {
             setTotalCount(data.totalCount);
         } catch (err) {
             setError(err.message || "An error occurred while fetching the leaderboard");
+            toast.error(err.message || "Failed to load leaderboard");
         }
         setLoading(false);
     };
@@ -56,13 +69,24 @@ const CodingDashboard = () => {
             return;
         }
 
-        const myIndex = users.findIndex(user => user._id === authUser._id);
-        if (myIndex !== -1) {
-            setHighlightedUserId(authUser._id);
-            // Scroll to the highlighted row
-            const element = document.getElementById(`user-row-${authUser._id}`);
-            if (element) {
-                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const myUser = users.find(user =>
+            user.platforms.leetcode.username === authUser.platforms.leetcode.username
+        );
+
+        if (myUser) {
+            setHighlightedUserId(myUser._id);
+            // Calculate which page the user is on
+            const userIndex = users.findIndex(u => u._id === myUser._id);
+            const targetPage = Math.floor(userIndex / limit) + 1;
+
+            if (targetPage !== page) {
+                setPage(targetPage);
+            } else {
+                // If already on correct page, just scroll to the user
+                const element = document.getElementById(`user-row-${myUser._id}`);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
             }
         } else {
             toast.error("You are not in the current leaderboard");
@@ -89,10 +113,10 @@ const CodingDashboard = () => {
         }
     };
 
-    // Add check for current user in top users
-    const isCurrentUserInTopThree = authUser && topUsers.some(user => user._id === authUser._id);
+    const isCurrentUser = (user) => {
+        return authUser && user.platforms.leetcode.username === authUser.platforms.leetcode.username;
+    };
 
-    // Render states remain the same...
     if (!selectedRoom) {
         return <div className="text-white text-center">Please select a room</div>;
     }
@@ -110,9 +134,24 @@ const CodingDashboard = () => {
             {/* Sort options and Search */}
             <div className="flex justify-between items-center mb-4">
                 <div className="flex space-x-2">
-                    <SortButton sortBy={sortBy} current="platforms.leetcode.totalQuestionsSolved" handleSort={handleSort} label="Total problems" />
-                    <SortButton sortBy={sortBy} current="platforms.leetcode.contestRating" handleSort={handleSort} label="Contest Rating" />
-                    <SortButton sortBy={sortBy} current="platforms.leetcode.attendedContestsCount" handleSort={handleSort} label="Attended Contests" />
+                    <SortButton
+                        sortBy={sortBy}
+                        current="platforms.leetcode.totalQuestionsSolved"
+                        handleSort={handleSort}
+                        label="Total problems"
+                    />
+                    <SortButton
+                        sortBy={sortBy}
+                        current="platforms.leetcode.contestRating"
+                        handleSort={handleSort}
+                        label="Contest Rating"
+                    />
+                    <SortButton
+                        sortBy={sortBy}
+                        current="platforms.leetcode.attendedContestsCount"
+                        handleSort={handleSort}
+                        label="Attended Contests"
+                    />
                 </div>
                 <div className="flex space-x-2">
                     {authUser && (
@@ -159,7 +198,7 @@ const CodingDashboard = () => {
                         user={user}
                         index={index}
                         isHighlighted={user._id === highlightedUserId}
-                        isCurrentUser={authUser && user._id === authUser._id}
+                        isCurrentUser={isCurrentUser(user)}
                     />
                 ))}
             </div>
@@ -172,7 +211,7 @@ const CodingDashboard = () => {
                         page={page}
                         limit={limit}
                         highlightedUserId={highlightedUserId}
-                        currentUserId={authUser?._id}
+                        isCurrentUser={isCurrentUser}
                     />
                     <Pagination
                         page={page}
@@ -186,10 +225,11 @@ const CodingDashboard = () => {
     );
 };
 
-// Updated TopUserCard component with current user indicator
+// Component definitions remain the same but with updated isCurrentUser prop usage
 const TopUserCard = ({ user, index, isHighlighted, isCurrentUser }) => (
-    <div className={`bg-gray-800 p-4 rounded-lg flex flex-col items-center transition-colors duration-300 ${isHighlighted ? 'ring-2 ring-blue-500 bg-gray-700' : ''
-        } ${isCurrentUser ? 'ring-2 ring-green-500' : ''}`}>
+    <div className={`bg-gray-800 p-4 rounded-lg flex flex-col items-center transition-colors duration-300 
+        ${isHighlighted ? 'ring-2 ring-blue-500 bg-gray-700' : ''} 
+        ${isCurrentUser ? 'ring-2 ring-green-500' : ''}`}>
         <div className="flex items-center justify-between w-full mb-2">
             <div className="flex items-center">
                 <img
@@ -211,8 +251,7 @@ const TopUserCard = ({ user, index, isHighlighted, isCurrentUser }) => (
     </div>
 );
 
-// UserStats component remains the same...
-
+// UserStats component stays the same...
 const UserStats = ({ user }) => (
     <>
         <div className="flex justify-between w-full text-xs mb-2">
@@ -225,7 +264,7 @@ const UserStats = ({ user }) => (
                 <p className="font-bold">{user.platforms.leetcode.contestRating}</p>
             </div>
         </div>
-        <div className="my-2">
+        <div>
             <CircularProgress solved={user.platforms.leetcode.totalQuestionsSolved} total={3263} />
             <p className="text-center text-xs text-gray-400 mt-1">
                 /3263 Solved
@@ -247,8 +286,7 @@ const UserStats = ({ user }) => (
         </div>
     </>
 );
-// Updated LeaderboardTable component with current user indicator
-const LeaderboardTable = ({ users, page, limit, highlightedUserId, currentUserId }) => (
+const LeaderboardTable = ({ users, page, limit, highlightedUserId, isCurrentUser }) => (
     <table className="w-full text-sm">
         <thead>
             <tr className="bg-gray-800 text-left">
@@ -267,8 +305,9 @@ const LeaderboardTable = ({ users, page, limit, highlightedUserId, currentUserId
                 <tr
                     key={user._id}
                     id={`user-row-${user._id}`}
-                    className={`border-b border-gray-700 transition-colors duration-300 ${user._id === highlightedUserId ? 'bg-gray-700' : ''
-                        } ${user._id === currentUserId ? 'bg-green-900/20' : ''}`}
+                    className={`border-b border-gray-700 transition-colors duration-300 
+                        ${user._id === highlightedUserId ? 'bg-gray-700' : ''} 
+                        ${isCurrentUser(user) ? 'bg-green-900/20' : ''}`}
                 >
                     <td className="p-2">{(page - 1) * limit + index + 1}</td>
                     <td className="p-2 flex items-center">
@@ -279,7 +318,7 @@ const LeaderboardTable = ({ users, page, limit, highlightedUserId, currentUserId
                         />
                         <span>
                             {user.fullName}
-                            {user._id === currentUserId && (
+                            {isCurrentUser(user) && (
                                 <span className="ml-2 text-xs text-green-400">(You)</span>
                             )}
                         </span>
