@@ -129,7 +129,7 @@ const joinRoomByInvite = async (req, res) => {
         if (!room) {
             return res.status(404).json({
                 success: false,
-                message: 'Invalid or expired invite link'
+                message: 'Cannot Join! Invalid or expired invite link'
             });
         }
 

@@ -15,6 +15,10 @@ const {
 
 const { getLeaderboard } = require("../controllers/getLeaderBoard");
 
+const {
+  verifyRoomInvite,
+  joinRoomByInvite
+} = require("../controllers/roomInviteController");
 const router = express.Router();
 
 router.post("/create", protect, createRoom);
@@ -35,5 +39,7 @@ router.post("/:roomId/join", protect, sendJoinRequest);
 
 router.delete('/:roomId/leave', protect, leaveRoom);
 
+router.get('/invite/:inviteCode/verify', verifyRoomInvite);
+router.post('/invite/:inviteCode/join', protect, joinRoomByInvite);
 
 module.exports = router;

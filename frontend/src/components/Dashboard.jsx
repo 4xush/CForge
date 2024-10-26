@@ -5,6 +5,7 @@ import MainContent from './MainContent';
 import { RoomContext } from '../context/RoomContext';
 import { DashboardContext } from '../context/DashboardContext';
 import HelpFAQ from './HelpFAQ';
+import InviteModal from './InviteModal';
 
 const CForgeUI = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -29,6 +30,8 @@ const CForgeUI = () => {
     return (
         <>
             <div className="flex flex-col md:flex-row h-screen bg-gray-900 text-gray-300">
+
+                <InviteModal />
                 {/* Top Navigation Bar */}
                 <div className="flex items-center justify-between p-4 bg-gray-800 md:hidden">
                     <button

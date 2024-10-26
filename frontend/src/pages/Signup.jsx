@@ -37,15 +37,26 @@ const SignUp = () => {
                 username: formData.email.split('@')[0], // Generate a default username from email
                 profilePicture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.fullName}`, // Generate avatar
                 gender: formData.gender,
-                leetcodeStats: {
-                    username: formData.leetcodeUsername,
-                    totalQuestionsSolved: 0, // Default value
-                    contestRating: 0 // Default value
-                }
+                leetcodeUsername: formData.leetcodeUsername,
             };
 
             await registerUser(userData);
             toast.success('Registration successful!');
+
+            // Check for pending invite code after successful registration
+            const pendingInviteCode = localStorage.getItem('app-pendingInviteCode');
+            if (pendingInviteCode) {
+                localStorage.removeItem('app-pendingInviteCode'); // Clear the stored code
+                navigate('/dashboard', {
+                    state: {
+                        inviteCode: pendingInviteCode,
+                        showInviteModal: true
+                    }
+                });
+                return;
+            }
+
+            // Default navigation if no invite code
             navigate('/dashboard');
         } catch (error) {
             // Error handling is managed by AuthContext, but we can add additional handling if needed

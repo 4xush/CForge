@@ -1,23 +1,17 @@
-import React, { useContext, useRef } from 'react';
-import { PanelRightIcon, MessageSquareIcon, SettingsIcon, HelpCircleIcon, UserIcon } from 'lucide-react';
+import React, { useContext, useRef, useState } from 'react';
+import { PanelRightIcon, MessageSquareIcon, SettingsIcon, HelpCircleIcon } from 'lucide-react';
 import DashboardButton from './ui/DashboardButtons';
 import LeftSlider from './LeftSlider';
 import { DashboardContext } from '../context/DashboardContext';
 import { useAuthContext } from '../context/AuthContext';
-import SettingsModal from './SettingsModal.jsx';
-import MiniProfileModal from './ProfileModal.jsx';
+import SettingsModal from './SettingsModal';
+import MiniProfileModal from './ProfileModal';
 
 const LeftSidebar = ({ isMobileMenuOpen, isRoomsListVisible, setIsRoomsListVisible }) => {
     const { activeSection, setActiveSection, isSettingsOpen, setIsSettingsOpen } = useContext(DashboardContext);
-    const { authUser } = useAuthContext();
+    const { authUser, logout } = useAuthContext();
     const settingsButtonRef = useRef(null);
-    const [isProfileOpen, setIsProfileOpen] = React.useState(false);
-
-    const handleLogout = () => {
-        localStorage.removeItem('app-token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
-    };
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
 
     const handleSettingsClick = () => {
         setIsProfileOpen(false);
@@ -29,7 +23,7 @@ const LeftSidebar = ({ isMobileMenuOpen, isRoomsListVisible, setIsRoomsListVisib
         <>
             <div
                 className={`w-full md:w-80 bg-gray-800 p-3 flex flex-col justify-between
-        ${isMobileMenuOpen ? 'block' : 'hidden'} md:block border-r border-gray-700 relative h-screen`}
+                ${isMobileMenuOpen ? 'block' : 'hidden'} md:block border-r border-gray-700 relative h-screen`}
                 onMouseEnter={() => setIsRoomsListVisible(true)}
                 onMouseLeave={() => setIsRoomsListVisible(false)}
             >
@@ -75,9 +69,8 @@ const LeftSidebar = ({ isMobileMenuOpen, isRoomsListVisible, setIsRoomsListVisib
                     <div className="mt-auto pt-4 border-t border-gray-700">
                         <MiniProfileModal
                             user={authUser}
-                            onLogout={handleLogout}
+                            onLogout={logout}
                         />
-
                     </div>
                 </div>
             </div>

@@ -23,14 +23,26 @@ const Login = () => {
 
         try {
             await loginUser(formData.email, formData.password);
-
             // No need to handle localStorage here as it's managed by AuthContext
             toast.success('Login successful!');
-            navigate('/dashboard');
+            const pendingInviteCode = localStorage.getItem('app-pendingInviteCode');
+            if (pendingInviteCode) {
+                localStorage.removeItem('app-pendingInviteCode'); // Clear the stored code
+                navigate('/dashboard', {
+                    state: {
+                        inviteCode: pendingInviteCode,
+                        showInviteModal: true
+                    }
+                });
+                return;
+            }
+
+            // Handle normal redirect
+            const redirectUrl = location.state?.redirectUrl || '/dashboard';
+            navigate(redirectUrl);
         } catch (error) {
             // Error handling is now managed by AuthContext
             console.error('Login error:', error);
-            // Additional error handling if needed
         }
     };
 

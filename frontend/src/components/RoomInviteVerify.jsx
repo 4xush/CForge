@@ -19,7 +19,7 @@ const RoomInviteVerify = () => {
     useEffect(() => {
         // Store invite code in localStorage if user is not logged in
         if (!authUser) {
-            localStorage.setItem('pendingInviteCode', inviteCode);
+            localStorage.setItem('app-pendingInviteCode', inviteCode);
         }
 
         verifyInvite();

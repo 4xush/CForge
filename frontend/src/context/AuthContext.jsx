@@ -175,6 +175,7 @@ export const AuthProvider = ({ children }) => {
     setError(null);
     localStorage.removeItem("app-user");
     localStorage.removeItem("app-token");
+    window.location.href = '/login'; // move the window to login page
   };
 
   const value = {

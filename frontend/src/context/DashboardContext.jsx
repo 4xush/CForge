@@ -1,19 +1,33 @@
-import React, { createContext, useState } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
-// Create a context for the dashboard
 export const DashboardContext = createContext();
 
-// Provider component to wrap around the dashboard
 export const DashboardProvider = ({ children }) => {
-    const [activeSection, setActiveSection] = useState('rooms'); // Default section is 'rooms'
-    const [isSettingsOpen, setIsSettingsOpen] = useState(false); // New state for Settings overlay
+    const [activeSection, setActiveSection] = useState('rooms');
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+    const [inviteDetails, setInviteDetails] = useState(null);
+    const [inviteLoading, setInviteLoading] = useState(false);
+    const [inviteError, setInviteError] = useState(null);
 
-    // Value object to be provided to children
     const contextValue = {
         activeSection,
         setActiveSection,
         isSettingsOpen,
-        setIsSettingsOpen
+        setIsSettingsOpen,
+        isInviteModalOpen,
+        setIsInviteModalOpen,
+        inviteDetails,
+        setInviteDetails,
+        inviteLoading,
+        setInviteLoading,
+        inviteError,
+        setInviteError,
+        resetInviteState: () => {
+            setInviteDetails(null);
+            setInviteError(null);
+            setIsInviteModalOpen(false);
+        }
     };
 
     return (
@@ -21,4 +35,12 @@ export const DashboardProvider = ({ children }) => {
             {children}
         </DashboardContext.Provider>
     );
+};
+
+export const useDashboardContext = () => {
+    const context = useContext(DashboardContext);
+    if (!context) {
+        throw new Error('useDashboardContext must be used within a DashboardProvider');
+    }
+    return context;
 };
