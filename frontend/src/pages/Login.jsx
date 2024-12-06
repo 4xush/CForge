@@ -11,7 +11,6 @@ const Login = () => {
     });
     const navigate = useNavigate();
 
-    // Use the auth context instead of direct API call
     const { loginUser, isLoading } = useAuthContext();
 
     const handleInputChange = (e) => {
@@ -27,7 +26,7 @@ const Login = () => {
             toast.success('Login successful!');
             const pendingInviteCode = localStorage.getItem('app-pendingInviteCode');
             if (pendingInviteCode) {
-                localStorage.removeItem('app-pendingInviteCode'); // Clear the stored code
+                localStorage.removeItem('app-pendingInviteCode');
                 navigate('/dashboard', {
                     state: {
                         inviteCode: pendingInviteCode,
@@ -41,7 +40,6 @@ const Login = () => {
             const redirectUrl = location.state?.redirectUrl || '/dashboard';
             navigate(redirectUrl);
         } catch (error) {
-            // Error handling is now managed by AuthContext
             console.error('Login error:', error);
         }
     };

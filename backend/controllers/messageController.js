@@ -50,24 +50,68 @@ exports.sendMessage = async (req, res) => {
   }
 };
 
-// Get all messages in a room
+// Fetch messages for a room
 exports.getMessages = async (req, res) => {
   try {
     const { roomId } = req.params;
-    const room = await Room.findById(roomId);
+    const {
+      lastMessageId = null, // Last message ID from client
+      limit = 50,           // Messages per batch
+    } = req.query;
 
+    const query = { room: roomId };
+
+    // If lastMessageId is provided, fetch messages older than that
+    if (lastMessageId) {
+      const lastMessage = await Message.findById(lastMessageId).select("createdAt");
+      if (lastMessage) {
+        query.createdAt = { $lt: lastMessage.createdAt };
+      }
+    }
+
+    const messages = await Message.find(query)
+      .populate("sender", "username profilePicture")
+      .sort({ createdAt: -1 })
+      .limit(Number(limit));
+
+    res.json({
+      messages,
+      hasMore: messages.length === limit, // Indicates if more messages exist
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching messages" });
+  }
+};
+
+// Delete a message
+exports.deleteMessage = async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const userId = req.user._id;
+
+    const message = await Message.findById(messageId);
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    const room = await Room.findById(message.room);
     if (!room) {
       return res.status(404).json({ message: "Room not found" });
     }
 
-    const messages = await Message.find({ room: roomId })
-      .populate("sender", "username profilePicture")
-      .sort({ createdAt: 1 }); // Assuming messages have a createdAt field
+    // Check if the user is authorized to delete the message
+    const isAdmin = room.admins.some((admin) => admin.toString() === userId.toString());
+    if (message.sender.toString() !== userId.toString() && !isAdmin) {
+      return res
+        .status(403)
+        .json({ message: "You are not authorized to delete this message" });
+    }
 
-    res.json({ messages });
+    await message.deleteOne();
+    res.status(200).json({ message: "Message deleted successfully" });
   } catch (error) {
     res
       .status(500)
-      .json({ message: "Error fetching messages", error: error.message });
+      .json({ message: "Error deleting message", error: error.message });
   }
 };

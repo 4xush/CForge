@@ -1,13 +1,11 @@
 const Room = require('../models/Room');
 const crypto = require('crypto');
 
-// Generate invite link for a room
 const generateRoomInvite = async (req, res) => {
     try {
         const { roomId } = req.params;
-        const userId = req.user._id; // Assuming you have user authentication middleware
+        const userId = req.user._id;
 
-        // Find the room and check if user is admin
         const room = await Room.findOne({ roomId });
 
         if (!room) {

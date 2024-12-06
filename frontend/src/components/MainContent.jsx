@@ -1,5 +1,4 @@
 import React from 'react';
-// import Leaderboard from './Leaderboard';
 import Leaderboard from '../components/Leaderboard';
 import Chat from './Chat';
 import TopBar from './TopBar';

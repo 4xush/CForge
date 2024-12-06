@@ -1,6 +1,5 @@
 import React from 'react';
-import { Settings as SettingsIcon } from 'lucide-react'; // Assuming you're using lucide-react for icons
-
+import { Settings as SettingsIcon } from 'lucide-react';
 const SettingsButton = ({ onClick }) => {
     return (
         <button

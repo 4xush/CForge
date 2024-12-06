@@ -14,8 +14,8 @@ const useLeaveRoom = () => {
     setLoading(true);
     try {
       await api.delete(`/rooms/${selectedRoom.roomId}/leave`);
-      setSelectedRoom(null);  // Clear the selected room
-      refreshRoomList();  // Trigger room list refresh
+      setSelectedRoom(null);  
+      refreshRoomList(); 
       return { success: true, message: "You have successfully left the room." };
     } catch (error) {
       console.error('Error leaving room:', error.response?.data?.message || "Unexpected error");

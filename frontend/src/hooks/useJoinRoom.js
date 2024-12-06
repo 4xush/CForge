@@ -7,10 +7,8 @@ const useJoinRoom = () => {
     const [success, setSuccess] = useState(null);
 
     const joinRoom = async (roomId) => {
-        // Trim and convert roomId to lowercase to match backend
         const formattedRoomId = roomId.trim().toLowerCase();
 
-        // Validate roomId before sending request
         if (!formattedRoomId) {
             setError('Room ID cannot be empty');
             return null;

@@ -2,12 +2,10 @@ const Room = require("../models/Room");
 const User = require("../models/User");
 const shortid = require('shortid');
 
-// Helper function to check if a user is a member of a room
 const isMember = (room, userId) => {
   return room.members.some((member) => member.toString() === userId.toString());
 };
 
-// Helper function to check if there's space in the room
 const hasAvailableSpace = (room) => {
   return room.members.length < room.maxMembers;
 };
@@ -43,7 +41,7 @@ exports.createRoom = async (req, res) => {
       isPublic,
       admins: [req.user._id],
       members: [req.user._id],
-      roomId: newRoomId, // Ensure roomId is stored in lowercase
+      roomId: newRoomId, 
     });
 
     await newRoom.save();
@@ -61,8 +59,8 @@ exports.createRoom = async (req, res) => {
 
 exports.leaveRoom = async (req, res) => {
   try {
-    const { roomId } = req.params; // Assuming roomId is passed as a parameter
-    const userId = req.user._id; // Get the ID of the user trying to leave
+    const { roomId } = req.params; 
+    const userId = req.user._id; 
 
     const room = await Room.findOne({ roomId });
 

@@ -251,7 +251,6 @@ const TopUserCard = ({ user, index, isHighlighted, isCurrentUser }) => (
     </div>
 );
 
-// UserStats component stays the same...
 const UserStats = ({ user }) => (
     <>
         <div className="flex justify-between w-full text-xs mb-2">

@@ -15,10 +15,10 @@ const useCreateRoom = () => {
             const response = await api.post('/rooms/create', formData);
             setSuccess('Room created successfully!');
             console.log('Room created:', response.data);
-            return response.data; // Return the created room data
+            return response.data;
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to create room');
-            throw err; // Re-throw the error so it can be handled by the component if needed
+            throw err;
         } finally {
             setLoading(false);
         }

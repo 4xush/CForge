@@ -1,4 +1,3 @@
-// toast.js
 import toast from 'react-hot-toast';
 
 export const showToast = ({ title, description, variant }) => {

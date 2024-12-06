@@ -1,48 +1,96 @@
-import React from 'react';
-import Message from './ui/Message';  // Import the Message component
+import React, { useState, useEffect, useRef } from 'react';
+import { useRoomContext } from '../context/RoomContext';
+import axios from 'axios';
+import Message from './ui/Message';
+import MessageInput from './Messages/MessageInput';
 
 const Chat = () => {
-    const personDP = 'https://avatar.iran.liara.run/username?username=[firstname+lastname]';
-    const messages = [
-        {
-            id: 1,
-            avatar: personDP,
-            senderName: "Jessica",
-            time: "09:45 AM",
-            message: "Hi everyone, I'm excited to be here for our demo chat! 🎉"
-        },
-        {
-            id: 2,
-            avatar: personDP,
-            senderName: "Emily",
-            time: "09:46 AM",
-            message: "Hey Jessica, great to see you here! Looking forward to our discussion."
-        },
-        {
-            id: 3,
-            avatar: personDP,
-            senderName: "Ryan",
-            time: "09:46 AM",
-            message: "Hi Jessica and Emily! Glad to join the conversation."
+    const { selectedRoom } = useRoomContext();
+    const [messages, setMessages] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const messagesEndRef = useRef(null);
+
+    // Scroll to bottom function
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    useEffect(() => {
+        if (!selectedRoom) {
+            setLoading(false);
+            return;
         }
-    ];
+
+        const fetchMessages = async () => {
+            setLoading(true);
+            try {
+                const token = localStorage.getItem('app-token');
+                const response = await axios.get(
+                    `http://localhost:5000/api/rooms/${selectedRoom._id}/messages`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+                const fetchedMessages = response.data.messages.reverse();
+                setMessages(fetchedMessages);
+            } catch (error) {
+                console.error('Error fetching messages:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchMessages();
+    }, [selectedRoom]);
+
+    // Scroll to bottom when messages change
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
+    const handleNewMessage = (newMessage) => {
+        setMessages((prevMessages) => [...prevMessages, newMessage]);
+    };
+
+    if (!selectedRoom) {
+        return <div>Please select a room to view messages</div>;
+    }
+
+    if (loading) {
+        return <div>Loading messages...</div>;
+    }
 
     return (
-        <>
-            {/* Render all messages dynamically */}
-            {messages.map((msg) => (
-                <Message
-                    key={msg.id}
-                    avatar={msg.avatar}
-                    senderName={msg.senderName}
-                    time={msg.time}
-                    message={msg.message}
-                />
-            ))}
-
-            {/* Divider for the date */}
-            <div className="text-center text-sm text-gray-500 my-2">Today</div>
-        </>
+        <div className="flex flex-col h-full">
+            <div className="flex-grow overflow-y-auto p-2">
+                {messages.length > 0 && (
+                    <div className="text-center text-sm text-gray-500 my-2">Today</div>
+                )}
+                {messages.map((msg) => (
+                    <Message
+                        key={msg._id}
+                        avatar={
+                            msg.sender.profilePicture ||
+                            `https://avatar.iran.liara.run/username?username=${msg.sender.username}`
+                        }
+                        senderName={msg.sender.username}
+                        time={new Date(msg.createdAt).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                        })}
+                        message={msg.content}
+                    />
+                ))}
+                {messages.length === 0 && (
+                    <div className="text-center text-gray-500">No messages yet</div>
+                )}
+                {/* Invisible div to scroll to */}
+                <div ref={messagesEndRef} />
+            </div>
+            <MessageInput onMessageSent={handleNewMessage} />
+        </div>
     );
 };
 

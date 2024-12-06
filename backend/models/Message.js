@@ -5,24 +5,31 @@ const messageSchema = new mongoose.Schema(
     room: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Room",
-      required: true, // Each message is associated with a specific room
+      required: true,
     },
     sender: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true, // The user who sent the message
+      required: true,
     },
     content: {
       type: String,
-      required: true, // The actual message content
+      required: true,
+    },
+    isEdited: {
+      type: Boolean,
+      default: false,
+    },
+    attachments: {
+      type: [String],
+      default: [],
     },
   },
   { timestamps: true }
 );
 
-// Add indexes here
-messageSchema.index({ room: 1 });
-messageSchema.index({ sender: 1 });
-messageSchema.index({ createdAt: -1 });
+// Indexes for efficient querying
+messageSchema.index({ room: 1, createdAt: -1 }); // Compound index for fetching room messages sorted by timestamp
+messageSchema.index({ sender: 1, createdAt: -1 }); // Compound index for filtering messages by sender
 
 module.exports = mongoose.model("Message", messageSchema);
