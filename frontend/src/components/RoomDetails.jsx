@@ -6,9 +6,9 @@ import {
     DialogHeader,
     DialogTitle,
 } from "./ui/dialog.jsx";
-import { Alert, AlertDescription } from "../components/ui/alert";
-import { useAuthContext } from '../context/AuthContext';
-import { roomApi } from '../api/roomApi';
+import { Alert, AlertDescription } from "./ui/Alert.jsx";
+import { useAuthContext } from '../context/AuthContext.jsx';
+import { roomApi } from '../api/roomApi.js';
 import toast from 'react-hot-toast';
 
 const RoomDetails = ({ roomDetails, loading, error, setError }) => {

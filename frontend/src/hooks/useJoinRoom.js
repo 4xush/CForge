@@ -7,15 +7,28 @@ const useJoinRoom = () => {
     const [success, setSuccess] = useState(null);
 
     const joinRoom = async (roomId) => {
+        // Trim and convert roomId to lowercase to match backend
+        const formattedRoomId = roomId.trim().toLowerCase();
+
+        // Validate roomId before sending request
+        if (!formattedRoomId) {
+            setError('Room ID cannot be empty');
+            return null;
+        }
+
         setLoading(true);
         setError(null);
         setSuccess(null);
 
         try {
-            const response = await api.post(`/rooms/${roomId}/join`);
+            const response = await api.post(`/rooms/${formattedRoomId}/join`);
             setSuccess(response.data.message);
+            return response.data;
         } catch (err) {
-            setError(err.response?.data?.message || 'An error occurred while joining the room');
+            const errorMessage = err.response?.data?.message ||
+                'An error occurred while joining the room';
+            setError(errorMessage);
+            return null;
         } finally {
             setLoading(false);
         }

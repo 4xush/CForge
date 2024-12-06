@@ -32,8 +32,9 @@ exports.getAllRoomsForUser = async (req, res) => {
 exports.createRoom = async (req, res) => {
   try {
     const { name, description, isPublic, roomId } = req.body;
-    // Use the custom roomId if provided, otherwise generate a shortid
-    const newRoomId = roomId || shortid.generate();
+
+    // Convert the roomId to lowercase if provided, otherwise generate a shortid
+    const newRoomId = (roomId ? roomId.toLowerCase() : shortid.generate().toLowerCase());
 
     const newRoom = new Room({
       name,
@@ -42,7 +43,7 @@ exports.createRoom = async (req, res) => {
       isPublic,
       admins: [req.user._id],
       members: [req.user._id],
-      roomId: newRoomId, // Ensure roomId is properly set
+      roomId: newRoomId, // Ensure roomId is stored in lowercase
     });
 
     await newRoom.save();
@@ -56,6 +57,7 @@ exports.createRoom = async (req, res) => {
       .json({ message: "Error creating room", error: error.message });
   }
 };
+
 
 exports.leaveRoom = async (req, res) => {
   try {
@@ -215,96 +217,37 @@ exports.getLeaderboard = async (req, res) => {
 
 exports.sendJoinRequest = async (req, res) => {
   try {
-    const { roomId } = req.params;
+    const roomId = req.params.roomId.toLowerCase();
     const { _id: userId } = req.user;
-
-    // Find the room by its roomId
     const room = await Room.findOne({ roomId });
-
-    // Check if the room exists
     if (!room) {
       return res.status(404).json({ message: "Room not found" });
     }
-
-    // Check if the user is already a member of the room
     if (isMember(room, userId)) {
       return res.status(400).json({ message: "You are already a member of this room" });
     }
-
-    // Check if the room has available space (applies to both public and private rooms)
     if (!hasAvailableSpace(room)) {
       return res.status(400).json({ message: "The room is full" });
     }
-
-    // Public Room Logic: Directly add user if room is public
     if (room.isPublic) {
       room.members.push(userId);
       await room.save();
-      return res.json({ message: "You have joined the room successfully" });
+      const roomDetails = {
+        name: room.name,
+        createdBy: room.creator ? room.creator.username : "Unknown", // dynamincally changing the db instance in response
+        admins: room.admins,
+        members: room.members,
+      };
+      return res.json(roomDetails);
     }
-
-    // Private Room Logic: Check for existing join requests
     const existingRequest = room.joinRequests.find(request => request.user.toString() === userId.toString());
     if (existingRequest) {
       return res.status(400).json({ message: "You have already sent a join request" });
     }
-
-    // If no join request exists, add the user’s join request for private rooms
     room.joinRequests.push({ user: userId });
     await room.save();
-
     return res.json({ message: "Join request sent successfully" });
-
   } catch (error) {
     return res.status(500).json({ message: "Error sending join request", error: error.message });
-  }
-};
-
-exports.joinViaInvite = async (req, res) => {
-  try {
-    const { inviteCode } = req.params;
-    const userId = req.user._id;
-
-    // Find room with this invite code
-    const room = await Room.findOne({
-      'invites.code': inviteCode
-    });
-
-    if (!room) {
-      return res.status(404).json({ message: "Invalid invite link" });
-    }
-
-    // Check if user is already a member
-    if (room.members.includes(userId)) {
-      return res.status(400).json({ message: "You are already a member of this room" });
-    }
-
-    // Find the specific invite
-    const invite = room.invites.find(inv => inv.code === inviteCode);
-
-    // Validate invite
-    if (!isInviteValid(invite)) {
-      return res.status(400).json({ message: "This invite link has expired or is no longer valid" });
-    }
-
-    // Check room capacity
-    if (room.members.length >= room.maxMembers) {
-      return res.status(400).json({ message: "Room is full" });
-    }
-
-    // Add member and update invite usage
-    room.members.push(userId);
-    invite.uses += 1;
-
-    // Disable invite if max uses reached
-    if (invite.maxUses > 0 && invite.uses >= invite.maxUses) {
-      invite.isActive = false;
-    }
-
-    await room.save();
-
-    res.json({ message: "Successfully joined the room" });
-  } catch (error) {
-    res.status(500).json({ message: "Error joining room", error: error.message });
   }
 };

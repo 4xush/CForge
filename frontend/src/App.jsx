@@ -1,16 +1,16 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { RoomProvider } from './context/RoomContext';
-import CreateRoomPage from './components/RoomForm.jsx';
+import CreateRoomPage from './components/RoomCreation/CreateJoinRoomModal.jsx';
 import LoginPage from './pages/Login';
 import SignupPage from './pages/Signup';
-import WelcomePage from './pages/Welcome';
+import WelcomePage from './pages/LandingPage.jsx';
 import DashboardPage from './components/Dashboard.jsx';
 import { DashboardProvider } from './context/DashboardContext.jsx';
 import { AuthProvider } from './context/AuthContext';
 import { Toaster } from 'react-hot-toast';
 import UserInfo from './components/User';
-import RoomInviteHandler from './components/RoomInviteHandler.jsx';
+import RoomInviteHandler from './pages/RoomInviteHandler.jsx';
 
 const App = () => {
   return (

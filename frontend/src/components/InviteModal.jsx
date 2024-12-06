@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from '../components/ui/Button';
-import { Alert, AlertDescription } from './ui/alert';
+import { Alert, AlertDescription } from './ui/Alert';
 import { Loader2, Users, Lock, Unlock } from 'lucide-react';
 import { useDashboardContext } from '../context/DashboardContext';
 import toast from 'react-hot-toast';

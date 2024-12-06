@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import RoomList from './RoomList';
 import MessageList from './MessageList';
-import RoomFormContainer from './RoomForm';
+import CreateJoinModal from './RoomCreation/CreateJoinRoomModal';
 import { DashboardContext } from '../context/DashboardContext';
 import { useRoomContext } from '../context/RoomContext';
 
@@ -40,7 +40,7 @@ const LeftSlider = ({ isRoomsListVisible, setIsRoomsListVisible }) => {
             {isRoomFormVisible && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
                     <div className="relative w-full max-w-lg">
-                        <RoomFormContainer
+                        <CreateJoinModal
                             onClose={() => setRoomFormVisible(false)}
                             onRoomCreated={handleRoomCreatedOrJoined}
                             onRoomJoined={handleRoomCreatedOrJoined}

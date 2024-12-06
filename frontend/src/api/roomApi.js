@@ -24,10 +24,34 @@ export const roomApi = {
                     'Authorization': `Bearer ${localStorage.getItem('app-token')}`
                 }
             });
-            console.log(response);
             return await response.json();
         } catch (error) {
             throw new Error('Failed to generate invite link');
+        }
+    },
+
+    // Verify invite code
+    verifyInvite: async (inviteCode) => {
+        try {
+            const response = await fetch(`${BASE_URL}/invite/${inviteCode}/verify`);
+            return await response.json();
+        } catch (error) {
+            throw new Error('Failed to verify invite link');
+        }
+    },
+
+    // Join room via invite code
+    joinRoom: async (inviteCode) => {
+        try {
+            const response = await fetch(`${BASE_URL}/invite/${inviteCode}/join`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('app-token')}`
+                }
+            });
+            return await response.json();
+        } catch (error) {
+            throw new Error('Failed to join room');
         }
     }
 };
