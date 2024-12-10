@@ -10,7 +10,7 @@ const {
 const { protect } = require("../middleware/authMiddleware");
 const {
   sendMessage,
-  getMessages,
+  getMessages, deleteMessage, editMessage,
 } = require("../controllers/messageController");
 
 const { getLeaderboard } = require("../controllers/getLeaderBoard");
@@ -34,6 +34,10 @@ router.post("/:roomId/messages", protect, sendMessage);
 router.get("/:roomId/leaderboard", getLeaderboard);
 
 router.get("/:roomId/messages", protect, getMessages);
+
+router.delete("/messages/:messageId", protect, deleteMessage);
+
+router.put('/messages/:messageId', protect, editMessage);
 
 router.post("/:roomId/join", protect, sendJoinRequest);
 

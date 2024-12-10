@@ -114,6 +114,7 @@ const signupUser = async (req, res) => {
       message: "User registered successfully",
       token,
       user: {
+        _id: updatedUser._id,
         fullName: updatedUser.fullName,
         username: updatedUser.username,
         email: updatedUser.email,
@@ -204,6 +205,7 @@ const loginUser = async (req, res) => {
       message: "Login successful",
       token,
       user: {
+        _id: updatedUser._id,
         fullName: updatedUser.fullName,
         username: updatedUser.username,
         email: updatedUser.email,

@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Message = ({ avatar, senderName, time, message }) => {
+const Message = ({ avatar, senderName, time, message, isEdited }) => {
     return (
         <div className="flex items-start mb-4">
             <img
@@ -12,6 +12,7 @@ const Message = ({ avatar, senderName, time, message }) => {
                 <div className="flex items-center">
                     <span className="font-semibold text-gray-300 mr-2">{senderName}</span>
                     <span className="text-xs text-gray-500">{time}</span>
+                    {isEdited && <span className="text-xs text-gray-500 ml-2">(edited)</span>}
                 </div>
                 <p className="bg-gray-800 rounded-lg p-3 inline-block">{message}</p>
             </div>

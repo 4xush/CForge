@@ -115,3 +115,50 @@ exports.deleteMessage = async (req, res) => {
       .json({ message: "Error deleting message", error: error.message });
   }
 };
+// Edit a message
+exports.editMessage = async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const { content } = req.body;
+    const userId = req.user._id;
+
+    // Validate input
+    if (!content || content.trim() === '') {
+      return res.status(400).json({ message: "Message content cannot be empty" });
+    }
+
+    const message = await Message.findById(messageId);
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    const room = await Room.findById(message.room);
+    if (!room) {
+      return res.status(404).json({ message: "Room not found" });
+    }
+
+    // Check if the user is authorized to edit the message
+    if (message.sender.toString() !== userId.toString()) {
+      return res.status(403).json({ message: "You are not authorized to edit this message" });
+    }
+
+    // Update message content
+    message.content = content;
+    message.isEdited = true;
+
+    await message.save();
+
+    // Populate sender details for response
+    await message.populate("sender", "username profilePicture");
+
+    res.status(200).json({
+      message: "Message edited successfully",
+      message: message
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error editing message",
+      error: error.message
+    });
+  }
+};
