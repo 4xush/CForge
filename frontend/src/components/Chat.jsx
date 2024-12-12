@@ -52,7 +52,6 @@ const Chat = () => {
     }, [messages]);
 
     const handleNewMessage = (newMessage) => {
-        // Ensure the new message has the correct structure
         const formattedNewMessage = {
             ...newMessage,
             sender: {

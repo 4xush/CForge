@@ -11,7 +11,7 @@ import {
   updateLeetCodeUsername,
   updateProfilePicture,
   deleteUserAccount,
-} from '../api/userroutes.js';
+} from '../api/userApi.js';
 
 const SettingsModal = ({ isOpen, onClose, triggerRef }) => {
   const [position, setPosition] = useState({ top: 0, left: 0 });
@@ -78,7 +78,6 @@ const SettingsModal = ({ isOpen, onClose, triggerRef }) => {
             oldPassword: formData.oldPassword,
             newPassword: formData.newPassword
           });
-          // Clear password fields after successful update
           setFormData(prev => ({
             ...prev,
             oldPassword: '',

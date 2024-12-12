@@ -23,10 +23,10 @@ const getLeetCodeStats = async (leetcodeUsername) => {
   };
 
   try {
-    console.log(
-      "Sending request to LeetCode API with username:",
-      leetcodeUsername
-    );
+    // console.log(
+    //   "Sending request to LeetCode API with username:",
+    //   leetcodeUsername
+    // );
     const response = await axios.post(
       "https://leetcode.com/graphql",
       {
@@ -41,13 +41,12 @@ const getLeetCodeStats = async (leetcodeUsername) => {
       }
     );
 
-    console.log(
-      "Received response from LeetCode API"
-    );
+    // console.log(
+    //   "Received response from LeetCode API"
+    // );
 
     const { matchedUser, userContestRanking } = response.data.data;
 
-    // Process the submission stats
     const questionsSolvedByDifficulty =
       matchedUser.submitStats.acSubmissionNum.reduce(
         (acc, { difficulty, count }) => {
@@ -57,7 +56,6 @@ const getLeetCodeStats = async (leetcodeUsername) => {
         { easy: 0, medium: 0, hard: 0 }
       );
 
-    // Calculate total questions solved
     const totalQuestionsSolved =
       questionsSolvedByDifficulty.easy +
       questionsSolvedByDifficulty.medium +

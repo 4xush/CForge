@@ -1,4 +1,3 @@
-// components/Leaderboard/LeaderboardTable.jsx
 import React from 'react';
 
 export const LeaderboardTable = ({ users, page, limit, highlightedUserId, currentUserId }) => (

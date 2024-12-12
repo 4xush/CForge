@@ -23,7 +23,7 @@ export const RoomProvider = ({ children }) => {
         const token = localStorage.getItem('app-token');
 
         if (!token) {
-            console.log('User not logged in, skipping fetch rooms.');
+            // console.log('User not logged in, skipping fetch rooms.');
             return;
         }
 
@@ -50,7 +50,7 @@ export const RoomProvider = ({ children }) => {
             const token = localStorage.getItem('app-token');
 
             if (!token) {
-                console.log('User not logged in, skipping fetch room.');
+                // console.log('User not logged in, skipping fetch room.');
                 return;
             }
 
