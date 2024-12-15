@@ -1,8 +1,35 @@
-import React from 'react';
+import React, { useRef } from 'react';
 
-const Message = ({ avatar, senderName, time, message, isEdited }) => {
+const Message = ({
+    avatar,
+    senderName,
+    time,
+    message,
+    isEdited,
+    onContextMenu
+}) => {
+    const paragraphRef = useRef(null);
+
+    const handleContextMenu = (e) => {
+        if (paragraphRef.current) {
+            const rect = paragraphRef.current.getBoundingClientRect();
+            const isWithinParagraphWidth =
+                e.clientX >= rect.left &&
+                e.clientX <= rect.right &&
+                e.clientY >= rect.top &&
+                e.clientY <= rect.bottom;
+
+            if (isWithinParagraphWidth) {
+                onContextMenu(e);
+            }
+        }
+    };
+
     return (
-        <div className="flex items-start mb-4">
+        <div
+            className="flex items-start mb-4"
+            onContextMenu={handleContextMenu}
+        >
             <img
                 src={avatar}
                 alt={senderName}
@@ -14,7 +41,12 @@ const Message = ({ avatar, senderName, time, message, isEdited }) => {
                     <span className="text-xs text-gray-500">{time}</span>
                     {isEdited && <span className="text-xs text-gray-500 ml-2">(edited)</span>}
                 </div>
-                <p className="bg-gray-800 rounded-lg p-3 inline-block">{message}</p>
+                <p
+                    ref={paragraphRef}
+                    className="bg-gray-800 rounded-lg p-3 inline-block"
+                >
+                    {message}
+                </p>
             </div>
         </div>
     );

@@ -13,7 +13,7 @@ const {
   getMessages, deleteMessage, editMessage,
 } = require("../controllers/messageController");
 
-const { getLeaderboard } = require("../controllers/getLeaderBoard");
+const { getLeaderboard } = require("../controllers/leaderboardController");
 
 const {
   verifyRoomInvite,

@@ -1,121 +1,62 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useRoomContext } from '../../context/RoomContext';
 import { useAuthContext } from '../../context/AuthContext';
-import axios from 'axios';
+import { useMessageContext } from '../../context/MessageContext';
 import Message from '../ui/Message';
 import MessageInput from './MessageInput';
 import ContextMenu from './ChatContextMenu';
+import { format, isToday, isYesterday, isSameYear } from 'date-fns';
 
 const Chat = () => {
     const { selectedRoom } = useRoomContext();
     const { authUser } = useAuthContext();
-    const [messages, setMessages] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, messageId: null });
-    const [editingMessageId, setEditingMessageId] = useState(null);
+    const {
+        messages,
+        loading,
+        fetchMessages,
+        addMessage,
+        deleteMessage,
+        editMessage
+    } = useMessageContext();
+
+    const [contextMenu, setContextMenu] = React.useState({
+        visible: false,
+        x: 0,
+        y: 0,
+        messageId: null
+    });
+    const [editingMessageId, setEditingMessageId] = React.useState(null);
     const messagesEndRef = useRef(null);
+    const contextMenuRef = useRef(null);
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
-
+    // Fetch messages when room changes
     useEffect(() => {
-        if (!selectedRoom) {
-            setLoading(false);
-            return;
+        if (selectedRoom) {
+            fetchMessages();
         }
-        const fetchMessages = async () => {
-            setLoading(true);
-            try {
-                const token = localStorage.getItem('app-token');
-                const response = await axios.get(
-                    `http://localhost:5000/api/rooms/${selectedRoom._id}/messages`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    }
-                );
-                const fetchedMessages = response.data.messages.reverse();
-                setMessages(fetchedMessages);
-            } catch (error) {
-                console.error('Error fetching messages:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchMessages();
-    }, [selectedRoom]);
+    }, [selectedRoom, fetchMessages]);
 
+    // Scroll to bottom when messages change
     useEffect(() => {
-        scrollToBottom();
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    const handleNewMessage = (newMessage) => {
-        const formattedNewMessage = {
-            ...newMessage,
-            sender: {
-                _id: authUser._id,
-                username: authUser.username,
-                profilePicture: authUser.profilePicture
-            },
-            createdAt: new Date().toISOString()
+    // Click outside handler for context menu
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (
+                contextMenuRef.current &&
+                !contextMenuRef.current.contains(event.target)
+            ) {
+                closeContextMenu();
+            }
         };
-        setMessages((prevMessages) => [...prevMessages, formattedNewMessage]);
-    };
 
-    const handleDeleteMessage = async (messageId) => {
-        try {
-            const token = localStorage.getItem('app-token');
-            await axios.delete(`http://localhost:5000/api/rooms/messages/${messageId}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
-            setMessages((prevMessages) =>
-                prevMessages.filter(msg => msg._id !== messageId)
-            );
-            setContextMenu({ visible: false, x: 0, y: 0, messageId: null });
-        } catch (error) {
-            console.error('Error deleting message:', error);
-            alert(error.response?.data?.message || 'Failed to delete message');
-        }
-    };
-
-    const handleEditMessage = async (messageId, newContent) => {
-        try {
-            const token = localStorage.getItem('app-token');
-            const response = await axios.put(
-                `http://localhost:5000/api/rooms/messages/${messageId}`,
-                { content: newContent },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
-
-            setMessages((prevMessages) =>
-                prevMessages.map(msg =>
-                    msg._id === messageId ? response.data.message : msg
-                )
-            );
-            setEditingMessageId(null);
-        } catch (error) {
-            console.error('Error editing message:', error);
-            alert(error.response?.data?.message || 'Failed to edit message');
-        }
-    };
-
-    const canModifyMessage = (message) => {
-        if (!authUser) return false;
-        if (message.sender._id === authUser._id) return true;
-        const isAdmin = selectedRoom.admins.some(
-            (admin) => admin.toString() === authUser._id.toString()
-        );
-        return isAdmin;
-    };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     const handleContextMenu = (e, messageId) => {
         e.preventDefault();
@@ -134,6 +75,51 @@ const Chat = () => {
         setContextMenu({ visible: false, x: 0, y: 0, messageId: null });
     };
 
+    const canModifyMessage = (message) => {
+        if (!authUser) return false;
+        if (message.sender._id === authUser._id) return true;
+        const isAdmin = selectedRoom.admins.some(
+            (admin) => admin.toString() === authUser._id.toString()
+        );
+        return isAdmin;
+    };
+
+    const handleDeleteMessage = async (messageId) => {
+        try {
+            await deleteMessage(messageId);
+            closeContextMenu();
+        } catch (error) {
+            alert(error.response?.data?.message || 'Failed to delete message');
+        }
+    };
+
+    const handleEditMessage = async (messageId, newContent) => {
+        try {
+            await editMessage(messageId, newContent);
+            setEditingMessageId(null);
+        } catch (error) {
+            alert(error.response?.data?.message || 'Failed to edit message');
+        }
+    };
+
+    const formatMessageDate = (date) => {
+        const messageDate = new Date(date);
+        if (isToday(messageDate)) return 'Today';
+        if (isYesterday(messageDate)) return 'Yesterday';
+        if (isSameYear(messageDate, new Date())) return format(messageDate, 'MMMM d');
+        return format(messageDate, 'MMMM d, yyyy');
+    };
+
+    const groupMessagesByDate = (messages) => {
+        const groups = {};
+        messages.forEach(message => {
+            const date = formatMessageDate(message.createdAt);
+            if (!groups[date]) groups[date] = [];
+            groups[date].push(message);
+        });
+        return groups;
+    };
+
     if (!selectedRoom) {
         return <div>Please select a room to view messages</div>;
     }
@@ -142,39 +128,37 @@ const Chat = () => {
         return <div>Loading messages...</div>;
     }
 
+    const groupedMessages = groupMessagesByDate(messages);
+
     return (
-        <div className="flex flex-col h-full" onClick={closeContextMenu}>
+        <div className="flex flex-col h-full">
             <div className="flex-grow overflow-y-auto">
-                {messages.length > 0 && (
-                    <div className="text-center text-sm text-gray-500">Today</div>
-                )}
-                {messages.map((msg) => (
-                    <div
-                        key={msg._id}
-                        className="relative group"
-                        onContextMenu={(e) => handleContextMenu(e, msg._id)}
-                    >
-                        {editingMessageId === msg._id ? (
-                            <MessageInput
-                                initialMessage={msg.content}
-                                onMessageSent={(newContent) => handleEditMessage(msg._id, newContent)}
-                                onCancel={() => setEditingMessageId(null)}
-                            />
-                        ) : (
-                            <Message
-                                avatar={
-                                    msg.sender.profilePicture ||
-                                    `https://avatar.iran.liara.run/username?username=${msg.sender.username}`
-                                }
-                                senderName={msg.sender.username}
-                                time={new Date(msg.createdAt).toLocaleTimeString([], {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                })}
-                                message={msg.content}
-                                isEdited={msg.isEdited}
-                            />
-                        )}
+                {Object.entries(groupedMessages).map(([date, msgs]) => (
+                    <div key={date}>
+                        <div className="text-center text-sm text-gray-500 my-2">{date}</div>
+                        {msgs.map((msg) => (
+                            <div key={msg._id} className="relative group">
+                                {editingMessageId === msg._id ? (
+                                    <MessageInput
+                                        initialMessage={msg.content}
+                                        onMessageSent={(newContent) => handleEditMessage(msg._id, newContent)}
+                                        onCancel={() => setEditingMessageId(null)}
+                                    />
+                                ) : (
+                                    <Message
+                                        avatar={
+                                            msg.sender.profilePicture ||
+                                            `https://avatar.iran.liara.run/username?username=${msg.sender.username}`
+                                        }
+                                        senderName={msg.sender.username}
+                                        time={format(new Date(msg.createdAt), 'HH:mm')}
+                                        message={msg.content}
+                                        isEdited={msg.isEdited}
+                                        onContextMenu={(e) => handleContextMenu(e, msg._id)}
+                                    />
+                                )}
+                            </div>
+                        ))}
                     </div>
                 ))}
                 {messages.length === 0 && (
@@ -182,8 +166,10 @@ const Chat = () => {
                 )}
                 <div ref={messagesEndRef} />
             </div>
+
             {contextMenu.visible && (
                 <div
+                    ref={contextMenuRef}
                     style={{
                         position: 'fixed',
                         top: `${contextMenu.y}px`,
@@ -200,7 +186,7 @@ const Chat = () => {
                     />
                 </div>
             )}
-            <MessageInput onMessageSent={handleNewMessage} />
+            <MessageInput onMessageSent={addMessage} />
         </div>
     );
 };

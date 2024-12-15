@@ -78,6 +78,7 @@ exports.getMessages = async (req, res) => {
       messages,
       hasMore: messages.length === limit, // Indicates if more messages exist
     });
+    console.log("messages fetched for room ", roomId);
   } catch (error) {
     res.status(500).json({ message: "Error fetching messages" });
   }

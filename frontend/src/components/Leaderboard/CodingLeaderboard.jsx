@@ -24,39 +24,29 @@ const CodingLeaderboard = () => {
         setPage,
         handleSort,
         handleShowMyPlace,
-        setHighlightedUserId
+        setHighlightedUserId,
+        searchUser
     } = useLeaderboardContext();
 
     const { authUser } = useAuthContext();
     const [searchQuery, setSearchQuery] = useState('');
     const [showSearchInput, setShowSearchInput] = useState(false);
 
-    const isCurrentUser = (user) => {
-        return authUser && user.platforms.leetcode.username === authUser.platforms.leetcode.username;
-    };
-
-    const handleSearch = (event) => {
+    const handleSearch = async (event) => {
         event.preventDefault();
-        const searchTerm = searchQuery.toLowerCase();
-        const foundUser = users.find(user =>
-            user.fullName.toLowerCase().includes(searchTerm) ||
-            user.platforms.leetcode.username.toLowerCase().includes(searchTerm)
-        );
-
-        if (foundUser) {
-            setHighlightedUserId(foundUser._id);
-            const element = document.getElementById(`user-row-${foundUser._id}`);
+        if (searchQuery.trim() === '') {
+            toast.error("Please enter a search term");
+            return;
+        }
+        const foundUserId = await searchUser(searchQuery);
+        if (foundUserId) {
+            setHighlightedUserId(foundUserId);
+            const element = document.getElementById(`user-row-${foundUserId}`);
             if (element) {
                 element.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
-        } else {
-            toast.error("User not found");
         }
     };
-
-    if (loading) {
-        return <div className="text-white text-center">Loading...</div>;
-    }
 
     if (error) {
         return <div className="text-red-500 text-center">{error}</div>;
@@ -108,6 +98,14 @@ const CodingLeaderboard = () => {
                             Show my place
                         </button>
                     )}
+                    {highlightedUserId && (
+                        <button
+                            onClick={() => setHighlightedUserId(null)}
+                            className="bg-gray-800 px-3 py-1 rounded text-sm hover:bg-gray-700 transition-colors"
+                        >
+                            Clear highlight
+                        </button>
+                    )}
                     {showSearchInput ? (
                         <form onSubmit={handleSearch} className="flex items-center">
                             <input
@@ -120,6 +118,7 @@ const CodingLeaderboard = () => {
                             <button
                                 type="submit"
                                 className="bg-gray-800 px-3 py-1 rounded-r flex items-center text-sm hover:bg-gray-700 transition-colors"
+                                disabled={loading}
                             >
                                 <Search size={14} />
                             </button>
@@ -135,39 +134,42 @@ const CodingLeaderboard = () => {
                     )}
                 </div>
             </div>
-            {topUsers.length > 0 && (
-                <div className="grid grid-cols-3 gap-4 mb-4">
-                    {topUsers.map((user, index) => (
-                        <TopUserCard
-                            key={user._id}
-                            user={user}
-                            index={index}
-                            isHighlighted={user._id === highlightedUserId}
-                            isCurrentUser={isCurrentUser(user)}
-                        />
-                    ))}
-                </div>
-            )}
-            {users.length > 0 && (
+            {loading && <div className="text-white text-center">Loading...</div>}
+            {!loading && (
                 <>
-                    <LeaderboardTable
-                        users={users}
-                        page={page}
-                        limit={limit}
-                        highlightedUserId={highlightedUserId}
-                        isCurrentUser={isCurrentUser}
-                    />
-                    <Pagination
-                        page={page}
-                        totalCount={totalCount}
-                        limit={limit}
-                        setPage={setPage}
-                    />
+                    {topUsers.length > 0 && (
+                        <div className="grid grid-cols-3 gap-4 mb-4">
+                            {topUsers.map((user, index) => (
+                                <TopUserCard
+                                    key={user._id}
+                                    user={user}
+                                    index={index}
+                                    isHighlighted={user._id === highlightedUserId}
+                                />
+                            ))}
+                        </div>
+                    )}
+                    {users.length > 0 && (
+                        <>
+                            <LeaderboardTable
+                                users={users}
+                                page={page}
+                                limit={limit}
+                                highlightedUserId={highlightedUserId}
+                            />
+                            <Pagination
+                                page={page}
+                                totalCount={totalCount}
+                                limit={limit}
+                                setPage={setPage}
+                            />
+                        </>
+                    )}
                 </>
             )}
         </div>
     );
 };
 
-
 export default CodingLeaderboard;
+

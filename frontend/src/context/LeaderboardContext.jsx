@@ -4,15 +4,12 @@ import { useRoomContext } from '../context/RoomContext';
 import { useAuthContext } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
-// Create the LeaderboardContext
 const LeaderboardContext = createContext();
 
-// LeaderboardProvider Component
 export const LeaderboardProvider = ({ children }) => {
     const { selectedRoom } = useRoomContext();
     const { authUser } = useAuthContext();
 
-    // State for leaderboard data
     const [users, setUsers] = useState([]);
     const [topUsers, setTopUsers] = useState([]);
     const [sortBy, setSortBy] = useState('platforms.leetcode.totalQuestionsSolved');
@@ -23,26 +20,21 @@ export const LeaderboardProvider = ({ children }) => {
     const [totalCount, setTotalCount] = useState(0);
     const [highlightedUserId, setHighlightedUserId] = useState(null);
 
-    // Limit options for dropdown
     const limitOptions = [10, 20, 50, 100];
 
-    // Fetch leaderboard data
-    const fetchLeaderboard = async () => {
+    const fetchLeaderboard = async (pageNum = page) => {
         if (!selectedRoom) return;
 
         setLoading(true);
         setError(null);
         try {
-            const data = await getLeaderboard(selectedRoom.roomId, sortBy, limit, page);
+            const data = await getLeaderboard(selectedRoom.roomId, sortBy, limit, pageNum);
 
-            // Set all users
-            setUsers(data.members);
-
-            // Only set top users for the first page
-            if (page === 1) {
+            if (pageNum === 1) {
+                setUsers(data.members);
                 setTopUsers(data.members.slice(0, 3));
             } else {
-                setTopUsers([]);
+                setUsers(prevUsers => [...prevUsers, ...data.members]);
             }
 
             setTotalCount(data.totalCount);
@@ -53,24 +45,12 @@ export const LeaderboardProvider = ({ children }) => {
         setLoading(false);
     };
 
-    // Effect to fetch leaderboard when dependencies change
     useEffect(() => {
         if (selectedRoom) {
-            fetchLeaderboard();
+            fetchLeaderboard(1);
         }
-    }, [selectedRoom?.roomId, sortBy, limit, page]);
+    }, [selectedRoom?.roomId, sortBy, limit]);
 
-    // Effect to highlight current user
-    useEffect(() => {
-        if (authUser && users.length > 0) {
-            const currentUserInLeaderboard = users.find(
-                user => user.platforms.leetcode.username === authUser.platforms.leetcode.username
-            );
-            if (currentUserInLeaderboard) {
-                setHighlightedUserId(currentUserInLeaderboard._id);
-            }
-        }
-    }, [users, authUser]);
 
     const handleSort = (newSortBy) => {
         setSortBy(newSortBy);
@@ -105,7 +85,48 @@ export const LeaderboardProvider = ({ children }) => {
         }
     };
 
-    // Context value
+    const searchUser = async (searchTerm) => {
+        setLoading(true);
+        setError(null);
+        let allUsers = [];
+        let currentPage = 1;
+        const searchTermLower = searchTerm.toLowerCase();
+
+        try {
+            while (true) {
+                const data = await getLeaderboard(selectedRoom.roomId, sortBy, totalCount, currentPage);
+                allUsers = [...allUsers, ...data.members];
+
+                const foundUser = data.members.find(user =>
+                    user.fullName.toLowerCase().includes(searchTermLower) ||
+                    user.platforms.leetcode.username.toLowerCase().includes(searchTermLower)
+                );
+
+                if (foundUser) {
+                    const userIndex = allUsers.findIndex(u => u._id === foundUser._id);
+                    const targetPage = Math.floor(userIndex / limit) + 1;
+                    setPage(targetPage);
+                    setUsers(allUsers);
+                    return foundUser._id;
+                }
+
+                if (data.members.length < totalCount) {
+                    currentPage++;
+                } else {
+                    break;
+                }
+            }
+            toast.error("User not found");
+            return null;
+        } catch (err) {
+            setError(err.message || "An error occurred while searching");
+            toast.error(err.message || "Failed to search user");
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const contextValue = {
         users,
         topUsers,
@@ -117,14 +138,13 @@ export const LeaderboardProvider = ({ children }) => {
         totalCount,
         highlightedUserId,
         limitOptions,
-
-        // Methods
         setLimit,
         setPage,
         handleSort,
         handleShowMyPlace,
         fetchLeaderboard,
-        setHighlightedUserId
+        setHighlightedUserId,
+        searchUser
     };
 
     return (
@@ -134,7 +154,6 @@ export const LeaderboardProvider = ({ children }) => {
     );
 };
 
-// Custom hook to use the LeaderboardContext
 export const useLeaderboardContext = () => {
     const context = useContext(LeaderboardContext);
     if (!context) {

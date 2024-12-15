@@ -1,10 +1,9 @@
 import React from 'react';
 import { UserStats } from './UserStats';
-export const TopUserCard = ({ user, index, isHighlighted, isCurrentUser }) => {
+export const TopUserCard = ({ user, index, isHighlighted }) => {
     return (
         <div className={`bg-gray-800 p-4 rounded-lg flex flex-col items-center transition-colors duration-300 
-            ${isHighlighted ? 'ring-2 ring-blue-500 bg-gray-700' : ''} 
-            ${isCurrentUser ? 'ring-2 ring-green-500' : ''}`
+            ${isHighlighted ? 'ring-2 ring-blue-500 bg-gray-700' : ''} `
         }>
             <div className="flex items-center justify-between w-full mb-2">
                 <div className="flex items-center">
@@ -16,7 +15,6 @@ export const TopUserCard = ({ user, index, isHighlighted, isCurrentUser }) => {
                     <div>
                         <h3 className="font-bold text-sm">
                             {user.fullName}
-                            {isCurrentUser && <span className="ml-2 text-xs text-green-400">(You)</span>}
                         </h3>
                         <p className="text-gray-400 text-xs">@{user.platforms.leetcode.username}</p>
                     </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const LeaderboardTable = ({ users, page, limit, highlightedUserId, isCurrentUser }) => {
+export const LeaderboardTable = ({ users, page, limit, highlightedUserId }) => {
     const displayUsers = page === 1 ? users.slice(3) : users;
 
     return (
@@ -23,8 +23,7 @@ export const LeaderboardTable = ({ users, page, limit, highlightedUserId, isCurr
                         key={user._id}
                         id={`user-row-${user._id}`}
                         className={`border-b border-gray-700 transition-colors duration-300 
-                            ${user._id === highlightedUserId ? 'bg-gray-700' : ''} 
-                            ${isCurrentUser(user) ? 'bg-green-900/20' : 'hover:bg-gray-800'}`}
+                            ${user._id === highlightedUserId ? 'bg-gray-700' : ''} `}
                     >
                         <td className="p-2">{page === 1 ? (index + 4) : ((page - 1) * limit + index + 1)}</td>
                         <td className="p-2 flex items-center">
@@ -35,9 +34,6 @@ export const LeaderboardTable = ({ users, page, limit, highlightedUserId, isCurr
                             />
                             <span>
                                 {user.fullName}
-                                {isCurrentUser(user) && (
-                                    <span className="ml-2 text-xs text-green-400">(You)</span>
-                                )}
                             </span>
                         </td>
                         <td className="p-2">{user.platforms.leetcode.totalQuestionsSolved}</td>
