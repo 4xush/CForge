@@ -5,7 +5,7 @@ import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Switch } from '../ui/Switch';
 import useCreateRoom from '../../hooks/useCreateRoom';
-import { roomApi } from '../../api/roomApi';
+import { generateInviteLink } from '../../api/roomApi';
 
 const CreateRoomForm = ({ onClose, onRoomCreated }) => {
     const { createRoom, loading: isCreatingRoom, error: createError } = useCreateRoom();
@@ -30,7 +30,7 @@ const CreateRoomForm = ({ onClose, onRoomCreated }) => {
             const result = await createRoom(roomSettings);
             if (result && result.room && result.room.roomId) {
                 const roomId = result.room.roomId;
-                const inviteResponse = await roomApi.generateInviteLink(roomId);
+                const inviteResponse = await generateInviteLink(roomId);
                 if (inviteResponse && inviteResponse.data.inviteLink) {
                     setInviteLink(inviteResponse.data.inviteLink);
                 }

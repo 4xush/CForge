@@ -1,57 +1,70 @@
-const BASE_URL = 'http://localhost:5000/api/rooms/admin';
+import api from "../config/api";
 
-export const roomApi = {
-    // Get room details
-    getRoomDetails: async (roomId) => {
-        try {
-            const response = await fetch(`${BASE_URL}/rooms/${roomId}`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('app-token')}`
-                }
-            });
-            return await response.json();
-        } catch (error) {
-            throw new Error('Failed to fetch room details');
-        }
-    },
+const BASE_URL = '/rooms';
 
-    // Generate invite link
-    generateInviteLink: async (roomId) => {
-        try {
-            const response = await fetch(`${BASE_URL}/${roomId}/invite`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('app-token')}`
-                }
-            });
-            return await response.json();
-        } catch (error) {
-            throw new Error('Failed to generate invite link');
-        }
-    },
-
-    // Verify invite code
-    verifyInvite: async (inviteCode) => {
-        try {
-            const response = await fetch(`${BASE_URL}/invite/${inviteCode}/verify`);
-            return await response.json();
-        } catch (error) {
-            throw new Error('Failed to verify invite link');
-        }
-    },
-
-    // Join room via invite code
-    joinRoom: async (inviteCode) => {
-        try {
-            const response = await fetch(`${BASE_URL}/invite/${inviteCode}/join`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('app-token')}`
-                }
-            });
-            return await response.json();
-        } catch (error) {
-            throw new Error('Failed to join room');
-        }
+export const getRoomDetails = async (roomId) => {
+    try {
+        const response = await api.get(`${BASE_URL}/${roomId}`);
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || new Error("Failed to fetch room details");
     }
 };
+
+export const generateInviteLink = async (roomId) => {
+    try {
+        const response = await api.post(`${BASE_URL}/admin/${roomId}/invite`);
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || new Error("Failed to generate invite link");
+    }
+};
+
+export const verifyInvite = async (inviteCode) => {
+    try {
+        const response = await api.get(`${BASE_URL}/invite/${inviteCode}/verify`);
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || new Error("Failed to verify invite link");
+    }
+};
+
+export const joinRoom = async (inviteCode) => {
+    try {
+        const response = await api.post(`${BASE_URL}/invite/${inviteCode}/join`);
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || new Error("Failed to join room");
+    }
+};
+
+export const getLeaderboard = async (roomId, sortBy, limit, page) => {
+    try {
+        const response = await api.get(`${BASE_URL}/${roomId}/leaderboard`, {
+            params: { sortBy, limit, page },
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || new Error("Failed to fetch leaderboard");
+    }
+};
+
+export const createRoom = async (formData) => {
+    try {
+        const response = await api.post(`${BASE_URL}/create`, formData);
+        console.log('Room created:', response.data);
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || new Error("Failed to create room");
+    }
+};
+
+export default {
+    getRoomDetails,
+    generateInviteLink,
+    verifyInvite,
+    joinRoom,
+    getLeaderboard,
+    createRoom
+};
+

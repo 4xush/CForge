@@ -9,7 +9,7 @@ import { DashboardProvider } from './context/DashboardContext.jsx';
 import { AuthProvider } from './context/AuthContext';
 import { LeaderboardProvider } from './context/LeaderboardContext';
 import { Toaster } from 'react-hot-toast';
-import UserInfo from './components/User';
+import UserInfo from './components/UserProfile.jsx';
 import RoomInviteHandler from './pages/RoomInviteHandler.jsx';
 
 const App = () => {
@@ -32,7 +32,7 @@ const App = () => {
                   </DashboardProvider>
                 }
               />
-              {/* Handle invite links */}
+              {/* Handling the invite links */}
               <Route
                 path="/rooms/join/:inviteCode"
                 element={<RoomInviteHandler />}

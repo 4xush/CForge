@@ -1,15 +1,10 @@
 import React from 'react';
-import ParticleBackground from './ParticleBackground';
+import ParticleBackground from './element/ParticleBackground';
 
 const AuthLayout = ({ children }) => {
     return (
         <div className="min-h-screen flex items-stretch bg-gray-900 relative overflow-hidden">
-            <ParticleBackground
-                particleCount={75}
-                lineCount={10}
-                particleSizeMultiplier={0.2}
-                speedMultiplier={0.5}
-            />
+            <ParticleBackground />
             <div className="hidden md:flex w-1/2 relative z-10 flex-col justify-center items-center p-8">
                 <div className="text-center">
                     <h1

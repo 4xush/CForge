@@ -8,7 +8,7 @@ import {
 } from "./ui/dialog.jsx";
 import { Alert, AlertDescription } from "./ui/Alert.jsx";
 import { useAuthContext } from '../context/AuthContext.jsx';
-import { roomApi } from '../api/roomApi.js';
+import { generateInviteLink } from '../api/roomApi.js';
 import toast from 'react-hot-toast';
 
 const RoomDetails = ({ roomDetails, loading, error, setError }) => {
@@ -22,7 +22,7 @@ const RoomDetails = ({ roomDetails, loading, error, setError }) => {
     const handleInviteClick = async () => {
         try {
             setIsGeneratingLink(true);
-            const response = await roomApi.generateInviteLink(roomDetails.roomId);
+            const response = await generateInviteLink(roomDetails.roomId);
 
             if (response.success) {
                 setInviteData(response.data);

@@ -1,21 +1,4 @@
-import axios from "axios";
-
-import API_URI from "../../config";
-
-const api = axios.create({
-  baseURL: API_URI,
-  timeout: 10000,
-});
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("app-token"); // Match storage key
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-}, (error) => {
-  return Promise.reject(error);
-});
+import api from "../config/api";
 
 export const login = async (email, password) => {
   try {
@@ -36,7 +19,7 @@ export const register = async (userData) => {
   try {
     const { data } = await api.post("/auth/signup", userData);
     const { token, user } = data;
-    localStorage.setItem("app-token", token); // Standardized key
+    localStorage.setItem("app-token", token);
     return {
       user: {
         fullName: user.fullName,

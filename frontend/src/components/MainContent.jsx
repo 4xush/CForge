@@ -1,6 +1,6 @@
 import React from 'react';
 import Leaderboard from './Leaderboard/CodingLeaderboard';
-import Chat from './Chat';
+import Chat from './Messages/Chat';
 import TopBar from './TopBar';
 import { useRoomContext } from '../context/RoomContext';
 

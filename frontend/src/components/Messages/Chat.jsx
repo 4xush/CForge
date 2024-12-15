@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useRoomContext } from '../context/RoomContext';
-import { useAuthContext } from '../context/AuthContext';
+import { useRoomContext } from '../../context/RoomContext';
+import { useAuthContext } from '../../context/AuthContext';
 import axios from 'axios';
-import Message from './ui/Message';
-import MessageInput from './Messages/MessageInput';
-import ContextMenu from './ContextMenu';
+import Message from '../ui/Message';
+import MessageInput from './MessageInput';
+import ContextMenu from './ChatContextMenu';
 
 const Chat = () => {
     const { selectedRoom } = useRoomContext();
@@ -144,9 +144,9 @@ const Chat = () => {
 
     return (
         <div className="flex flex-col h-full" onClick={closeContextMenu}>
-            <div className="flex-grow overflow-y-auto p-2">
+            <div className="flex-grow overflow-y-auto">
                 {messages.length > 0 && (
-                    <div className="text-center text-sm text-gray-500 my-2">Today</div>
+                    <div className="text-center text-sm text-gray-500">Today</div>
                 )}
                 {messages.map((msg) => (
                     <div
