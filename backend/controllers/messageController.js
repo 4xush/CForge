@@ -1,7 +1,6 @@
 const Message = require("../models/Message");
 const Room = require("../models/Room");
 
-// Send a message in a room
 exports.sendMessage = async (req, res) => {
   try {
     const { roomId } = req.params;
@@ -76,7 +75,7 @@ exports.getMessages = async (req, res) => {
 
     res.json({
       messages,
-      hasMore: messages.length === limit, // Indicates if more messages exist
+      hasMore: messages.length === limit,
     });
     console.log("messages fetched for room ", roomId);
   } catch (error) {
@@ -100,7 +99,6 @@ exports.deleteMessage = async (req, res) => {
       return res.status(404).json({ message: "Room not found" });
     }
 
-    // Check if the user is authorized to delete the message
     const isAdmin = room.admins.some((admin) => admin.toString() === userId.toString());
     if (message.sender.toString() !== userId.toString() && !isAdmin) {
       return res

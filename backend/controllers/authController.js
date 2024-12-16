@@ -33,7 +33,6 @@ const signupUser = async (req, res) => {
       });
     }
 
-    // Check for existing email (case-insensitive)
     const existingEmailUser = await User.findOne({
       email: new RegExp(`^${email}$`, 'i')
     });
@@ -44,7 +43,6 @@ const signupUser = async (req, res) => {
       });
     }
 
-    // Verify LeetCode username existence
     try {
       const isValidLeetCodeUsername = await checkLeetCodeUsername(leetcodeUsername);
       if (!isValidLeetCodeUsername) {
@@ -59,15 +57,12 @@ const signupUser = async (req, res) => {
       });
     }
 
-    // Generate username and avatar
     const username = await generateUsername(fullName);
     const defaultAvatar = "https://ui-avatars.com/api/?background=random";
     const avatarUrl = `${defaultAvatar}&name=${encodeURIComponent(fullName)}`;
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Create new user
     const newUser = new User({
       fullName: fullName.trim(),
       username,
@@ -91,16 +86,13 @@ const signupUser = async (req, res) => {
 
     await newUser.save();
 
-    // Update LeetCode stats using the imported service
     let updatedUser = newUser;
     try {
-      updatedUser = await updateUserLeetCodeStats(newUser, false, true); // Force update for new users
+      updatedUser = await updateUserLeetCodeStats(newUser, false, true);
     } catch (statsError) {
       console.error("Initial LeetCode stats fetch failed:", statsError);
-      // Continue with signup process
     }
 
-    // Generate JWT
     const token = jwt.sign(
       {
         id: updatedUser._id,
@@ -140,7 +132,6 @@ const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // Input validation
     if (!email?.trim() || !password?.trim()) {
       return res.status(400).json({
         message: "Email and password are required"
@@ -153,7 +144,6 @@ const loginUser = async (req, res) => {
       });
     }
 
-    // Find user (case-insensitive)
     const user = await User.findOne({
       email: new RegExp(`^${email}$`, 'i')
     });
@@ -163,7 +153,6 @@ const loginUser = async (req, res) => {
         message: "Invalid credentials"
       });
     }
-    // Verify password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       // Update failed login attempts
@@ -176,21 +165,17 @@ const loginUser = async (req, res) => {
       });
     }
 
-    // Reset failed attempts and update last login
     user.failedLoginAttempts = 0;
     user.lastLogin = new Date();
     await user.save();
 
-    // Update LeetCode stats using the imported service
     let updatedUser = user;
     try {
-      updatedUser = await updateUserLeetCodeStats(user); // Uses built-in staleness check
+      updatedUser = await updateUserLeetCodeStats(user);
     } catch (statsError) {
       console.error("LeetCode stats update failed during login:", statsError);
-      // Continue with login process
     }
 
-    // Generate JWT
     const token = jwt.sign(
       {
         id: updatedUser._id,

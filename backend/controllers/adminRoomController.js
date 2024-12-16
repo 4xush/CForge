@@ -1,7 +1,6 @@
 const Room = require("../models/Room");
 const User = require("../models/User");
 
-// Helper function to check if a user is an admin of a room
 const isAdmin = (room, userId) => {
   return room.admins.some((admin) => admin.toString() === userId.toString());
 };
@@ -15,7 +14,6 @@ exports.updateRoom = async (req, res) => {
       return res.status(404).json({ message: "Room not found" });
     }
 
-    // Check if the authenticated user is an admin
     if (!room.admins.includes(req.user._id)) {
       return res
         .status(403)

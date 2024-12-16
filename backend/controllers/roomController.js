@@ -41,7 +41,7 @@ exports.createRoom = async (req, res) => {
       isPublic,
       admins: [req.user._id],
       members: [req.user._id],
-      roomId: newRoomId, 
+      roomId: newRoomId,
     });
 
     await newRoom.save();
@@ -59,8 +59,8 @@ exports.createRoom = async (req, res) => {
 
 exports.leaveRoom = async (req, res) => {
   try {
-    const { roomId } = req.params; 
-    const userId = req.user._id; 
+    const { roomId } = req.params;
+    const userId = req.user._id;
 
     const room = await Room.findOne({ roomId });
 
@@ -143,7 +143,6 @@ exports.getRoomDetails = async (req, res) => {
     if (!room) {
       return res.status(404).json({ message: "Room not found" });
     }
-    // Check if the room is private and the user is neither an admin nor a member
     if (!room.isPublic && !(isMember)) {
       return res
         .status(403)
@@ -232,7 +231,7 @@ exports.sendJoinRequest = async (req, res) => {
       await room.save();
       const roomDetails = {
         name: room.name,
-        createdBy: room.creator ? room.creator.username : "Unknown", // dynamincally changing the db instance in response
+        createdBy: room.creator ? room.creator.username : "Unknown",
         admins: room.admins,
         members: room.members,
       };

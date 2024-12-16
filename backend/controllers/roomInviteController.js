@@ -82,7 +82,6 @@ const verifyRoomInvite = async (req, res) => {
             });
         }
 
-        // Check if room has reached maximum members
         if (room.members.length >= room.maxMembers) {
             return res.status(400).json({
                 success: false,
@@ -90,7 +89,7 @@ const verifyRoomInvite = async (req, res) => {
             });
         }
 
-        // Return room details for frontend to display
+        // Return room details for joining the room
         return res.status(200).json({
             success: true,
             data: {
@@ -131,7 +130,6 @@ const joinRoomByInvite = async (req, res) => {
             });
         }
 
-        // Check if user is already a member
         if (room.members.includes(userId)) {
             return res.status(400).json({
                 success: false,
@@ -139,7 +137,6 @@ const joinRoomByInvite = async (req, res) => {
             });
         }
 
-        // Check if room has reached maximum members
         if (room.members.length >= room.maxMembers) {
             return res.status(400).json({
                 success: false,
@@ -147,7 +144,6 @@ const joinRoomByInvite = async (req, res) => {
             });
         }
 
-        // Add user to room members
         const updatedRoom = await Room.findByIdAndUpdate(
             room._id,
             {
