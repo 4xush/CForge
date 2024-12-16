@@ -1,10 +1,9 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 
-// Get user details
 exports.getUserDetails = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-password"); // Exclude password field
+    const user = await User.findById(req.user.id).select("-password");
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -15,7 +14,6 @@ exports.getUserDetails = async (req, res) => {
   }
 };
 
-// Delete user account
 exports.deleteUserAccount = async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.user.id);
@@ -31,7 +29,7 @@ exports.deleteUserAccount = async (req, res) => {
 
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password"); // Exclude password field
+    const users = await User.find().select("-password");
     res.status(200).json(users);
   } catch (error) {
     console.error("Error fetching all users:", error);

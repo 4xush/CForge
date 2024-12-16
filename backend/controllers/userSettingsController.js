@@ -86,12 +86,10 @@ exports.updateEmail = async (req, res) => {
   }
 };
 
-// Update LeetCode username
 exports.updateLeetCodeUsername = async (req, res) => {
   const { leetcodeUsername } = req.body;
 
   try {
-    // Validate if the LeetCode username exists
     const isLeetCodeUsernameValid = await checkLeetCodeUsername(leetcodeUsername);
     if (!isLeetCodeUsernameValid) {
       return res
@@ -99,7 +97,6 @@ exports.updateLeetCodeUsername = async (req, res) => {
         .json({ message: "LeetCode username does not exist" });
     }
 
-    // Update the user's LeetCode username
     const user = await User.findByIdAndUpdate(
       req.user.id,
       { "platforms.leetcode.username": leetcodeUsername },
@@ -114,7 +111,6 @@ exports.updateLeetCodeUsername = async (req, res) => {
   }
 };
 
-// Update profile picture
 exports.updateProfilePicture = async (req, res) => {
   const { profilePicture } = req.body;
 

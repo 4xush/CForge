@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuthContext } from '../context/AuthContext';
-import { roomApi } from '../api/roomApi';
+import { joinRoomWithInvite, verifyRoomInvite } from '../api/roomApi';
 import { AlertCircle, Loader2, Users, Lock, Unlock } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,7 +28,7 @@ const RoomInviteVerify = () => {
     const verifyInvite = async () => {
         try {
             setLoading(true);
-            const response = await roomApi.verifyRoomInvite(inviteCode);
+            const response = await verifyRoomInvite(inviteCode);
 
             if (response.success) {
                 setRoomDetails(response.data);
@@ -51,7 +51,7 @@ const RoomInviteVerify = () => {
 
         try {
             setJoining(true);
-            const response = await roomApi.joinRoomWithInvite(inviteCode);
+            const response = await joinRoomWithInvite(inviteCode);
 
             if (response.success) {
                 navigate(`/rooms/${response.data.roomId}`);

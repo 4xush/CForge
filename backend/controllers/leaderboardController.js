@@ -1,4 +1,3 @@
-const mongoose = require('mongoose');
 const Room = require('../models/Room');
 const User = require('../models/User');
 
@@ -18,7 +17,6 @@ exports.getLeaderboard = async (req, res) => {
     ];
 
     try {
-        // Validate sortBy field
         if (!allowedSortFields.includes(sortBy)) {
             return res.status(400).json({ message: "Invalid sort field" });
         }
@@ -28,7 +26,6 @@ exports.getLeaderboard = async (req, res) => {
         const parsedPage = parseInt(page, 10);
         const skip = (parsedPage - 1) * parsedLimit;
 
-        // Find room
         const room = await Room.findOne({ roomId: req.params.roomId });
         if (!room) {
             return res.status(404).json({ message: "Room not found" });
@@ -57,10 +54,10 @@ exports.getLeaderboard = async (req, res) => {
                     username: 1,
                     fullName: 1,
                     profilePicture: 1,
-                    email: 1,  // Include if needed
+                    email: 1,
                     "platforms.leetcode": 1,
-                    createdAt: 1,  // Include if needed
-                    updatedAt: 1   // Include if needed
+                    createdAt: 1,
+                    updatedAt: 1
                 }
             }
         ];
@@ -69,7 +66,6 @@ exports.getLeaderboard = async (req, res) => {
         const members = await User.aggregate(pipeline);
         const totalCount = await User.countDocuments({ _id: { $in: room.members } });
 
-        // Add data validation before sending response
         const validatedMembers = members.map(member => ({
             ...member,
             fullName: member.fullName || member.username || 'Anonymous User',

@@ -1,7 +1,6 @@
 const Message = require("../models/Message");
 const Room = require("../models/Room");
 
-// Send a message in a room
 exports.sendMessage = async (req, res) => {
   try {
     const { roomId } = req.params;
@@ -76,8 +75,9 @@ exports.getMessages = async (req, res) => {
 
     res.json({
       messages,
-      hasMore: messages.length === limit, // Indicates if more messages exist
+      hasMore: messages.length === limit,
     });
+    console.log("messages fetched for room ", roomId);
   } catch (error) {
     res.status(500).json({ message: "Error fetching messages" });
   }
@@ -99,7 +99,6 @@ exports.deleteMessage = async (req, res) => {
       return res.status(404).json({ message: "Room not found" });
     }
 
-    // Check if the user is authorized to delete the message
     const isAdmin = room.admins.some((admin) => admin.toString() === userId.toString());
     if (message.sender.toString() !== userId.toString() && !isAdmin) {
       return res
@@ -113,5 +112,52 @@ exports.deleteMessage = async (req, res) => {
     res
       .status(500)
       .json({ message: "Error deleting message", error: error.message });
+  }
+};
+// Edit a message
+exports.editMessage = async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const { content } = req.body;
+    const userId = req.user._id;
+
+    // Validate input
+    if (!content || content.trim() === '') {
+      return res.status(400).json({ message: "Message content cannot be empty" });
+    }
+
+    const message = await Message.findById(messageId);
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    const room = await Room.findById(message.room);
+    if (!room) {
+      return res.status(404).json({ message: "Room not found" });
+    }
+
+    // Check if the user is authorized to edit the message
+    if (message.sender.toString() !== userId.toString()) {
+      return res.status(403).json({ message: "You are not authorized to edit this message" });
+    }
+
+    // Update message content
+    message.content = content;
+    message.isEdited = true;
+
+    await message.save();
+
+    // Populate sender details for response
+    await message.populate("sender", "username profilePicture");
+
+    res.status(200).json({
+      message: "Message edited successfully",
+      message: message
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error editing message",
+      error: error.message
+    });
   }
 };

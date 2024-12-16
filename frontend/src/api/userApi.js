@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api";
+const API_URI = "http://localhost:5000/api";
 
 const getConfig = (token) => ({
     headers: {
@@ -12,7 +12,7 @@ const getConfig = (token) => ({
 export const getUserProfile = async (token) => {
     try {
         const response = await axios.get(
-            `${API_URL}/users/profile`,
+            `${API_URI}/users/profile`,
             getConfig(token)
         );
         return response.data;
@@ -24,7 +24,7 @@ export const getUserProfile = async (token) => {
 export const deleteUserAccount = async (token) => {
     try {
         const response = await axios.delete(
-            `${API_URL}/users/profile`,
+            `${API_URI}/users/profile`,
             getConfig(token)
         );
         return response.data;
@@ -36,7 +36,7 @@ export const deleteUserAccount = async (token) => {
 export const updatePassword = async (passwordData, token) => {
     try {
         const response = await axios.put(
-            `${API_URL}/settings/password`,
+            `${API_URI}/settings/password`,
             passwordData,
             getConfig(token)
         );
@@ -49,7 +49,7 @@ export const updatePassword = async (passwordData, token) => {
 export const updateUsername = async (usernameData, token) => {
     try {
         const response = await axios.put(
-            `${API_URL}/settings/username`,
+            `${API_URI}/settings/username`,
             usernameData,
             getConfig(token)
         );
@@ -62,7 +62,7 @@ export const updateUsername = async (usernameData, token) => {
 export const updateEmail = async (emailData, token) => {
     try {
         const response = await axios.put(
-            `${API_URL}/settings/email`,
+            `${API_URI}/settings/email`,
             emailData,
             getConfig(token)
         );
@@ -75,7 +75,7 @@ export const updateEmail = async (emailData, token) => {
 export const updateLeetCodeUsername = async (leetcodeData, token) => {
     try {
         const response = await axios.put(
-            `${API_URL}/settings/leetcode`,
+            `${API_URI}/settings/leetcode`,
             { leetcodeUsername: leetcodeData.username }, // Ensure the property name matches backend expectation
             getConfig(token)
         );
@@ -88,7 +88,7 @@ export const updateLeetCodeUsername = async (leetcodeData, token) => {
 export const updateProfilePicture = async (pictureData, token) => {
     try {
         const response = await axios.put(
-            `${API_URL}/settings/avatar`,
+            `${API_URI}/settings/avatar`,
             pictureData,
             getConfig(token)
         );
@@ -101,7 +101,7 @@ export const updateProfilePicture = async (pictureData, token) => {
 export const getAllRoomsForUser = async (token) => {
     try {
         const response = await axios.get(
-            `${API_URL}/users/rooms`,
+            `${API_URI}/users/rooms`,
             getConfig(token)
         );
         return response.data;
@@ -113,7 +113,7 @@ export const getAllRoomsForUser = async (token) => {
 export const updateLeetCodeStats = async (token) => {
     try {
         const response = await axios.put(
-            `${API_URL}/users/update/lcstats`,
+            `${API_URI}/users/update/lcstats`,
             {},
             getConfig(token)
         );
@@ -126,7 +126,7 @@ export const updateLeetCodeStats = async (token) => {
 export const getAllUsers = async (token) => {
     try {
         const response = await axios.get(
-            `${API_URL}/users/admin/users`,
+            `${API_URI}/users/admin/users`,
             getConfig(token)
         );
         return response.data;
@@ -138,8 +138,6 @@ export const getAllUsers = async (token) => {
 // Error handling utility
 const handleApiError = (error) => {
     if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
         return {
             status: error.response.status,
             message: error.response.data.message || 'An error occurred',

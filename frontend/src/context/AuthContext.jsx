@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { login, register } from "../api";
+import { login, register } from "../api/authApi";
 import toast from 'react-hot-toast';
 
 const validatePlatformData = (platform) => {

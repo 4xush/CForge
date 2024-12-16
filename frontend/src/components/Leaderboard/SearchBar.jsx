@@ -1,13 +1,12 @@
-// components/Leaderboard/SearchBar.jsx
 import React from 'react';
 import { Search } from 'lucide-react';
 
-export const SearchBar = ({ 
+export const SearchBar = ({
   showSearchInput,
   searchQuery,
   setSearchQuery,
   handleSearch,
-  setShowSearchInput 
+  setShowSearchInput
 }) => {
   return showSearchInput ? (
     <form onSubmit={handleSearch} className="flex items-center">

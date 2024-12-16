@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Menu, X } from 'lucide-react';
-import LeftSidebar from './LeftSidebar';
-import MainContent from './MainContent';
+import LeftSidebar from '../components/LeftSidebar';
+import MainContent from '../components/MainContent';
 import { RoomContext } from '../context/RoomContext';
 import { DashboardContext } from '../context/DashboardContext';
-import HelpFAQ from './HelpFAQ';
-import InviteModal from './InviteModal';
+import HelpFAQ from '../components/HelpFAQ';
+import InviteModal from '../components/InviteModal';
 
 const CForgeUI = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
