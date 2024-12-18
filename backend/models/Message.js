@@ -16,20 +16,24 @@ const messageSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    iv: {
+      type: String,
+      required: true,
+    },
     isEdited: {
-      type: Boolean,
+      type: Boolean, // Indicates if the message was edited
       default: false,
     },
     attachments: {
-      type: [String],
+      type: [String], // Stores an array of attachment URLs
       default: [],
     },
   },
-  { timestamps: true }
+  { timestamps: true } // Automatically adds createdAt and updatedAt fields
 );
 
-// Indexes for efficient querying
-messageSchema.index({ room: 1, createdAt: -1 }); // Compound index for fetching room messages sorted by timestamp
-messageSchema.index({ sender: 1, createdAt: -1 }); // Compound index for filtering messages by sender
+// Indexes for optimizing queries
+messageSchema.index({ room: 1, createdAt: -1 }); // For fetching messages in a room, sorted by creation date
+messageSchema.index({ sender: 1, createdAt: -1 }); // For fetching messages by sender, sorted by creation date
 
 module.exports = mongoose.model("Message", messageSchema);

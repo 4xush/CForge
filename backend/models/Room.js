@@ -10,7 +10,7 @@ const roomSchema = new mongoose.Schema(
     name: { type: String, required: true },
     description: { type: String },
     displayPicture: {
-      type: String,  // URL to the image stored in your cloud storage
+      type: String,  
       default: null
     },
     creator: {

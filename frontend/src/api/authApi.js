@@ -26,7 +26,6 @@ export const register = async (userData) => {
         username: user.username,
         email: user.email,
         profilePicture: user.profilePicture,
-        // leetcodeStats: user.leetcodeStats
         platforms: user.platforms
       },
       token

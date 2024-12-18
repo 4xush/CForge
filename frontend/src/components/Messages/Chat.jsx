@@ -76,6 +76,7 @@ const Chat = () => {
     };
 
     const canModifyMessage = (message) => {
+        // console.log(authUser);
         if (!authUser) return false;
         if (message.sender._id === authUser._id) return true;
         const isAdmin = selectedRoom.admins.some(

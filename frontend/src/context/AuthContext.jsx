@@ -84,7 +84,7 @@ export const AuthProvider = ({ children }) => {
         if (tokenData.exp * 1000 < Date.now()) {
           throw new Error("Token expired");
         }
-
+        // console.log(userData);
         setAuthUser(userData);
       }
     } catch (error) {
