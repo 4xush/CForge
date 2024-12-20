@@ -31,6 +31,12 @@ app.use(express.json());
 connectDB();
 
 // Routes
+app.get("/api", (req, res) => {
+  console.log("Test Ok");
+  res.status(200).json({ message: "Hello Cforgers" });
+});
+
+
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/rooms", roomRoutes);

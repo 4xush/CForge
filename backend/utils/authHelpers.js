@@ -1,24 +1,23 @@
 const axios = require("axios");
 
-// Email validation
 const validateEmail = (email) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };
 
-// Password validation (minimum 8 characters)
 const validatePassword = (password) => {
-  return password && password.length >= 8;
+  return (
+    password &&
+    password.length >= 8);
 };
 
-// Full name validation (between 2 and 50 characters)
-const validatefullName = (name) => {
-  return name && name.trim().length >= 2 && name.trim().length <= 50;
+const validateFullName = (name) => {
+  const trimmedName = name?.trim();
+  return trimmedName && trimmedName.length >= 2 && trimmedName.length <= 50;
 };
 
-// Check if LeetCode username exists
 const checkLeetCodeUsername = async (username) => {
-  if (!username || typeof username !== 'string') {
+  if (!username || typeof username !== "string") {
     throw new Error("Invalid LeetCode username format");
   }
 
@@ -31,22 +30,32 @@ const checkLeetCodeUsername = async (username) => {
   `;
 
   try {
-    const response = await axios.post("https://leetcode.com/graphql", { query }, {
-      timeout: 5000,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    const response = await axios.post(
+      "https://leetcode.com/graphql",
+      { query },
+      {
+        timeout: 5000,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+
     return response.data.data.matchedUser !== null;
   } catch (error) {
     if (error.response?.status === 429) {
-      throw new Error("LeetCode API rate limit exceeded. Please try again later.");
+      throw new Error(
+        "LeetCode API rate limit exceeded. Please try again later."
+      );
     }
-    throw new Error("Error verifying LeetCode username. Please check the username and try again.");
+    console.error("LeetCode API error:", error.message || error);
+    throw new Error(
+      "Unable to verify LeetCode username. Please check your connection or try again later."
+    );
   }
 };
 
 module.exports = {
   validateEmail,
   validatePassword,
-  validatefullName,
-  checkLeetCodeUsername
+  validateFullName,
+  checkLeetCodeUsername,
 };

@@ -7,8 +7,9 @@ const { updateLeetCodeStats } = require("../jobs/leetCodeUpdater");
 const {
   getUserDetails,
   deleteUserAccount,
-  getAllUsers,
+  searchUser,
 } = require("../controllers/userController");
+
 const {
   updatePassword,
   updateUsername,
@@ -16,21 +17,21 @@ const {
   updateLeetCodeUsername,
   updateProfilePicture,
 } = require("../controllers/userSettingsController");
-const { getAllRoomsForUser } = require("../controllers/roomController");
 
 // User profile routes
-router.get("/profile", protect, getUserDetails);
-router.delete("/profile", protect, deleteUserAccount);
+router.route("/profile")
+  .get(protect, getUserDetails)
+  .delete(protect, deleteUserAccount);
+
+router.get("/search", protect, searchUser); //GET /users/search?query=johndoe
 
 // User settings routes
-router.put("/settings/password", protect, updatePassword);
-router.route("/settings/username").put(protect, updateUsername);
-router.route("/settings/email").put(protect, updateEmail);
-router.route("/settings/leetcode").put(protect, updateLeetCodeUsername);
-router.route("/settings/avatar").put(protect, updateProfilePicture);
+router.put("/updatePassword", protect, updatePassword);
+router.put("/updateUsername", protect, updateUsername);
+router.route("/updateEmail").put(protect, updateEmail);
+router.route("/updateLeetcode").put(protect, updateLeetCodeUsername);
+router.route("/updateAvatar").put(protect, updateProfilePicture);
 
-router.get("/rooms", protect, getAllRoomsForUser);
-router.put("/me/leetcode", protect, updateLeetCodeStats);
-router.get("/admin/users", protect, getAllUsers);
+router.put("/update/leetcode", protect, updateLeetCodeStats);
 
 module.exports = router;

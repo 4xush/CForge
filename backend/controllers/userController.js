@@ -1,5 +1,4 @@
 const User = require("../models/User");
-const bcrypt = require("bcryptjs");
 
 exports.getUserDetails = async (req, res) => {
   try {
@@ -27,12 +26,29 @@ exports.deleteUserAccount = async (req, res) => {
   }
 };
 
-exports.getAllUsers = async (req, res) => {
+exports.searchUser = async (req, res) => {
+  const { query } = req.query; // `query` parameter from the request URL (e.g., `/search?query=johndoe`).
+
   try {
-    const users = await User.find().select("-password");
+    if (!query || query.trim().length === 0) {
+      return res.status(400).json({ message: "Search query cannot be empty" });
+    }
+
+    // Perform a case-insensitive search for users based on username or email
+    const users = await User.find({
+      $or: [
+        { username: { $regex: query, $options: "i" } }, // Case-insensitive match on username
+        { email: { $regex: query, $options: "i" } },    // Case-insensitive match on email
+      ],
+    }).select("-password"); // Exclude the password field.
+
+    if (users.length === 0) {
+      return res.status(404).json({ message: "No users found matching the query" });
+    }
+
     res.status(200).json(users);
   } catch (error) {
-    console.error("Error fetching all users:", error);
+    console.error("Error searching users:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };

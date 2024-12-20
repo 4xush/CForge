@@ -39,8 +39,8 @@ const Login = () => {
             const redirectUrl = location.state?.redirectUrl || '/dashboard';
             navigate(redirectUrl);
         } catch (error) {
-            toast.error('Login failed. Please check your credentials.');
-            console.error('Login error:', error);
+            // toast.error('Login failed. Please check your credentials.');
+            // console.error('Login error:', error);
         }
     };
 
