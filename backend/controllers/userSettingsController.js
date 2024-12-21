@@ -2,10 +2,34 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const authHelper = require("../utils/authHelpers");
 
+exports.updateFullName = async (req, res) => {
+  const { fullName } = req.body;
+
+  try {
+    if (!authHelper.validateFullName(fullName)) {
+      return res.status(400).json({ message: "Invalid fullName" });
+    }
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { fullName },
+      { new: true }
+    );
+
+    res.status(200).json({ message: "fullName updated successfully" });
+  } catch (error) {
+    console.error("Error updating fullName:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
 exports.updatePassword = async (req, res) => {
   const { oldPassword, newPassword } = req.body;
 
   try {
+    // Validate input
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ message: "Both old and new passwords are required" });
+    }
+
     if (!authHelper.validatePassword(newPassword)) {
       return res
         .status(400)
@@ -13,10 +37,21 @@ exports.updatePassword = async (req, res) => {
     }
 
     const user = await User.findById(req.user.id).select("+password");
-    if (!user || !(await bcrypt.compare(oldPassword, user.password))) {
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!user.password) {
+      return res.status(500).json({ message: "User password is not set in the database" });
+    }
+
+    // Compare old password with stored password
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
       return res.status(400).json({ message: "Old password is incorrect" });
     }
 
+    // Hash and update the new password
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(newPassword, salt);
     await user.save();
@@ -27,6 +62,7 @@ exports.updatePassword = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 
 
 exports.updateUsername = async (req, res) => {
@@ -88,6 +124,7 @@ exports.updateLeetCodeUsername = async (req, res) => {
 
   // Validate input
   if (!leetcodeUsername || typeof leetcodeUsername !== "string") {
+    console.log(leetcodeUsername);
     return res.status(400).json({ message: "Invalid LeetCode username format" });
   }
 

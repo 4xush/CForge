@@ -16,6 +16,7 @@ const {
   updateEmail,
   updateLeetCodeUsername,
   updateProfilePicture,
+  updateFullName,
 } = require("../controllers/userSettingsController");
 
 // User profile routes
@@ -26,11 +27,12 @@ router.route("/profile")
 router.get("/search", protect, searchUser); //GET /users/search?query=johndoe
 
 // User settings routes
-router.put("/updatePassword", protect, updatePassword);
-router.put("/updateUsername", protect, updateUsername);
-router.route("/updateEmail").put(protect, updateEmail);
-router.route("/updateLeetcode").put(protect, updateLeetCodeUsername);
-router.route("/updateAvatar").put(protect, updateProfilePicture);
+router.put("/update/password", protect, updatePassword);
+router.put("/update/fullName", protect, updateFullName);
+router.put("/update/username", protect, updateUsername);
+router.route("/update/email").put(protect, updateEmail);
+router.route("/update/leetcodeUsername").put(protect, updateLeetCodeUsername);
+router.route("/update/avatar").put(protect, updateProfilePicture);
 
 router.put("/update/leetcode", protect, updateLeetCodeStats);
 

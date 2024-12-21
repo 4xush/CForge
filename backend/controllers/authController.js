@@ -1,7 +1,7 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { validateEmail, validatePassword, validatefullName, checkLeetCodeUsername } = require("../utils/authHelpers.js");
+const { validateEmail, validatePassword, validateFullName, checkLeetCodeUsername } = require("../utils/authHelpers.js");
 const generateUsername = require("../utils/usernameGenerator");
 const { updateUserLeetCodeStats } = require("../services/leetcodeStatsService");
 
@@ -18,7 +18,7 @@ const signupUser = async (req, res) => {
     if (!validatePassword(password)) {
       validationErrors.push("Password must be at least 8 characters long");
     }
-    if (!validatefullName(fullName)) {
+    if (!validateFullName(fullName)) {
       validationErrors.push("Full name must be between 2 and 50 characters");
     }
     if (!leetcodeUsername?.trim()) {
