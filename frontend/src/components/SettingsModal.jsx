@@ -2,18 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import {
-  User,
-  FileText,
-  Linkedin,
-  Mail,
-  Key,
-  Trash2,
-  CircleUser,
-  X,
-  ChevronLeft,
-  AlertTriangle
-} from 'lucide-react';
+import { User, Mail, Key, Trash2, CircleUser, X, ChevronLeft, AlertTriangle } from 'lucide-react';
 import ApiService from '../services/api';
 import SettingField from './SettingField';
 
@@ -67,7 +56,7 @@ const SettingsModal = ({ isOpen, onClose, triggerRef }) => {
     }
   };
 
-  const handlePasswordChange = async () => {
+  const handlePasswordChange = async (passwordData) => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast.error('New passwords do not match');
       return;
@@ -80,11 +69,6 @@ const SettingsModal = ({ isOpen, onClose, triggerRef }) => {
       });
       toast.success('Password updated successfully');
       setShowPasswordForm(false);
-      setPasswordData({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      });
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to update password');
     }
@@ -150,52 +134,73 @@ const SettingsModal = ({ isOpen, onClose, triggerRef }) => {
     </div>
   );
 
-  const PasswordChangeForm = () => (
-    <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-4 p-4 bg-gray-800/50 rounded-lg"
-    >
-      <h3 className="text-lg font-medium text-white mb-4">Change Password</h3>
-      <div className="space-y-4">
-        <input
-          type="password"
-          value={passwordData.currentPassword}
-          onChange={e => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
-          placeholder="Current Password"
-          className="w-full px-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20"
-        />
-        <input
-          type="password"
-          value={passwordData.newPassword}
-          onChange={e => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-          placeholder="New Password"
-          className="w-full px-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20"
-        />
-        <input
-          type="password"
-          value={passwordData.confirmPassword}
-          onChange={e => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-          placeholder="Confirm New Password"
-          className="w-full px-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20"
-        />
-      </div>
-      <div className="flex gap-2 mt-4">
-        <button
-          onClick={handlePasswordChange}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-        >
-          Update Password
-        </button>
-        <button
-          onClick={() => setShowPasswordForm(false)}
-          className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
-        >
-          Cancel
-        </button>
-      </div>
-    </motion.div>
-  );
+  const PasswordChangeForm = () => {
+    const [localPasswordData, setLocalPasswordData] = useState({
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    });
+
+    const handleInputChange = (e) => {
+      const { name, value } = e.target;
+      setLocalPasswordData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    };
+
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      handlePasswordChange(localPasswordData);
+    };
+
+    return (
+      <form onSubmit={handleSubmit}>
+        <h3 className="text-lg font-medium text-white mb-4">Change Password</h3>
+        <div className="space-y-4">
+          <input
+            type="password"
+            name="currentPassword"
+            value={localPasswordData.currentPassword}
+            onChange={handleInputChange}
+            placeholder="Current Password"
+            className="w-full px-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20"
+          />
+          <input
+            type="password"
+            name="newPassword"
+            value={localPasswordData.newPassword}
+            onChange={handleInputChange}
+            placeholder="New Password"
+            className="w-full px-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20"
+          />
+          <input
+            type="password"
+            name="confirmPassword"
+            value={localPasswordData.confirmPassword}
+            onChange={handleInputChange}
+            placeholder="Confirm New Password"
+            className="w-full px-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20"
+          />
+        </div>
+        <div className="flex gap-2 mt-4">
+          <button
+            type="submit"
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            Update Password
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowPasswordForm(false)}
+            className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    );
+  };
 
   if (loading) {
     return null;
@@ -287,19 +292,6 @@ const SettingsModal = ({ isOpen, onClose, triggerRef }) => {
                     value={profileData?.username}
                     onEdit={value => handleEdit('username', value)}
                   />
-                  <SettingField
-                    icon={<FileText />}
-                    label="Bio"
-                    value={profileData?.summary}
-                    type="textarea"
-                    onEdit={value => handleEdit('summary', value)}
-                  />
-                  <SettingField
-                    icon={<Linkedin />}
-                    label="LinkedIn"
-                    value={profileData?.linkedin}
-                    onEdit={value => handleEdit('linkedin', value)}
-                  />
                 </div>
               ) : (
                 <div className="space-y-6">
@@ -356,3 +348,4 @@ const SettingsModal = ({ isOpen, onClose, triggerRef }) => {
 };
 
 export default SettingsModal;
+

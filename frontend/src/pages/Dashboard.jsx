@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import LeftSidebar from '../components/LeftSidebar';
 import MainContent from '../components/MainContent';
 import { RoomContext } from '../context/RoomContext';

@@ -5,7 +5,7 @@ import useLeaveRoom from '../hooks/useLeaveRoom';
 import ConfirmDialog from './ui/ConfirmDialog';
 import { useRoomContext } from '../context/RoomContext';
 import useRoomDetails from '../hooks/useRoomDetails';
-import { showToast } from '../utils/toast';
+import toast from 'react-hot-toast';
 
 const TopBar = () => {
     const { selectedRoom } = useRoomContext();
@@ -50,11 +50,11 @@ const TopBar = () => {
 
     const onLeaveRoom = async () => {
         const result = await handleLeaveRoom();
-        showToast({
-            title: result.success ? "Room Left" : "Error",
-            description: result.message,
-            variant: result.success ? "success" : "destructive",
-        });
+        if (result.success) {
+            toast.success(`Room Left: ${result.message}`);
+        } else {
+            toast.error(`Error: ${result.message}`);
+        }
     };
 
     return (

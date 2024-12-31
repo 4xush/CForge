@@ -41,13 +41,6 @@ const LeftSidebar = ({ isMobileMenuOpen, isRoomsListVisible, setIsRoomsListVisib
                             onClick={() => setActiveSection('rooms')}
                         />
                         <DashboardButton
-                            icon={MessageSquareIcon}
-                            label="Messages"
-                            badge="12"
-                            isActive={activeSection === 'messages'}
-                            onClick={() => setActiveSection('messages')}
-                        />
-                        <DashboardButton
                             ref={settingsButtonRef}
                             icon={SettingsIcon}
                             label="Settings"
