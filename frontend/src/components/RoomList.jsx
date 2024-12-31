@@ -1,35 +1,73 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { RoomContext } from '../context/RoomContext';
-import { Plus } from 'lucide-react';
+import { Plus, ChevronDown } from 'lucide-react';
 
 const RoomList = ({ setRoomFormVisible }) => {
     const { rooms, setSelectedRoom } = useContext(RoomContext);
+    const [isExpanded, setIsExpanded] = useState(false);
 
-    const handleRoomClick = (room) => {
-        setSelectedRoom(room);
-    };
+    const visibleRooms = isExpanded ? rooms : rooms.slice(0, 2);
+    const hasMoreRooms = rooms.length > 2;
 
     return (
-        <>
-            <h2 className="text-lg mb-3 flex items-center">Rooms</h2>
-            {rooms.map((room, index) => (
-                <div
-                    key={room.id || index}
-                    className="flex items-center mb-2 cursor-pointer"
-                    onClick={() => handleRoomClick(room)}
-                >
-                    <img src={`https://avatar.iran.liara.run/username?username=[${room.name}]`} alt={room.name} className="w-6 h-6 rounded-full mr-2" />
-                    <span className="text-sm">{room.name}</span>
+        <div className="pl-6 relative">
+            {/* Main vertical branch */}
+            <div className="absolute left-3 top-0 bottom-0 border-l-2 border-dotted border-orange-500/50" />
+
+            {/* Room list with branching connections */}
+            <div className="space-y-4">
+                {visibleRooms.map((room, index) => (
+                    <div key={room.id || index} className="relative">
+                        {/* Horizontal branch to room */}
+                        <div className="absolute left-0 top-1/2 w-4 border-t-2 border-dotted border-orange-500/50 -translate-y-1/2" />
+                        <button
+                            onClick={() => setSelectedRoom(room)}
+                            className="ml-6 flex items-center inline-block w-auto space-x-2 px-2 rounded-xl 
+                                bg-gray-700/50 hover:bg-orange-500/20 transition-colors duration-200"
+                        >
+                            <img
+                                src={`https://avatar.iran.liara.run/username?username=[${room.name}]`}
+                                alt={room.name}
+                                className="w-6 h-6 rounded-full"
+                            />
+                            <span className="text-sm text-white">{room.name}</span>
+                        </button>
+                    </div>
+                ))}
+
+                {/* Expand/Collapse button */}
+                {hasMoreRooms && (
+                    <div className="relative">
+                        <div className="absolute left-0 top-1/2 w-4 border-t-2 border-dotted border-orange-500/50 -translate-y-1/2" />
+                        <button
+                            onClick={() => setIsExpanded(!isExpanded)}
+                            className="ml-6 flex items-center space-x-2 "
+                        >
+                            <ChevronDown
+                                className={`text-orange-500 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                                size={16}
+                            />
+                            <span className="text-sm text-orange-500">
+                                {isExpanded ? 'Show Less' : `Show ${rooms.length - 2} More`}
+                            </span>
+                        </button>
+                    </div>
+                )}
+
+                {/* Create/Join Room button */}
+                <div className="relative pb-2">
+                    <div className="absolute left-0 top-1/2 w-4 border-t-2 border-dotted border-orange-500/50 -translate-y-1/2" />
+                    <button
+                        className="ml-6 flex items-center space-x-2 px-3 py-1.5 rounded-xl 
+                            bg-gray-700/50 hover:bg-orange-500/20 transition-colors duration-200"
+                        onClick={() => setRoomFormVisible(true)}
+                    >
+                        <Plus className="text-orange-500" size={16} />
+                        <span className="text-sm text-orange-500">Create or Join Room</span>
+                    </button>
                 </div>
-            ))}
-            <button
-                className="mt-3 flex items-center text-orange-500 text-sm"
-                onClick={() => setRoomFormVisible(true)}
-            >
-                <Plus className="mr-2" size={16} />
-                Create or Join Room
-            </button>
-        </>
+            </div>
+        </div>
     );
 };
 
