@@ -1,48 +1,48 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { RoomProvider } from './context/RoomContext';
-import LoginPage from './pages/Login';
-import SignupPage from './pages/Signup';
-import WelcomePage from './pages/LandingPage.jsx';
-import DashboardPage from './pages/Dashboard.jsx';
-import { DashboardProvider } from './context/DashboardContext.jsx';
+import { DashboardProvider } from './context/DashboardContext';
 import { AuthProvider } from './context/AuthContext';
-import { LeaderboardProvider } from './context/LeaderboardContext';
-import { MessageProvider } from './context/MessageContext.jsx';
+import { MessageProvider } from './context/MessageContext';
 import { Toaster } from 'react-hot-toast';
-import UserInfo from './components/UserProfile.jsx';
-import RoomInviteHandler from './pages/RoomInviteHandler.jsx';
+import Layout from './components/Layout';
+import PrivateRoute from './components/PrivateRoute';
+
+const LoginPage = lazy(() => import('./pages/Login'));
+const SignupPage = lazy(() => import('./pages/Signup'));
+const WelcomePage = lazy(() => import('./pages/LandingPage'));
+const DashboardPage = lazy(() => import('./pages/Dashboard'));
+const UserInfo = lazy(() => import('./components/UserProfile'));
+const RoomInviteHandler = lazy(() => import('./pages/RoomInviteHandler'));
+const RoomLeaderboard = lazy(() => import('./pages/RoomLeaderboard'));
+const RoomChat = lazy(() => import('./pages/RoomChat'));
 
 const App = () => {
   return (
     <AuthProvider>
       <Router>
         <RoomProvider>
-          <LeaderboardProvider>
-            <MessageProvider>
+          <MessageProvider>
+            <DashboardProvider>
               <Toaster position="top-right" reverseOrder={false} />
-              <Routes>
-                <Route path="/signup" element={<SignupPage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/welcome" element={<WelcomePage />} />
-                <Route path="/profile" element={<UserInfo />} />
-                <Route
-                  path="/dashboard/*"
-                  element={
-                    <DashboardProvider>
-                      <DashboardPage />
-                    </DashboardProvider>
-                  }
-                />
-                {/* Handling the invite links */}
-                <Route
-                  path="/rooms/join/:inviteCode"
-                  element={<RoomInviteHandler />}
-                />
-                <Route path="/" element={<Navigate to="/login" />} />
-              </Routes>
-            </MessageProvider>
-          </LeaderboardProvider>
+              <Suspense fallback={<div>Loading...</div>}>
+                <Routes>
+                  <Route path="/signup" element={<SignupPage />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/welcome" element={<WelcomePage />} />
+                  {/* layout */}
+                  <Route element={<Layout />}>
+                    <Route path="/profile" element={<PrivateRoute><UserInfo /></PrivateRoute>} />
+                    <Route path="/dashboard" element={<PrivateRoute><DashboardPage /></PrivateRoute>} />
+                    <Route path="/rooms/:roomId/leaderboard" element={<PrivateRoute><RoomLeaderboard /></PrivateRoute>} />
+                    <Route path="/rooms/:roomId/chat" element={<PrivateRoute><RoomChat /></PrivateRoute>} />
+                  </Route>
+                  <Route path="/rooms/join/:inviteCode" element={<RoomInviteHandler />} />
+                  <Route path="/" element={<Navigate to="/login" />} />
+                </Routes>
+              </Suspense>
+            </DashboardProvider>
+          </MessageProvider>
         </RoomProvider>
       </Router>
     </AuthProvider>
@@ -50,3 +50,4 @@ const App = () => {
 };
 
 export default App;
+

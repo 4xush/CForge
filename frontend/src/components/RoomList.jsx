@@ -1,13 +1,20 @@
 import React, { useContext, useState } from 'react';
 import { RoomContext } from '../context/RoomContext';
 import { Plus, ChevronDown } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const RoomList = ({ setRoomFormVisible }) => {
     const { rooms, setSelectedRoom } = useContext(RoomContext);
     const [isExpanded, setIsExpanded] = useState(false);
+    const navigate = useNavigate();
 
     const visibleRooms = isExpanded ? rooms : rooms.slice(0, 2);
     const hasMoreRooms = rooms.length > 2;
+
+    const handleRoomClick = (room) => {
+        setSelectedRoom(room);
+        navigate(`/rooms/${room.roomId}/leaderboard`); // Navigate to the room's ID endpoint
+    };
 
     return (
         <div className="pl-6 relative">
@@ -21,7 +28,8 @@ const RoomList = ({ setRoomFormVisible }) => {
                         {/* Horizontal branch to room */}
                         <div className="absolute left-0 top-1/2 w-4 border-t-2 border-dotted border-orange-500/50 -translate-y-1/2" />
                         <button
-                            onClick={() => setSelectedRoom(room)}
+                            onClick={() => handleRoomClick(room)}
+                            // onClick={() => setSelectedRoom(room)}
                             className="ml-6 flex items-center inline-block w-auto space-x-2 px-2 rounded-xl 
                                 bg-gray-700/50 hover:bg-orange-500/20 transition-colors duration-200"
                         >

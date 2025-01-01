@@ -1,19 +1,14 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Menu } from 'lucide-react';
-import LeftSidebar from '../components/LeftSidebar';
-import MainContent from '../components/MainContent';
 import { RoomContext } from '../context/RoomContext';
-import { DashboardContext } from '../context/DashboardContext';
-import HelpFAQ from '../components/HelpFAQ';
 import InviteModal from '../components/InviteModal';
 
-const CForgeUI = () => {
+const Dashboard = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState('leaderboard');
     const [isMobile, setIsMobile] = useState(false);
-    const [isRoomsListVisible, setIsRoomsListVisible] = useState(false);
     const { selectedRoom, refreshRoomList } = useContext(RoomContext);
-    const { activeSection } = useContext(DashboardContext);
+    const navigate = useNavigate();
 
     useEffect(() => {
         refreshRoomList();
@@ -27,12 +22,18 @@ const CForgeUI = () => {
         handleResize();
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+
+    useEffect(() => {
+        if (selectedRoom) {
+            navigate(`/rooms/${selectedRoom._id}/leaderboard`);
+        }
+    }, [selectedRoom, navigate]);
+
     return (
         <>
-            <div className="flex flex-col md:flex-row h-screen bg-gray-900 text-gray-300">
-
+            <div className="flex flex-col h-screen bg-gray-900 text-gray-300">
                 <InviteModal />
-                {/* Top Navigation Bar */}
+                {/* Top Navigation Bar for mobile */}
                 <div className="flex items-center justify-between p-4 bg-gray-800 md:hidden">
                     <button
                         className="text-white"
@@ -41,33 +42,16 @@ const CForgeUI = () => {
                         <Menu size={20} />
                     </button>
                 </div>
-
-                {/* Left Sidebar */}
-                <LeftSidebar
-                    isMobileMenuOpen={isMobileMenuOpen}
-                    isRoomsListVisible={isRoomsListVisible}
-                    setIsRoomsListVisible={setIsRoomsListVisible}
-                />
-
                 {/* Main Layout */}
-                <div className="flex-1 flex flex-col md:flex-row relative">
-                    {activeSection === 'help' ? (
-                        <HelpFAQ />
-                    ) : selectedRoom ? (
-                        <MainContent
-                            activeTab={activeTab}
-                            setActiveTab={setActiveTab}
-                            isMobile={isMobile}
-                        />
-                    ) : (
-                        <div className="flex-1 bg-gray-800 flex items-center justify-center">
-                            <h2 className="text-sm text-gray-700">Please select a room</h2>
-                        </div>
-                    )}
+                <div className="flex-1 flex flex-col relative">
+                    <div className="flex-1 bg-gray-800 flex items-center justify-center">
+                        <h2 className="text-sm text-gray-300">Please select a room from the sidebar</h2>
+                    </div>
                 </div>
             </div>
         </>
     );
 };
 
-export default CForgeUI;
+export default Dashboard;
+

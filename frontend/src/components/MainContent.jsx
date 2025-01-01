@@ -1,34 +1,39 @@
 import React from 'react';
-import Leaderboard from './Leaderboard/CodingLeaderboard';
-import Chat from './Messages/Chat';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import TopBar from './TopBar';
 import { useRoomContext } from '../context/RoomContext';
 
-const MainContent = ({ activeTab, setActiveTab, isMobile }) => {
-    const { refreshRoomList } = useRoomContext();
-    const { selectedRoom } = useRoomContext();
+const MainContent = ({ children }) => {
+    const { refreshRoomList, selectedRoom } = useRoomContext();
+    const location = useLocation();
+    const { roomId } = useParams();
+
+    const isLeaderboardActive = location.pathname.endsWith('/leaderboard');
+    const isChatActive = location.pathname.endsWith('/chat');
+
     return (
         <div className="flex-1 flex flex-col bg-gray-900">
-            <TopBar setRefreshRooms={refreshRoomList} /> {/* Pass refreshRoomList to TopBar */}
+            <TopBar setRefreshRooms={refreshRoomList} />
             <div className="flex border-b border-gray-700">
-                <button
-                    className={`px-4 py-1 text-sm ${activeTab === 'leaderboard' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-500'}`}
-                    onClick={() => setActiveTab('leaderboard')}
+                <Link
+                    to={`/rooms/${roomId}/leaderboard`}
+                    className={`px-4 py-1 text-sm ${isLeaderboardActive ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-500'}`}
                 >
                     Leaderboard
-                </button>
-                <button
-                    className={`px-4 py-1 text-sm ${activeTab === 'chat' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-500'}`}
-                    onClick={() => setActiveTab('chat')}
+                </Link>
+                <Link
+                    to={`/rooms/${roomId}/chat`}
+                    className={`px-4 py-1 text-sm ${isChatActive ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-500'}`}
                 >
                     Chat
-                </button>
+                </Link>
             </div>
             <div className="flex-1 p-4 overflow-y-auto bg-gray-900">
-                {activeTab === 'leaderboard' ? <Leaderboard selectedRoom={selectedRoom} isMobile={isMobile} /> : <Chat />}
+                {children}
             </div>
         </div>
     );
 };
 
 export default MainContent;
+

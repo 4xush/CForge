@@ -3,7 +3,6 @@ import React, { createContext, useContext, useState } from 'react';
 export const DashboardContext = createContext();
 
 export const DashboardProvider = ({ children }) => {
-    const [activeSection, setActiveSection] = useState('rooms');
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [inviteDetails, setInviteDetails] = useState(null);
@@ -11,8 +10,6 @@ export const DashboardProvider = ({ children }) => {
     const [inviteError, setInviteError] = useState(null);
 
     const contextValue = {
-        activeSection,
-        setActiveSection,
         isSettingsOpen,
         setIsSettingsOpen,
         isInviteModalOpen,
