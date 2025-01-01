@@ -1,25 +1,24 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MoreVertical, LogOut, X } from 'lucide-react';
 import RoomDetails from './RoomDetails';
-import useLeaveRoom from '../hooks/useLeaveRoom';
 import ConfirmDialog from './ui/ConfirmDialog';
 import { useRoomContext } from '../context/RoomContext';
-import useRoomDetails from '../hooks/useRoomDetails';
+import ApiService from '../services/api';
 import toast from 'react-hot-toast';
 
 const TopBar = () => {
-    const { selectedRoom } = useRoomContext();
+    const { selectedRoom, setSelectedRoom, refreshRoomList } = useRoomContext();
     const [showMenu, setShowMenu] = useState(false);
     const [showRoomDetails, setShowRoomDetails] = useState(false);
     const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
+    const [roomDetails, setRoomDetails] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
     const menuRef = useRef(null);
     const roomDetailsRef = useRef(null);
 
-    const { roomDetails, loading, error } = useRoomDetails(selectedRoom?.roomId);
-    const { handleLeaveRoom } = useLeaveRoom();
-
-    const toggleMenu = () => setShowMenu(prev => !prev);
+    const toggleMenu = () => setShowMenu((prev) => !prev);
 
     const handleRoomDetailsClick = () => {
         setShowRoomDetails(true);
@@ -30,6 +29,25 @@ const TopBar = () => {
         setShowLeaveConfirmation(true);
         setShowMenu(false);
     };
+
+    const fetchRoomDetails = async (roomId) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await ApiService.get(`/rooms/${roomId}`);
+            setRoomDetails(response.data);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to fetch room details.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (selectedRoom?.roomId) {
+            fetchRoomDetails(selectedRoom.roomId);
+        }
+    }, [selectedRoom]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -49,11 +67,14 @@ const TopBar = () => {
     }, []);
 
     const onLeaveRoom = async () => {
-        const result = await handleLeaveRoom();
-        if (result.success) {
-            toast.success(`Room Left: ${result.message}`);
-        } else {
-            toast.error(`Error: ${result.message}`);
+        try {
+            const response = await ApiService.delete(`/rooms/${selectedRoom.roomId}/leave`);
+            setSelectedRoom(null);
+            refreshRoomList();
+            setShowLeaveConfirmation(false); // Close the confirm dialog
+            toast.success(`Room Left: ${response.data.message}`);
+        } catch (err) {
+            toast.error(`Error: ${err.response?.data?.message || 'Failed to leave room.'}`);
         }
     };
 

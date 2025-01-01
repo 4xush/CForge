@@ -7,6 +7,7 @@ import { MessageProvider } from './context/MessageContext';
 import { Toaster } from 'react-hot-toast';
 import Layout from './components/Layout';
 import PrivateRoute from './components/PrivateRoute';
+import Settings from './pages/Settings';
 
 const LoginPage = lazy(() => import('./pages/Login'));
 const SignupPage = lazy(() => import('./pages/Signup'));
@@ -16,6 +17,7 @@ const UserInfo = lazy(() => import('./components/UserProfile'));
 const RoomInviteHandler = lazy(() => import('./pages/RoomInviteHandler'));
 const RoomLeaderboard = lazy(() => import('./pages/RoomLeaderboard'));
 const RoomChat = lazy(() => import('./pages/RoomChat'));
+const HelpFAQ = lazy(() => import('./pages/HelpFAQ'));
 
 const App = () => {
   return (
@@ -36,6 +38,8 @@ const App = () => {
                     <Route path="/dashboard" element={<PrivateRoute><DashboardPage /></PrivateRoute>} />
                     <Route path="/rooms/:roomId/leaderboard" element={<PrivateRoute><RoomLeaderboard /></PrivateRoute>} />
                     <Route path="/rooms/:roomId/chat" element={<PrivateRoute><RoomChat /></PrivateRoute>} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/help" element={<HelpFAQ />} />
                   </Route>
                   <Route path="/rooms/join/:inviteCode" element={<RoomInviteHandler />} />
                   <Route path="/" element={<Navigate to="/login" />} />

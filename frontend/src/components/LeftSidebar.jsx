@@ -5,9 +5,8 @@ import { useAuthContext } from '../context/AuthContext';
 import { useRoomContext } from '../context/RoomContext';
 import DashboardButton from './ui/DashboardButtons';
 import RoomList from './RoomList';
-import SettingsModal from './SettingsModal';
 import MiniProfileModal from './ProfileModal';
-import CreateJoinModal from './RoomCreation/CreateJoinRoomModal';
+import CreateJoinModal from './CreateRoom/CreateJoinRoomModal';
 
 const LeftSidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
     const { authUser, logout } = useAuthContext();
@@ -51,7 +50,6 @@ const LeftSidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
                             icon={PanelRightIcon}
                             label="Rooms"
                             isActive={isActive('/rooms')}
-                            onClick={() => navigate('/dashboard')}
                         />
 
                         {/* Always visible RoomList */}
@@ -66,8 +64,8 @@ const LeftSidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
                             ref={settingsButtonRef}
                             icon={SettingsIcon}
                             label="Settings"
-                            isActive={isActive('/profile')}
-                            onClick={handleSettingsClick}
+                            isActive={isActive('/settings')}
+                            onClick={() => navigate('/settings')}
                         />
 
                         <DashboardButton
@@ -86,13 +84,6 @@ const LeftSidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
                     </div>
                 </div>
             </div>
-
-            <SettingsModal
-                isOpen={isSettingsOpen}
-                onClose={() => setIsSettingsOpen(false)}
-                triggerRef={settingsButtonRef}
-            />
-
             {isRoomFormVisible && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
                     <div className="relative w-full max-w-lg">
