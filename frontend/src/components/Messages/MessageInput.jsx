@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useRoomContext } from '../../context/RoomContext';
-import { useAuthContext } from '../../context/AuthContext';
 import axios from 'axios';
 import { Send, X } from 'lucide-react';
 
 const MessageInput = ({ onMessageSent, initialMessage = '', onCancel }) => {
     const { selectedRoom } = useRoomContext();
-    const { authUser } = useAuthContext();
     const [message, setMessage] = useState(initialMessage);
     const [sending, setSending] = useState(false);
 
@@ -20,10 +18,8 @@ const MessageInput = ({ onMessageSent, initialMessage = '', onCancel }) => {
         setSending(true);
         try {
             if (initialMessage) {
-                // Editing existing message
                 await onMessageSent(message);
             } else {
-                // Sending new message
                 const token = localStorage.getItem('app-token');
                 const response = await axios.post(
                     `http://localhost:5000/api/rooms/${selectedRoom._id}/messages`,
@@ -52,47 +48,43 @@ const MessageInput = ({ onMessageSent, initialMessage = '', onCancel }) => {
     };
 
     return (
-        <div className="bg-gray-100 rounded-xl border-t border-gray-200 shadow-sm">
-            <div className="flex items-center bg-gray-800 rounded-xl overflow-hidden ring-1 ring-gray-200 focus-within:ring-2 focus-within:ring-blue-500 transition-all duration-300">
-                <input
-                    type="text"
-                    className="flex-grow p-3 text-white placeholder-gray-400 bg-transparent focus:outline-none"
-                    placeholder={initialMessage ? "Edit your message..." : "Type your message..."}
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    disabled={(!selectedRoom && !initialMessage) || sending}
-                />
-                <button
-                    className={`
-                        p-3
+        <div className="flex items-center bg-[#25272E] p-2  rounded-md overflow-hidden focus-within:ring-2 ring-[#5A5FCF] transition-all duration-200">
+            <input
+                type="text"
+                className="flex-grow px-4 py-2 text-[#DDE3F1] placeholder-[#A6B1C0] bg-transparent focus:outline-none font-mono text-sm"
+                placeholder={initialMessage ? "Edit message..." : "Type a message..."}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={handleKeyDown}
+                disabled={(!selectedRoom && !initialMessage) || sending}
+            />
+            <button
+                className={`
+                        p-2 mr-1
                         ${message.trim() && !sending
-                            ? 'text-blue-600 hover:bg-blue-50 active:bg-blue-100'
-                            : 'text-gray-400'}
+                        ? 'text-[#DDE3F1] hover:text-white hover:bg-[#333845]'
+                        : 'text-gray-600'}
                         transition-colors duration-200
-                        flex items-center justify-center
+                        rounded-md
                     `}
-                    onClick={handleSendMessage}
-                    disabled={!message.trim() || sending}
+                onClick={handleSendMessage}
+                disabled={!message.trim() || sending}
+            >
+                <Send
+                    size={16}
+                    className={sending ? 'animate-pulse' : ''}
+                />
+            </button>
+            {onCancel && (
+                <button
+                    className="p-2 mr-2 text-[#A6B1C0] hover:text-white hover:bg-[#333845] rounded-md transition-colors duration-200"
+                    onClick={onCancel}
                 >
-                    <Send
-                        size={20}
-                        strokeWidth={2}
-                        className={sending ? 'animate-pulse' : ''}
-                    />
+                    <X size={16} />
                 </button>
-                {onCancel && (
-                    <button
-                        className="p-3 text-gray-400 hover:bg-red-50 active:bg-red-100 transition-colors duration-200"
-                        onClick={onCancel}
-                    >
-                        <X size={20} strokeWidth={2} />
-                    </button>
-                )}
-            </div>
+            )}
         </div>
     );
 };
 
 export default MessageInput;
-

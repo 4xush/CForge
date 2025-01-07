@@ -35,7 +35,7 @@ const App = () => {
                   {/* layout */}
                   <Route element={<Layout />}>
                     <Route path="/profile" element={<PrivateRoute><UserInfo /></PrivateRoute>} />
-                    <Route path="/dashboard" element={<PrivateRoute><DashboardPage /></PrivateRoute>} />
+                    <Route path="/dashboard" element={<DashboardPage />} />
                     <Route path="/rooms/:roomId/leaderboard" element={<PrivateRoute><RoomLeaderboard /></PrivateRoute>} />
                     <Route path="/rooms/:roomId/chat" element={<PrivateRoute><RoomChat /></PrivateRoute>} />
                     <Route path="/settings" element={<Settings />} />
