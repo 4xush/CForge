@@ -5,6 +5,8 @@ const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const roomRoutes = require("./routes/roomRoutes");
 const adminRoomRoutes = require("./routes/adminRoomRoutes");
+const publicRoutes = require("./routes/publicRoutes");
+
 const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
@@ -41,6 +43,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/rooms/admin", adminRoomRoutes);
+app.use("/api", publicRoutes);
 
 const PORT = process.env.PORT || 5000;
 

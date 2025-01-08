@@ -2,12 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ChevronRight, Trophy, Star, LogOut } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
+import { useAuthContext } from '../context/AuthContext';
 
-const MiniProfileModal = ({ user, onLogout }) => {
+const UserProfileModal = ({ user, onLogout }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const modalRef = useRef(null);
     const navigate = useNavigate();
-
+    const { authUser } = useAuthContext();
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (modalRef.current && !modalRef.current.contains(event.target)) {
@@ -21,7 +22,8 @@ const MiniProfileModal = ({ user, onLogout }) => {
 
     const handleViewFullProfile = (e) => {
         e.stopPropagation();
-        navigate('/profile');
+        // console.log(authUser.username);
+        navigate(`/u/${authUser.username}`);  // Navigate to cforge.live/username
     };
 
     const handleLogoutClick = (e) => {
@@ -34,13 +36,13 @@ const MiniProfileModal = ({ user, onLogout }) => {
             ref={modalRef}
             className={`
                 mt-auto bg-gray-900 rounded-t-xl border-t border-x border-gray-700
-                transition-all duration-300 ease-in-out
-                ${isExpanded ? 'h-auto' : 'h-16 cursor-pointer'}
+                transition-all duration-300 ease-in-out 
+                ${isExpanded ? 'h-auto' : 'h-16 '}
             `}
             onClick={() => setIsExpanded(!isExpanded)}
         >
             {/* Collapsed View */}
-            <div className="flex items-center px-4 h-16">
+            <div className="flex items-center px-4 h-16 mb-2 cursor-pointer">
                 <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-800 mr-3">
                     {user?.profilePicture ? (
                         <img
@@ -70,30 +72,6 @@ const MiniProfileModal = ({ user, onLogout }) => {
                 ${isExpanded ? 'opacity-100 max-h-[450px]' : 'opacity-0 max-h-0'}
             `}>
                 <CardContent className="p-4">
-                    {/* Quick Stats */}
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                        <div className="bg-gray-800 p-3 rounded-lg">
-                            <div className="flex items-center justify-center space-x-2 text-yellow-500 mb-1">
-                                <Trophy size={16} />
-                                <span className="text-sm">LeetCode</span>
-                            </div>
-                            <p className="text-center text-white font-semibold">
-                                {user?.platforms?.leetcode?.totalQuestionsSolved || 0}
-                            </p>
-                            <p className="text-center text-xs text-gray-400">Problems Solved</p>
-                        </div>
-                        <div className="bg-gray-800 p-3 rounded-lg">
-                            <div className="flex items-center justify-center space-x-2 text-red-500 mb-1">
-                                <Star size={16} />
-                                <span className="text-sm">Rating</span>
-                            </div>
-                            <p className="text-center text-white font-semibold">
-                                {user?.platforms?.leetcode?.contestRating || 0}
-                            </p>
-                            <p className="text-center text-xs text-gray-400">Contest Rating</p>
-                        </div>
-                    </div>
-
                     {/* Action Buttons */}
                     <div className="space-y-2">
                         <button
@@ -120,4 +98,4 @@ const MiniProfileModal = ({ user, onLogout }) => {
     );
 };
 
-export default MiniProfileModal;
+export default UserProfileModal;

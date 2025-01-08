@@ -12,11 +12,12 @@ const LoginPage = lazy(() => import('./pages/Login'));
 const SignupPage = lazy(() => import('./pages/Signup'));
 const WelcomePage = lazy(() => import('./pages/LandingPage'));
 const DashboardPage = lazy(() => import('./pages/Dashboard'));
-const UserInfo = lazy(() => import('./components/UserProfile'));
+const UserProfile = lazy(() => import('./components/UserProfile'));
 const RoomInviteHandler = lazy(() => import('./pages/RoomInviteHandler'));
 const RoomLeaderboard = lazy(() => import('./pages/RoomLeaderboard'));
 const RoomChat = lazy(() => import('./pages/RoomChat'));
 const HelpFAQ = lazy(() => import('./pages/HelpFAQ'));
+const NotFoundPage = lazy(() => import('./pages/Error404'));
 
 const App = () => {
   return (
@@ -26,18 +27,20 @@ const App = () => {
           <MessageProvider>
             <Toaster position="top-right" reverseOrder={false} />
             <Suspense fallback={<div>Loading...</div>}>
-              <Routes>UserInfo
+              <Routes>UserProfile
                 <Route path="/signup" element={<SignupPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/welcome" element={<WelcomePage />} />
                 {/* layout */}
+                <Route path="/404/" element={<NotFoundPage />} />
                 <Route element={<Layout />}>
-                  <Route path="/profile" element={<PrivateRoute><UserInfo /></PrivateRoute>} />
+                  <Route path="/u/:username" element={<UserProfile />} />
                   <Route path="/dashboard" element={<DashboardPage />} />
                   <Route path="/rooms/:roomId/leaderboard" element={<PrivateRoute><RoomLeaderboard /></PrivateRoute>} />
                   <Route path="/rooms/:roomId/chat" element={<PrivateRoute><RoomChat /></PrivateRoute>} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/help" element={<HelpFAQ />} />
+
                 </Route>
                 <Route path="/rooms/join/:inviteCode" element={<RoomInviteHandler />} />
                 <Route path="/" element={<Navigate to="/login" />} />

@@ -14,7 +14,6 @@ export const useRoomContext = () => {
 export const RoomProvider = ({ children }) => {
     const [rooms, setRooms] = useState([]);
     const [selectedRoom, setSelectedRoom] = useState(null);
-    console.log(selectedRoom);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);

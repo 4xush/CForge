@@ -5,7 +5,7 @@ import { useAuthContext } from '../context/AuthContext';
 import { useRoomContext } from '../context/RoomContext';
 import DashboardButton from './ui/DashboardButtons';
 import RoomList from './RoomList';
-import MiniProfileModal from './ProfileModal';
+import UserProfileModal from './ProfileModal';
 import CreateJoinModal from './CreateRoom/CreateJoinRoomModal';
 
 const LeftSidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
@@ -14,15 +14,8 @@ const LeftSidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
     const settingsButtonRef = useRef(null);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [isRoomFormVisible, setRoomFormVisible] = useState(false);
-    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
-
-    const handleSettingsClick = () => {
-        setIsProfileOpen(false);
-        setIsSettingsOpen(true);
-        navigate('/profile');
-    };
 
     const handleRoomCreatedOrJoined = () => {
         setRoomFormVisible(false);
@@ -77,7 +70,7 @@ const LeftSidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
                     </div>
 
                     <div className="mt-auto pt-4 border-t border-gray-700">
-                        <MiniProfileModal
+                        <UserProfileModal
                             user={authUser}
                             onLogout={logout}
                         />
