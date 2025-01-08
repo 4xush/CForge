@@ -4,7 +4,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from '../components/ui/Button';
 import { Alert, AlertDescription } from './ui/Alert';
 import { Loader2, Users, Lock, Unlock } from 'lucide-react';
-import { useDashboardContext } from '../context/DashboardContext';
 import toast from 'react-hot-toast';
 import { useRoomContext } from '../context/RoomContext';
 
@@ -12,21 +11,23 @@ const InviteModal = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const [currentInviteCode, setCurrentInviteCode] = useState(null);
-    const {
-        isInviteModalOpen,
-        setIsInviteModalOpen,
-        inviteDetails,
-        setInviteDetails,
-        inviteLoading,
-        setInviteLoading,
-        inviteError,
-        setInviteError,
-        resetInviteState
-    } = useDashboardContext();
-    const { setSelectedRoom, refreshRoomList } = useRoomContext();
+    const [isOpen, setIsOpen] = useState(false);
+    const [inviteDetails, setInviteDetails] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    const { refreshRoomList } = useRoomContext();
+
     const handleRoomJoinedViaInvite = () => {
         refreshRoomList();
     };
+
+    const resetState = () => {
+        setInviteDetails(null);
+        setError(null);
+        setIsOpen(false);
+    };
+
     useEffect(() => {
         // Check if we have an invite code in the location state
         if (location.state?.inviteCode && location.state?.showInviteModal) {
@@ -39,22 +40,22 @@ const InviteModal = () => {
 
     const verifyInvite = async (inviteCode) => {
         try {
-            setInviteLoading(true);
-            setIsInviteModalOpen(true);
+            setLoading(true);
+            setIsOpen(true);
             const response = await fetch(`http://localhost:5000/api/rooms/invite/${inviteCode}/verify`);
             const data = await response.json();
 
             if (data.success) {
                 setInviteDetails(data.data);
             } else {
-                setInviteError(data.message);
+                setError(data.message);
                 toast.error(data.message);
             }
         } catch (error) {
-            setInviteError('Failed to verify invite link');
+            setError('Failed to verify invite link');
             toast.error('Failed to verify invite link');
         } finally {
-            setInviteLoading(false);
+            setLoading(false);
         }
     };
 
@@ -62,7 +63,7 @@ const InviteModal = () => {
         if (!inviteDetails || !currentInviteCode) return;
 
         try {
-            setInviteLoading(true);
+            setLoading(true);
             const response = await fetch(`http://localhost:5000/api/rooms/invite/${currentInviteCode}/join`, {
                 method: 'POST',
                 headers: {
@@ -73,7 +74,7 @@ const InviteModal = () => {
 
             if (data.success) {
                 toast.success('Successfully joined room!');
-                resetInviteState();
+                resetState();
                 setCurrentInviteCode(null);
                 handleRoomJoinedViaInvite();
             } else {
@@ -82,11 +83,12 @@ const InviteModal = () => {
         } catch (error) {
             toast.error('Failed to join room');
         } finally {
-            setInviteLoading(false);
+            setLoading(false);
         }
     };
+
     return (
-        <Dialog open={isInviteModalOpen} onOpenChange={setIsInviteModalOpen}>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogContent aria-describedby="dialog-description">
                 <DialogHeader>
                     <DialogTitle>Join Room</DialogTitle>
@@ -97,14 +99,14 @@ const InviteModal = () => {
                     Use this dialog to join a room with an invitation code.
                 </p>
 
-                {inviteLoading ? (
+                {loading ? (
                     <div className="flex items-center justify-center p-4">
                         <Loader2 className="h-6 w-6 animate-spin" />
                         <span className="ml-2">Verifying invite...</span>
                     </div>
-                ) : inviteError ? (
+                ) : error ? (
                     <Alert variant="destructive">
-                        <AlertDescription>{inviteError}</AlertDescription>
+                        <AlertDescription>{error}</AlertDescription>
                     </Alert>
                 ) : inviteDetails && (
                     <div className="space-y-4">
@@ -132,9 +134,9 @@ const InviteModal = () => {
                         <Button
                             className="w-full"
                             onClick={handleJoinRoom}
-                            disabled={inviteLoading}
+                            disabled={loading}
                         >
-                            {inviteLoading ? (
+                            {loading ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                     Joining...

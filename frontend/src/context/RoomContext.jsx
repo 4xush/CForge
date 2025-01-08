@@ -3,7 +3,6 @@ import api from '../config/api';
 
 export const RoomContext = createContext();
 
-// Custom hook for context access
 export const useRoomContext = () => {
     const context = useContext(RoomContext);
     if (!context) {
