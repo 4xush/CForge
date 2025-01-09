@@ -1,19 +1,16 @@
 import React from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import TopBar from './TopBar';
-import { useRoomContext } from '../context/RoomContext';
 
 const MainContent = ({ children }) => {
-    const { refreshRoomList, selectedRoom } = useRoomContext();
     const location = useLocation();
     const { roomId } = useParams();
-
     const isLeaderboardActive = location.pathname.endsWith('/leaderboard');
     const isChatActive = location.pathname.endsWith('/chat');
 
     return (
         <div className="flex-1 flex flex-col bg-gray-900">
-            <TopBar setRefreshRooms={refreshRoomList} />
+            <TopBar roomId={roomId} />
             <div className="flex border-b border-gray-700">
                 <Link
                     to={`/rooms/${roomId}/leaderboard`}
@@ -36,4 +33,3 @@ const MainContent = ({ children }) => {
 };
 
 export default MainContent;
-

@@ -2,38 +2,28 @@ import React, { useRef, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { PanelRightIcon, SettingsIcon, HelpCircleIcon } from 'lucide-react';
 import { useAuthContext } from '../context/AuthContext';
-import { useRoomContext } from '../context/RoomContext';
 import DashboardButton from './ui/DashboardButtons';
 import RoomList from './RoomList';
 import UserProfileModal from './ProfileModal';
 import CreateJoinModal from './CreateRoom/CreateJoinRoomModal';
 
-const LeftSidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
+const LeftSidebar = () => {
     const { authUser, logout } = useAuthContext();
-    const { setSelectedRoom, refreshRoomList } = useRoomContext();
     const settingsButtonRef = useRef(null);
-    const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [isRoomFormVisible, setRoomFormVisible] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
 
     const handleRoomCreatedOrJoined = () => {
         setRoomFormVisible(false);
-        refreshRoomList();
+        window.location.reload();
     };
-
-    const handleRoomSelection = (room) => {
-        setSelectedRoom(room);
-        navigate(`/rooms/${room.id}/leaderboard`);
-    };
-
     const isActive = (path) => location.pathname.startsWith(path);
 
     return (
         <>
             <div
-                className={`w-full md:w-64 bg-gray-800 p-3 flex flex-col justify-between
-                ${isMobileMenuOpen ? 'block' : 'hidden'} md:block border-r border-gray-700 relative h-screen overflow-y-auto`}
+                className={`w-full md:w-64 bg-gray-800 p-3 flex flex-col justify-between 'hidden' md:block border-r border-gray-700 relative h-screen overflow-y-auto`}
             >
                 <div className="flex flex-col h-full">
                     <Link to="/dashboard" className="text-xl font-bold mb-6 text-white">CForge</Link>
@@ -43,13 +33,13 @@ const LeftSidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
                             icon={PanelRightIcon}
                             label="Rooms"
                             isActive={isActive('/rooms')}
+                            onClick={() => navigate('/dashboard')}
                         />
 
                         {/* Always visible RoomList */}
                         <div className="mt-2">
                             <RoomList
                                 setRoomFormVisible={setRoomFormVisible}
-                                onRoomClick={handleRoomSelection}
                             />
                         </div>
 

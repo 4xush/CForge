@@ -1,14 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useRoomContext } from '../../context/RoomContext';
 import { useAuthContext } from '../../context/AuthContext';
 import { useMessageContext } from '../../context/MessageContext';
 import Message from './ui/Message';
 import MessageInput from './MessageInput';
 import ContextMenu from './ChatContextMenu';
 import { format, isToday, isYesterday, isSameYear } from 'date-fns';
+import ApiService from '../../services/api';
 
-const Chat = () => {
-    const { selectedRoom } = useRoomContext();
+const Chat = ({ roomId }) => {
     const { authUser } = useAuthContext();
     const {
         messages,
@@ -21,12 +20,28 @@ const Chat = () => {
 
     const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, messageId: null });
     const [editingMessage, setEditingMessage] = useState(null);
+    const [roomDetails, setRoomDetails] = useState(null);
     const messagesEndRef = useRef(null);
     const contextMenuRef = useRef(null);
 
+    // Fetch room details
     useEffect(() => {
-        if (selectedRoom) fetchMessages();
-    }, [selectedRoom, fetchMessages]);
+        const fetchRoomDetails = async () => {
+            if (!roomId) return;
+            try {
+                const response = await ApiService.get(`/rooms/${roomId}`);
+                setRoomDetails(response.data);
+            } catch (error) {
+                console.error('Failed to fetch room details:', error);
+            }
+        };
+
+        fetchRoomDetails();
+    }, [roomId]);
+
+    useEffect(() => {
+        if (roomId) fetchMessages(roomId); // Update to pass roomId
+    }, [roomId, fetchMessages]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -58,14 +73,14 @@ const Chat = () => {
     const closeContextMenu = () => setContextMenu({ visible: false, x: 0, y: 0, messageId: null });
 
     const canModifyMessage = (message) => {
-        if (!authUser) return false;
+        if (!authUser || !roomDetails) return false;
         if (message.sender._id === authUser._id) return true;
-        return selectedRoom.admins.some(admin => admin.toString() === authUser._id.toString());
+        return roomDetails.admins.some(admin => admin.toString() === authUser._id.toString());
     };
 
     const handleDeleteMessage = async (messageId) => {
         try {
-            await deleteMessage(messageId);
+            await deleteMessage(messageId, roomId); // Update to pass roomId
             closeContextMenu();
         } catch (error) {
             console.error('Delete error:', error);
@@ -74,10 +89,18 @@ const Chat = () => {
 
     const handleEditMessage = async (messageId, newContent) => {
         try {
-            await editMessage(messageId, newContent);
+            await editMessage(messageId, newContent, roomId); // Update to pass roomId
             setEditingMessage(null);
         } catch (error) {
             console.error('Edit error:', error);
+        }
+    };
+
+    const handleSendMessage = async (content) => {
+        try {
+            await addMessage(content, roomId); // Update to pass roomId
+        } catch (error) {
+            console.error('Send error:', error);
         }
     };
 
@@ -96,7 +119,7 @@ const Chat = () => {
         return format(messageDate, 'MMMM d, yyyy');
     };
 
-    if (!selectedRoom) return <div className="text-center text-gray-500 mt-4">Select a room to view messages</div>;
+    if (!roomId) return <div className="text-center text-gray-500 mt-4">No room selected</div>;
     if (loading) return <div className="text-center text-gray-500 mt-4">Loading messages...</div>;
 
     const groupedMessages = messages.reduce((groups, message) => {
@@ -164,7 +187,7 @@ const Chat = () => {
             )}
 
             <div className="px-4 py-2">
-                <MessageInput onMessageSent={addMessage} />
+                <MessageInput onMessageSent={handleSendMessage} />
             </div>
         </div>
     );
