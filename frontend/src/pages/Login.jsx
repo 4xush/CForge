@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../context/AuthContext';
 import toast from 'react-hot-toast';
-import AuthLayout from './AuthLayout';
+import AuthLayout from './AuthPage';
 
 const Login = () => {
     const [formData, setFormData] = useState({

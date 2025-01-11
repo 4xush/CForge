@@ -43,11 +43,7 @@ const RoomList = ({ setRoomFormVisible }) => {
                         <div className="absolute left-0 top-1/2 w-4 border-t-2 border-dotted border-orange-500/50 -translate-y-1/2" />
                         <button
                             onClick={() => handleRoomClick(room)}
-                            className={`ml-6 flex items-center inline-block w-auto space-x-2 px-2 rounded-xl transition-colors duration-200 
-                                ${selectedRoomId === room.roomId
-                                    ? 'bg-orange-500/50'
-                                    : 'bg-gray-700/50 hover:bg-orange-500/20'
-                                }`}
+                            className={"ml-6 flex items-center inline-block w-auto space-x-2 px-2 rounded-xl transition-colors duration-200 'bg-gray-700/50 hover:bg-orange-500/20"}
                         >
                             <img
                                 src={`https://avatar.iran.liara.run/username?username=[${room.name}]`}
