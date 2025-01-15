@@ -1,32 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import ApiService from '../services/api';
+import React, { useContext, useState } from 'react';
+import { RoomContext } from '../context/RoomContext';
 import { Plus, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const RoomList = ({ setRoomFormVisible }) => {
-    const [rooms, setRooms] = useState([]);
-    const [selectedRoomId, setSelectedRoomId] = useState(null);
+    const { rooms, setSelectedRoom } = useContext(RoomContext);
     const [isExpanded, setIsExpanded] = useState(false);
     const navigate = useNavigate();
 
     const visibleRooms = isExpanded ? rooms : rooms.slice(0, 2);
     const hasMoreRooms = rooms.length > 2;
 
-    useEffect(() => {
-        const fetchRooms = async () => {
-            try {
-                const response = await ApiService.get('/rooms');
-                setRooms(response.data.rooms);
-            } catch (error) {
-                console.error('Error fetching rooms:', error);
-            }
-        };
-
-        fetchRooms();
-    }, []); // Fetch rooms once on component mount
-
     const handleRoomClick = (room) => {
-        setSelectedRoomId(room.roomId); // Track selected room
+        setSelectedRoom(room);
         navigate(`/rooms/${room.roomId}/leaderboard`); // Navigate to the room's ID endpoint
     };
 
@@ -43,7 +29,9 @@ const RoomList = ({ setRoomFormVisible }) => {
                         <div className="absolute left-0 top-1/2 w-4 border-t-2 border-dotted border-orange-500/50 -translate-y-1/2" />
                         <button
                             onClick={() => handleRoomClick(room)}
-                            className={"ml-6 flex items-center inline-block w-auto space-x-2 px-2 rounded-xl transition-colors duration-200 'bg-gray-700/50 hover:bg-orange-500/20"}
+                            // onClick={() => setSelectedRoom(room)}
+                            className="ml-6 flex items-center inline-block w-auto space-x-2 px-2 rounded-xl 
+                                bg-gray-700/50 hover:bg-orange-500/20 transition-colors duration-200"
                         >
                             <img
                                 src={`https://avatar.iran.liara.run/username?username=[${room.name}]`}

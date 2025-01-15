@@ -23,8 +23,12 @@ const useJoinRoom = () => {
             setSuccess(response.data.message);
             return response.data;
         } catch (err) {
-            const errorMessage = err.response?.data?.message ||
-                'An error occurred while joining the room';
+            let errorMessage;
+            if (err.response && err.response.status === 404) {
+                errorMessage = 'Room not found. Please check the Room ID and try again.';
+            } else {
+                errorMessage = err.response?.data?.message || 'An error occurred while joining the room';
+            }
             setError(errorMessage);
             return null;
         } finally {
@@ -36,3 +40,4 @@ const useJoinRoom = () => {
 };
 
 export default useJoinRoom;
+

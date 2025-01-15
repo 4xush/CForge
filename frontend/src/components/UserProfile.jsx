@@ -11,7 +11,7 @@ import {
     Mail,
     GitBranch
 } from 'lucide-react';
-import ApiService from '../services/api';
+import ApiService from '../services/ApiService';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 

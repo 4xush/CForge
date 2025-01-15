@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MoreVertical, LogOut, X } from 'lucide-react';
 import RoomDetails from './RoomDetails';
 import ConfirmDialog from './ui/ConfirmDialog';
-import ApiService from '../services/api';
+import ApiService from '../services/ApiService';
 import toast from 'react-hot-toast';
 
 const TopBar = ({ roomId }) => {

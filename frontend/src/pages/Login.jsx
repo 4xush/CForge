@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import AuthLayout from './AuthPage';
@@ -9,7 +8,6 @@ const Login = () => {
         email: '',
         password: '',
     });
-    const navigate = useNavigate();
 
     const { loginUser, isLoading } = useAuthContext();
 
@@ -24,23 +22,19 @@ const Login = () => {
             await loginUser(formData.email, formData.password);
             toast.success('Login successful!');
 
+            // Optional: Perform any other actions, like checking for a pending invite code.
             const pendingInviteCode = localStorage.getItem('app-pendingInviteCode');
             if (pendingInviteCode) {
                 localStorage.removeItem('app-pendingInviteCode');
-                navigate('/dashboard', {
-                    state: {
-                        inviteCode: pendingInviteCode,
-                        showInviteModal: true
-                    }
-                });
+                window.location.replace('/dashboard'); // Use window.location.replace to navigate
                 return;
             }
 
-            const redirectUrl = location.state?.redirectUrl || '/dashboard';
-            navigate(redirectUrl);
+            // Navigate to the dashboard without reloading using window.location.replace
+            window.location.replace('/dashboard');
         } catch (error) {
-            // toast.error('Login failed. Please check your credentials.');
-            // console.error('Login error:', error);
+            // Handle login failure (e.g., show toast or error message)
+            toast.error('Login failed. Please check your credentials.');
         }
     };
 
@@ -78,7 +72,7 @@ const Login = () => {
             </form>
             <div className="text-center">
                 <button
-                    onClick={() => navigate('/signup')}
+                    onClick={() => window.location.replace('/signup')} // Redirect to signup page
                     className="font-medium text-purple-400 hover:text-purple-500"
                 >
                     Need an account? Sign Up

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { User, Mail, Key, Trash2, CircleUser, AlertTriangle } from 'lucide-react';
-import ApiService from '../services/api';
+import ApiService from '../services/ApiService';
 import SettingField from '../components/SettingField';
 
 const Settings = () => {

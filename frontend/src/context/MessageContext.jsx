@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import api from '../services/api.js';
+import api from '../services/ApiService.js';
 import { useAuthContext } from './AuthContext';
 import { useRoomContext } from './RoomContext';
 

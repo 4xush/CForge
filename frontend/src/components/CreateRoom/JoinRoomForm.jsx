@@ -9,8 +9,30 @@ const JoinRoomForm = ({ onClose, onRoomJoined }) => {
     const { joinRoom, loading: isJoiningRoom, error: joinError } = useJoinRoom();
     const [roomCode, setRoomCode] = useState('');
     const [joinedRoomDetails, setJoinedRoomDetails] = useState(null);
+    const [validationError, setValidationError] = useState('');
+
+    const validateRoomCode = (code) => {
+        if (code.length === 0) {
+            setValidationError('Room code is required');
+            return false;
+        }
+        if (code.length < 3 || code.length > 8) {
+            setValidationError('Room code must be between 3 and 8 characters');
+            return false;
+        }
+        if (!/^[A-Za-z0-9]+$/.test(code)) {
+            setValidationError('Room code must contain only letters and numbers');
+            return false;
+        }
+        setValidationError('');
+        return true;
+    };
 
     const handleJoinRoom = async () => {
+        if (!validateRoomCode(roomCode)) {
+            return;
+        }
+
         try {
             const result = await joinRoom(roomCode);
             if (result) {
@@ -19,6 +41,12 @@ const JoinRoomForm = ({ onClose, onRoomJoined }) => {
         } catch (err) {
             console.error('Room joining failed', err);
         }
+    };
+
+    const handleInputChange = (e) => {
+        const newCode = e.target.value;
+        setRoomCode(newCode);
+        validateRoomCode(newCode);
     };
 
     // Render success state
@@ -64,22 +92,23 @@ const JoinRoomForm = ({ onClose, onRoomJoined }) => {
                 <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <Input
                     value={roomCode}
-                    onChange={(e) => setRoomCode(e.target.value)}
+                    onChange={handleInputChange}
                     placeholder="Enter Room ID"
                     className="pl-10 bg-[#2a2b36] border-gray-600 text-white placeholder-gray-400 focus:border-purple-500 transition-colors duration-200"
+                    maxLength={8}
                 />
             </div>
 
-            {joinError && (
+            {(validationError || joinError) && (
                 <div className="text-red-500 text-sm mt-2">
-                    {joinError}
+                    {validationError || joinError}
                 </div>
             )}
 
             <Button
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white"
                 onClick={handleJoinRoom}
-                disabled={isJoiningRoom || !roomCode}
+                disabled={isJoiningRoom || !roomCode || !!validationError}
             >
                 {isJoiningRoom ? 'Joining Room...' : 'Join Room'}
             </Button>
@@ -88,3 +117,4 @@ const JoinRoomForm = ({ onClose, onRoomJoined }) => {
 };
 
 export default JoinRoomForm;
+
