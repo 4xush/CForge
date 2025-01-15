@@ -4,7 +4,7 @@ import { Plus, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const RoomList = ({ setRoomFormVisible }) => {
-    const { rooms, setSelectedRoom } = useContext(RoomContext);
+    const { rooms, selectedRoom, setSelectedRoom } = useContext(RoomContext);
     const [isExpanded, setIsExpanded] = useState(false);
     const navigate = useNavigate();
 
@@ -29,16 +29,18 @@ const RoomList = ({ setRoomFormVisible }) => {
                         <div className="absolute left-0 top-1/2 w-4 border-t-2 border-dotted border-orange-500/50 -translate-y-1/2" />
                         <button
                             onClick={() => handleRoomClick(room)}
-                            // onClick={() => setSelectedRoom(room)}
-                            className="ml-6 flex items-center inline-block w-auto space-x-2 px-2 rounded-xl 
-                                bg-gray-700/50 hover:bg-orange-500/20 transition-colors duration-200"
+                            className={`ml-6 flex items-center inline-block w-auto space-x-2 px-2 rounded-xl 
+                                transition-colors duration-200 ${selectedRoom?.roomId === room.roomId
+                                    ? 'bg-orange-600 text-white' // Highlight selected room
+                                    : 'bg-gray-700/50 hover:bg-orange-500/20 text-white'
+                                }`}
                         >
                             <img
                                 src={`https://avatar.iran.liara.run/username?username=[${room.name}]`}
                                 alt={room.name}
                                 className="w-6 h-6 rounded-full"
                             />
-                            <span className="text-sm text-white">{room.name}</span>
+                            <span className="text-sm">{room.name}</span>
                         </button>
                     </div>
                 ))}

@@ -8,16 +8,27 @@ const MessageContext = createContext();
 export const MessageProvider = ({ children }) => {
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
     const { authUser } = useAuthContext();
     const { selectedRoom } = useRoomContext();
 
-    const fetchMessages = useCallback(async () => {
+    const fetchMessages = useCallback(async (lastMessageId = null) => {
         if (!selectedRoom) return;
-
         setLoading(true);
+
         try {
-            const response = await api.get(`/rooms/${selectedRoom._id}/messages`);
-            setMessages(response.data.messages.reverse());
+            const query = lastMessageId ? `?lastMessageId=${lastMessageId}&limit=50` : '?limit=50';
+            const response = await api.get(`/rooms/${selectedRoom._id}/messages${query}`);
+
+            if (!lastMessageId) {
+                // Initial load: newest messages at the bottom
+                setMessages(response.data.messages);
+            } else {
+                // Loading more: older messages go at the top
+                setMessages(prevMessages => [...response.data.messages, ...prevMessages]);
+            }
+
+            setHasMore(response.data.hasMore);
         } catch (error) {
             console.error('Error fetching messages:', error);
         } finally {
@@ -26,6 +37,7 @@ export const MessageProvider = ({ children }) => {
     }, [selectedRoom]);
 
     const addMessage = useCallback((newMessage) => {
+        // Add new message at the bottom
         setMessages(prevMessages => [...prevMessages, {
             ...newMessage,
             sender: {
@@ -68,6 +80,7 @@ export const MessageProvider = ({ children }) => {
         <MessageContext.Provider value={{
             messages,
             loading,
+            hasMore,
             fetchMessages,
             addMessage,
             deleteMessage,

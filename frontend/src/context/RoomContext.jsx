@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import api from '../config/api';
 
 export const RoomContext = createContext();
@@ -14,15 +15,15 @@ export const useRoomContext = () => {
 export const RoomProvider = ({ children }) => {
     const [rooms, setRooms] = useState([]);
     const [selectedRoom, setSelectedRoom] = useState(null);
-
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+
+    const location = useLocation(); // Hook to track current location
 
     const refreshRoomList = useCallback(async () => {
         const token = localStorage.getItem('app-token');
 
         if (!token) {
-            // console.log('User not logged in, skipping fetch rooms.');
             return;
         }
 
@@ -49,7 +50,6 @@ export const RoomProvider = ({ children }) => {
             const token = localStorage.getItem('app-token');
 
             if (!token) {
-                // console.log('User not logged in, skipping fetch room.');
                 return;
             }
 
@@ -70,8 +70,15 @@ export const RoomProvider = ({ children }) => {
                 setLoading(false);
             }
         },
-        [setSelectedRoom]
+        []
     );
+
+    // Reset selectedRoom when navigating away from a room page
+    useEffect(() => {
+        if (!location.pathname.startsWith('/rooms')) {
+            setSelectedRoom(null);
+        }
+    }, [location]);
 
     useEffect(() => {
         refreshRoomList();

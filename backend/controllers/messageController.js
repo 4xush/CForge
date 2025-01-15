@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Message = require("../models/Message");
 const Room = require("../models/Room");
 const { encrypt, decrypt } = require("../utils/cryptoUtils");
@@ -58,39 +59,66 @@ exports.sendMessage = async (req, res) => {
     res.status(500).json({ message: "Error sending message", error: error.message });
   }
 };
-
-// Fetch Messages with Decryption
 exports.getMessages = async (req, res) => {
   try {
     const { roomId } = req.params;
     const { lastMessageId = null, limit = 50 } = req.query;
 
-    const query = { room: roomId };
-
-    if (lastMessageId) {
-      const lastMessage = await Message.findById(lastMessageId).select("createdAt");
-      if (lastMessage) {
-        query.createdAt = { $lt: lastMessage.createdAt };
-      }
+    // Validate roomId
+    if (!roomId || !mongoose.Types.ObjectId.isValid(roomId)) {
+      return res.status(400).json({ message: "Invalid room ID" });
     }
 
+    // Validate and sanitize limit
+    const sanitizedLimit = Math.min(Math.max(Number(limit), 1), 100);
+
+    // Build query
+    const query = { room: roomId };
+    if (lastMessageId) {
+      if (!mongoose.Types.ObjectId.isValid(lastMessageId)) {
+        return res.status(400).json({ message: "Invalid message ID" });
+      }
+      const lastMessage = await Message.findById(lastMessageId).select("createdAt");
+      if (!lastMessage) {
+        return res.status(404).json({ message: "Last message not found" });
+      }
+      query.createdAt = { $lt: lastMessage.createdAt };
+    }
+
+    // Changed sort order to ascending (oldest first)
     const messages = await Message.find(query)
       .populate("sender", "username profilePicture")
-      .sort({ createdAt: -1 })
-      .limit(Number(limit));
+      .sort({ createdAt: 1 })  // for ascending order (old to new)
+      .limit(sanitizedLimit + 1)
+      .lean();
 
-    // Decrypt messages before sending them to the frontend
-    const decryptedMessages = messages.map((msg) => ({
-      ...msg.toObject(),
+    // Check if there are more messages
+    const hasMore = messages.length > sanitizedLimit;
+    const messagesToSend = hasMore ? messages.slice(0, sanitizedLimit) : messages;
+
+    // Decrypt messages
+    const decryptedMessages = messagesToSend.map((msg) => ({
+      ...msg,
       content: decrypt(msg.content, msg.iv),
     }));
 
+    // Add total count for initial load (optional)
+    let totalCount;
+    if (!lastMessageId) {
+      totalCount = await Message.countDocuments({ room: roomId });
+    }
+
     res.json({
       messages: decryptedMessages,
-      hasMore: messages.length === limit,
+      hasMore,
+      ...(totalCount !== undefined && { totalCount }),
     });
   } catch (error) {
-    res.status(500).json({ message: "Error fetching messages", error: error.message });
+    console.error('Error in getMessages:', error);
+    res.status(500).json({
+      message: "Error fetching messages",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 

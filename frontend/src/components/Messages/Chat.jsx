@@ -13,6 +13,7 @@ const Chat = () => {
     const {
         messages,
         loading,
+        hasMore,
         fetchMessages,
         addMessage,
         deleteMessage,
@@ -21,16 +22,21 @@ const Chat = () => {
 
     const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, messageId: null });
     const [editingMessage, setEditingMessage] = useState(null);
+    const [loadingMore, setLoadingMore] = useState(false);
     const messagesEndRef = useRef(null);
     const contextMenuRef = useRef(null);
 
     useEffect(() => {
-        if (selectedRoom) fetchMessages();
+        if (selectedRoom) {
+            fetchMessages();
+        }
     }, [selectedRoom, fetchMessages]);
 
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages]);
+        if (!loadingMore) {
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [messages, loadingMore]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -41,6 +47,20 @@ const Chat = () => {
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    const loadOlderMessages = async () => {
+        if (!hasMore || loadingMore || !messages.length) return;
+
+        setLoadingMore(true);
+        try {
+            const oldestMessage = messages[messages.length - 1];
+            await fetchMessages(oldestMessage._id);
+        } catch (error) {
+            console.error('Error loading older messages:', error);
+        } finally {
+            setLoadingMore(false);
+        }
+    };
 
     const handleContextMenu = (e, messageId) => {
         e.preventDefault();
@@ -97,7 +117,7 @@ const Chat = () => {
     };
 
     if (!selectedRoom) return <div className="text-center text-gray-500 mt-4">Select a room to view messages</div>;
-    if (loading) return <div className="text-center text-gray-500 mt-4">Loading messages...</div>;
+    if (loading && !loadingMore) return <div className="text-center text-gray-500 mt-4">Loading messages...</div>;
 
     const groupedMessages = messages.reduce((groups, message) => {
         const date = formatMessageDate(message.createdAt);
@@ -108,6 +128,18 @@ const Chat = () => {
     return (
         <div className="flex flex-col h-full">
             <div className="flex-grow overflow-y-auto">
+                {hasMore && (
+                    <div className="text-center py-2">
+                        <button
+                            onClick={loadOlderMessages}
+                            disabled={loadingMore}
+                            className="px-4 py-2 text-sm bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 disabled:bg-gray-100 disabled:text-gray-400 transition-colors duration-200"
+                        >
+                            {loadingMore ? 'Loading...' : 'Load older messages'}
+                        </button>
+                    </div>
+                )}
+
                 {Object.entries(groupedMessages).map(([date, msgs]) => (
                     <div key={date}>
                         <div className="text-center text-xs text-gray-500 my-2">{date}</div>
@@ -137,6 +169,7 @@ const Chat = () => {
                         ))}
                     </div>
                 ))}
+
                 {messages.length === 0 && (
                     <div className="text-center text-gray-500 mt-4">No messages yet</div>
                 )}
