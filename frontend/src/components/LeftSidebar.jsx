@@ -8,7 +8,7 @@ import UserProfileModal from './ProfileModal';
 import CreateJoinModal from './CreateRoom/CreateJoinRoomModal';
 
 const LeftSidebar = () => {
-    const { authUser, logout } = useAuthContext();
+    const { logout } = useAuthContext();
     const settingsButtonRef = useRef(null);
     const [isRoomFormVisible, setRoomFormVisible] = useState(false);
     const navigate = useNavigate();
@@ -48,7 +48,7 @@ const LeftSidebar = () => {
                             icon={SettingsIcon}
                             label="Settings"
                             isActive={isActive('/settings')}
-                            onClick={() => navigate('/settings')}
+                            onClick={() => window.location.replace('/settings')}
                         />
 
                         <DashboardButton
@@ -61,7 +61,6 @@ const LeftSidebar = () => {
 
                     <div className="mt-auto pt-4 border-t border-gray-700">
                         <UserProfileModal
-                            user={authUser}
                             onLogout={logout}
                         />
                     </div>

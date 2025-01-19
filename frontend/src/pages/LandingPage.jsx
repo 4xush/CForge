@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Code, Trophy, BookOpen, Target, ArrowDown, Github, Twitter } from 'lucide-react';
 import ParticleBackground from './element/ParticleBackground';
 
 const CforgeLanding = () => {
     const [scrollPosition, setScrollPosition] = useState(0);
-    const navigate = useNavigate();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -40,7 +38,7 @@ const CforgeLanding = () => {
                                 <a href="#features" className="hover:text-purple-400 transition-colors">Features</a>
                                 <a href="#community" className="hover:text-purple-400 transition-colors">Community</a>
                                 <button
-                                    onClick={() => navigate('/signup')}
+                                    onClick={() => window.location.replace('/signup')}
                                     className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-colors"
                                 >
                                     Get Started
@@ -97,7 +95,7 @@ const CforgeLanding = () => {
                             Connect with fellow coders, share your achievements, and stay updated on the latest challenges.
                         </p>
                         <div className="flex justify-center space-x-6">
-                            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                            <a href="https://github.com/4xush" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
                                 <Github className="h-8 w-8" />
                             </a>
                             <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
@@ -120,7 +118,7 @@ const CforgeLanding = () => {
 const FeatureCard = ({ icon, title, description }) => (
     <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg transform transition-all hover:scale-105 hover:shadow-xl border border-gray-700">
         <div className="mb-4">{icon}</div>
-        <h3 className="text-xl font-bold mb-2">{title}</h3>
+        <h3 className="text-xl font-bold mb-2">{title}</h3>CForge
         <p className="text-gray-400">{description}</p>
     </div>
 );

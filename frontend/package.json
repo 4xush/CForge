@@ -20,6 +20,7 @@
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.5",
     "framer-motion": "^11.15.0",
+    "jwt-decode": "^4.0.0",
     "lucide-react": "^0.428.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

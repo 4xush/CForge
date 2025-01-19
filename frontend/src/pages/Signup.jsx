@@ -54,7 +54,7 @@ const SignUp = () => {
                 return;
             }
 
-            navigate('/dashboard');
+            window.location.replace('/signup')
         } catch (error) {
             console.error('Registration error:', error);
         }
@@ -134,7 +134,7 @@ const SignUp = () => {
             </form>
             <div className="text-center">
                 <button
-                    onClick={() => navigate('/login')}
+                    onClick={() => window.location.replace('/login')}
                     className="font-medium text-purple-400 hover:text-purple-500"
                 >
                     Already have an account? Sign In

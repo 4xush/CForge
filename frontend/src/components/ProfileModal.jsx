@@ -4,11 +4,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../context/AuthContext';
 
-const UserProfileModal = ({ user, onLogout }) => {
+const UserProfileModal = ({ onLogout }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const modalRef = useRef(null);
     const navigate = useNavigate();
     const { authUser } = useAuthContext();
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (modalRef.current && !modalRef.current.contains(event.target)) {
@@ -22,8 +23,7 @@ const UserProfileModal = ({ user, onLogout }) => {
 
     const handleViewFullProfile = (e) => {
         e.stopPropagation();
-        // console.log(authUser.username);
-        navigate(`/u/${authUser.username}`);  // Navigate to cforge.live/username
+        navigate(`/u/${authUser.username}`);
     };
 
     const handleLogoutClick = (e) => {
@@ -44,21 +44,21 @@ const UserProfileModal = ({ user, onLogout }) => {
             {/* Collapsed View */}
             <div className="flex items-center px-4 h-16 mb-2 cursor-pointer">
                 <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-800 mr-3">
-                    {user?.profilePicture ? (
+                    {authUser?.profilePicture ? (
                         <img
-                            src={user.profilePicture}
+                            src={authUser.profilePicture}
                             alt="Profile"
                             className="w-full h-full object-cover"
                         />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-500">
-                            {user?.fullName?.charAt(0) || 'U'}
+                            {authUser?.fullName?.charAt(0) || 'U'}
                         </div>
                     )}
                 </div>
                 <div className="flex-1">
-                    <h3 className="text-sm font-semibold text-white">{user?.fullName}</h3>
-                    <p className="text-xs text-gray-400">@{user?.username}</p>
+                    <h3 className="text-sm font-semibold text-white">{authUser?.fullName}</h3>
+                    <p className="text-xs text-gray-400">@{authUser?.username}</p>
                 </div>
                 <ChevronRight
                     size={20}

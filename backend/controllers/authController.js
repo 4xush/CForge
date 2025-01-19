@@ -182,7 +182,7 @@ const loginUser = async (req, res) => {
         email: updatedUser.email
       },
       process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "30d" }
     );
 
     res.status(200).json({

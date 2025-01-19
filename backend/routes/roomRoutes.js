@@ -31,7 +31,7 @@ router.get("/:roomId", protect, getRoomDetails);
 
 router.post("/:roomId/messages", protect, sendMessage);
 
-router.get("/:roomId/leaderboard", getLeaderboard);
+router.get("/:roomId/leaderboard", protect, getLeaderboard);
 
 router.get("/:roomId/messages", protect, getMessages);
 

@@ -17,19 +17,13 @@ const MainContent = ({ children }) => {
                 <div className="flex border-b border-gray-700 bg-gray-900 ">
                     <Link
                         to={`/rooms/${roomId}/leaderboard`}
-                        className={`px-4 py-1 text-sm hover:bg-gray-800 transition-colors duration-200 ${isLeaderboardActive
-                            ? 'text-blue-500 border-b-2 border-blue-500'
-                            : 'text-gray-500'
-                            }`}
+                        className={`px-4 py-1 text-sm ${isLeaderboardActive ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-500'}`}
                     >
                         Leaderboard
                     </Link>
                     <Link
                         to={`/rooms/${roomId}/chat`}
-                        className={`px-4 py-1 text-sm hover:bg-gray-800 transition-colors duration-200 ${isChatActive
-                            ? 'text-blue-500 border-b-2 border-blue-500'
-                            : 'text-gray-500'
-                            }`}
+                        className={`px-4 py-1 text-sm ${isChatActive ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-500'}`}
                     >
                         Chat
                     </Link>

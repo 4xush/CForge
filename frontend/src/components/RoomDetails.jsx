@@ -17,7 +17,6 @@ const RoomDetails = ({ roomDetails, loading, error, setError }) => {
     const [inviteData, setInviteData] = useState(null);
     const [copied, setCopied] = useState(false);
     const [isGeneratingLink, setIsGeneratingLink] = useState(false);
-    const userDp = 'https://avatar.iran.liara.run/username?username=[firstname+lastname]';
 
     const handleInviteClick = async () => {
         try {
@@ -101,7 +100,7 @@ const RoomDetails = ({ roomDetails, loading, error, setError }) => {
                     <div className="space-y-2">
                         {roomDetails.members.map((member) => (
                             <div key={member._id} className="flex items-center">
-                                <img src={member.profilePicture || userDp} alt={member.username} className="w-8 h-8 rounded-full mr-2" />
+                                <img src={member.profilePicture} alt={member.username} className="w-8 h-8 rounded-full mr-2" />
                                 <span className="text-sm">{member.username}</span>
                                 {roomDetails.admins.some(admin => admin._id === member._id) && (
                                     <span className="ml-2 text-xs bg-blue-500 text-white px-2 py-1 rounded">Admin</span>
@@ -118,7 +117,7 @@ const RoomDetails = ({ roomDetails, loading, error, setError }) => {
                     <div className="space-y-2">
                         {roomDetails.admins.map((admin) => (
                             <div key={admin._id} className="flex items-center">
-                                <img src={admin.profilePicture || userDp} alt={admin.username} className="w-8 h-8 rounded-full mr-2" />
+                                <img src={admin.profilePicture} alt={admin.username} className="w-8 h-8 rounded-full mr-2" />
                                 <span className="text-sm">{admin.username}</span>
                             </div>
                         ))}

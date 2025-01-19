@@ -13,7 +13,6 @@ exports.getPublicUserProfile = async (req, res) => {
                 message: "User not found"
             });
         }
-        console.log("profile fetched");
         res.status(200).json(user);
     } catch (error) {
         console.error("Error fetching user details:", error);

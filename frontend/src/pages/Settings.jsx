@@ -32,8 +32,8 @@ const Settings = () => {
   const handleEdit = async (field, value) => {
     try {
       await ApiService.put(`/users/update/${field}`, { [field]: value });
-      await fetchProfileData();
       toast.success(`${field} updated successfully`);
+      window.location.reload();
     } catch (error) {
       toast.error(error.response?.data?.message || `Failed to update ${field}`);
       console.error(`Error updating ${field}:`, error);
@@ -53,6 +53,7 @@ const Settings = () => {
       });
       toast.success('Password updated successfully');
       setShowPasswordForm(false);
+      window.location.reload();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to update password');
     }
@@ -180,10 +181,6 @@ const Settings = () => {
     );
   };
 
-  if (loading) {
-    return <div className="text-white text-center">Loading...</div>;
-  }
-
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
       <div className="max-w-2xl mx-auto">
@@ -284,4 +281,3 @@ const Settings = () => {
 };
 
 export default Settings;
-

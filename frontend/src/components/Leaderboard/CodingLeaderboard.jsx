@@ -230,7 +230,6 @@ const CodingLeaderboard = ({ selectedRoom }) => {
                     )}
                 </div>
             </div>
-            {loading && <div className="text-white text-center">Loading...</div>}
             {!loading && (
                 <>
                     {topUsers.length > 0 && (

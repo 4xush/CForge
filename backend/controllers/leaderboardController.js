@@ -2,7 +2,6 @@ const Room = require('../models/Room');
 const User = require('../models/User');
 
 exports.getLeaderboard = async (req, res) => {
-    console.log("Fetched LeaderBoard");
     const {
         sortBy = "platforms.leetcode.totalQuestionsSolved",
         order = "desc",

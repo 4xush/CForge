@@ -1,7 +1,23 @@
 import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
 
 const API_URI = 'http://localhost:5000/api';
 
+const isTokenExpired = (token) => {
+    try {
+        const decoded = jwtDecode(token);
+        const currentTime = Date.now() / 1000;
+
+        // Check if token has expiration claim and is expired
+        if (decoded.exp && decoded.exp < currentTime) {
+            return true;
+        }
+        return false;
+    } catch (error) {
+        // If token can't be decoded, consider it expired
+        return true;
+    }
+};
 class ApiService {
     constructor() {
         this.api = axios.create({
@@ -12,6 +28,12 @@ class ApiService {
             (config) => {
                 const token = localStorage.getItem('app-token');
                 if (token) {
+                    if (isTokenExpired(token)) {
+                        // Clear token and redirect to login if expired
+                        localStorage.removeItem('app-token');
+                        window.location.href = '/login';
+                        throw new Error('Token expired');
+                    }
                     config.headers['Authorization'] = `Bearer ${token}`;
                 }
                 return config;
