@@ -8,15 +8,13 @@ const getGitHubStats = async (githubUsername) => {
             },
         });
 
-        const { public_repos, followers, following, contributions, starred } = response.data;
+        const { public_repos, followers, following } = response.data;
 
         return {
             githubUsername,
             publicRepos: public_repos,
-            followers: followers,
-            following: following,
-            contributions: contributions,
-            stars: starred.length,
+            followers,
+            following,
         };
     } catch (error) {
         console.error(

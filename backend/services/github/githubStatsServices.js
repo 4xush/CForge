@@ -1,4 +1,4 @@
-const User = require("../models/User");
+const User = require("../../models/User");
 const { getGitHubStats } = require("./githubService");
 
 const updateUserGitHubStats = async (user, throwError = false, force = false) => {
@@ -14,7 +14,6 @@ const updateUserGitHubStats = async (user, throwError = false, force = false) =>
         if (!force) {
             const lastUpdate = user.platforms?.github?.lastUpdated;
             const isStale = !lastUpdate || (Date.now() - lastUpdate.getTime()) > 3600000; // 1 hour
-
             if (!isStale) {
                 return user;
             }
@@ -32,13 +31,11 @@ const updateUserGitHubStats = async (user, throwError = false, force = false) =>
             throw error;
         }
 
-        // Prepare stats update object
+        // Prepare stats update object - only including available fields
         const statsToUpdate = {
             "platforms.github.publicRepos": stats.publicRepos || 0,
             "platforms.github.followers": stats.followers || 0,
             "platforms.github.following": stats.following || 0,
-            "platforms.github.contributions": stats.contributions || 0,
-            "platforms.github.stars": stats.stars || 0,
             "platforms.github.lastUpdated": new Date()
         };
 
@@ -56,7 +53,6 @@ const updateUserGitHubStats = async (user, throwError = false, force = false) =>
         }
 
         return updatedUser;
-
     } catch (error) {
         console.error(`GitHub stats update failed for user ${user?._id}:`, {
             error: error.message,
@@ -67,7 +63,6 @@ const updateUserGitHubStats = async (user, throwError = false, force = false) =>
         if (throwError) {
             throw error;
         }
-
         return user;
     }
 };
@@ -78,7 +73,6 @@ const refreshUserGitHubStats = async (userId) => {
         if (!user) {
             throw new Error("User not found");
         }
-
         return await updateUserGitHubStats(user, true, true);
     } catch (error) {
         throw error;

@@ -1,4 +1,4 @@
-const User = require("../models/User");
+const User = require("../../models/User");
 const { getCodeforcesStats } = require("./codeforcesService");
 
 const updateUserCodeforcesStats = async (user, throwError = false, force = false) => {

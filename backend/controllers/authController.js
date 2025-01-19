@@ -1,9 +1,48 @@
 const User = require("../models/User");
+
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { validateEmail, validatePassword, validateFullName, checkLeetCodeUsername, checkGitHubUsername, checkCodeforcesUsername } = require("../utils/authHelpers.js");
+const {
+  validateEmail,
+  validatePassword,
+  validateFullName,
+  checkLeetCodeUsername,
+  checkGitHubUsername,
+  checkCodeforcesUsername
+} = require("../utils/authHelpers.js");
+
 const generateUsername = require("../utils/usernameGenerator");
 const { updateUserLeetCodeStats } = require("../services/leetcodeStatsService");
+const { updateUserGitHubStats } = require("../services/github/githubStatsServices.js");
+const { updateUserCodeforcesStats } = require("../services/codeforces/codeforcesStatsService.js");
+
+// Helper function to update all platform stats
+const updateAllPlatformStats = async (user, throwError = false) => {
+  let updatedUser = user;
+
+  try {
+    // Update LeetCode stats if username exists
+    if (user.platforms.leetcode.username) {
+      updatedUser = await updateUserLeetCodeStats(updatedUser, throwError);
+    }
+
+    // Update GitHub stats if username exists
+    if (user.platforms.github.username) {
+      updatedUser = await updateUserGitHubStats(updatedUser, throwError);
+    }
+
+    // Update Codeforces stats if username exists
+    if (user.platforms.codeforces.username) {
+      updatedUser = await updateUserCodeforcesStats(updatedUser, throwError);
+    }
+
+    return updatedUser;
+  } catch (error) {
+    console.error("Platform stats update failed:", error);
+    if (throwError) throw error;
+    return updatedUser;
+  }
+};
 
 const signupUser = async (req, res) => {
   const { fullName, email, password, gender, leetcodeUsername, githubUsername, codeforcesUsername } = req.body;
@@ -13,110 +52,67 @@ const signupUser = async (req, res) => {
     const validationErrors = [];
 
     // Basic field validations
-    if (!validateEmail(email)) {
-      validationErrors.push("Invalid email format");
-    }
-    if (!validatePassword(password)) {
-      validationErrors.push("Password must be at least 8 characters long");
-    }
-    if (!validateFullName(fullName)) {
-      validationErrors.push("Full name must be between 2 and 50 characters");
-    }
+    if (!validateEmail(email)) validationErrors.push("Invalid email format");
+    if (!validatePassword(password)) validationErrors.push("Password must be at least 8 characters long");
+    if (!validateFullName(fullName)) validationErrors.push("Full name must be between 2 and 50 characters");
     if (!["male", "female", "other"].includes(gender?.toLowerCase())) {
       validationErrors.push("Gender must be either 'male', 'female', or 'other'");
     }
 
     // Platform username validations
-    if (!leetcodeUsername?.trim()) {
-      validationErrors.push("LeetCode username is required");
-    }
-
-    if (githubUsername && typeof githubUsername !== 'string') {
-      validationErrors.push("Invalid GitHub username format");
-    }
-
-    if (codeforcesUsername && typeof codeforcesUsername !== 'string') {
-      validationErrors.push("Invalid Codeforces username format");
-    }
+    if (!leetcodeUsername?.trim()) validationErrors.push("LeetCode username is required");
+    if (githubUsername && typeof githubUsername !== 'string') validationErrors.push("Invalid GitHub username format");
+    if (codeforcesUsername && typeof codeforcesUsername !== 'string') validationErrors.push("Invalid Codeforces username format");
 
     if (validationErrors.length > 0) {
-      return res.status(400).json({
-        message: "Validation failed",
-        errors: validationErrors
-      });
+      return res.status(400).json({ message: "Validation failed", errors: validationErrors });
     }
 
     // Check if email is already registered
-    const existingEmailUser = await User.findOne({
-      email: new RegExp(`^${email}$`, 'i')
-    });
+    const existingEmailUser = await User.findOne({ email: new RegExp(`^${email}$`, 'i') });
     if (existingEmailUser) {
-      return res.status(400).json({
-        message: "Email is already registered"
-      });
+      return res.status(400).json({ message: "Email is already registered" });
     }
 
-    // Validate platform usernames
+    // Validate platform usernames in parallel
     try {
-      // LeetCode validation (required)
-      const isValidLeetCodeUsername = await checkLeetCodeUsername(leetcodeUsername);
-      if (!isValidLeetCodeUsername) {
-        return res.status(400).json({
-          message: "LeetCode username not found or invalid"
-        });
-      }
+      const [isValidLeetCode, isValidGitHub, isValidCodeforces] = await Promise.all([
+        checkLeetCodeUsername(leetcodeUsername),
+        githubUsername ? checkGitHubUsername(githubUsername) : true,
+        codeforcesUsername ? checkCodeforcesUsername(codeforcesUsername) : true
+      ]);
 
-      // GitHub validation (optional)
-      if (githubUsername) {
-        const isValidGitHubUsername = await checkGitHubUsername(githubUsername);
-        if (!isValidGitHubUsername) {
-          return res.status(400).json({
-            message: "GitHub username not found or invalid"
-          });
-        }
+      if (!isValidLeetCode) {
+        return res.status(400).json({ message: "LeetCode username not found or invalid" });
       }
-
-      // Codeforces validation (optional)
-      if (codeforcesUsername) {
-        const isValidCodeforcesUsername = await checkCodeforcesUsername(codeforcesUsername);
-        if (!isValidCodeforcesUsername) {
-          return res.status(400).json({
-            message: "Codeforces username not found or invalid"
-          });
-        }
+      if (githubUsername && !isValidGitHub) {
+        return res.status(400).json({ message: "GitHub username not found or invalid" });
+      }
+      if (codeforcesUsername && !isValidCodeforces) {
+        return res.status(400).json({ message: "Codeforces username not found or invalid" });
       }
     } catch (error) {
       console.error("Platform username verification failed:", error);
-      return res.status(503).json({
-        message: "Unable to verify platform usernames. Please try again later."
-      });
+      return res.status(503).json({ message: "Unable to verify platform usernames. Please try again later." });
     }
 
     // Generate username and avatar
     const username = await generateUsername(fullName);
-    const defaultAvatar = "https://ui-avatars.com/api/?background=random";
-    const avatarUrl = `${defaultAvatar}&name=${encodeURIComponent(fullName)}`;
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const avatarUrl = `https://ui-avatars.com/api/?background=random&name=${encodeURIComponent(fullName)}`;
 
     // Create user object with proper platform structure
     const newUser = new User({
       fullName: fullName.trim(),
       username,
       email: email.toLowerCase(),
-      password: hashedPassword,
+      password: await bcrypt.hash(password, 12),
       gender: gender.toLowerCase(),
       profilePicture: avatarUrl,
       platforms: {
         leetcode: {
           username: leetcodeUsername.trim(),
           totalQuestionsSolved: 0,
-          questionsSolvedByDifficulty: {
-            easy: 0,
-            medium: 0,
-            hard: 0
-          },
+          questionsSolvedByDifficulty: { easy: 0, medium: 0, hard: 0 },
           attendedContestsCount: 0,
           contestRating: 0
         },
@@ -124,9 +120,7 @@ const signupUser = async (req, res) => {
           username: githubUsername.trim(),
           publicRepos: 0,
           followers: 0,
-          following: 0,
-          contributions: 0,
-          stars: 0
+          following: 0
         } : { username: null },
         codeforces: codeforcesUsername ? {
           username: codeforcesUsername.trim(),
@@ -144,20 +138,12 @@ const signupUser = async (req, res) => {
     await newUser.validate();
     await newUser.save();
 
-    // Update LeetCode stats
-    let updatedUser = newUser;
-    try {
-      updatedUser = await updateUserLeetCodeStats(newUser, false, true);
-    } catch (statsError) {
-      console.error("Initial LeetCode stats fetch failed:", statsError);
-    }
+    // Update all platform stats
+    const updatedUser = await updateAllPlatformStats(newUser, false);
 
     // Generate JWT token
     const token = jwt.sign(
-      {
-        id: updatedUser._id,
-        username: updatedUser.username
-      },
+      { id: updatedUser._id, username: updatedUser.username },
       process.env.JWT_SECRET,
       { expiresIn: "30d" }
     );
@@ -185,13 +171,9 @@ const signupUser = async (req, res) => {
       });
     }
     if (error.code === 11000) {
-      return res.status(400).json({
-        message: "Username already exists"
-      });
+      return res.status(400).json({ message: "Username already exists" });
     }
-    res.status(500).json({
-      message: "Registration failed. Please try again later."
-    });
+    res.status(500).json({ message: "Registration failed. Please try again later." });
   }
 };
 
@@ -201,55 +183,34 @@ const loginUser = async (req, res) => {
   try {
     // Input validation
     if (!email?.trim() || !password?.trim()) {
-      return res.status(400).json({
-        message: "Email and password are required"
-      });
+      return res.status(400).json({ message: "Email and password are required" });
     }
-
     if (!validateEmail(email)) {
-      return res.status(400).json({
-        message: "Invalid email format"
-      });
+      return res.status(400).json({ message: "Invalid email format" });
     }
 
     // Find user
-    const user = await User.findOne({
-      email: new RegExp(`^${email}$`, 'i')
-    });
-
+    const user = await User.findOne({ email: new RegExp(`^${email}$`, 'i') });
     if (!user) {
-      return res.status(401).json({
-        message: "Invalid credentials"
-      });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
     // Verify password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({
-        message: "Invalid credentials"
-      });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Update login timestamp
+    // Update login timestamp and platform stats
     user.lastLogin = new Date();
     await user.save();
 
-    // Update LeetCode stats
-    let updatedUser = user;
-    try {
-      updatedUser = await updateUserLeetCodeStats(user);
-    } catch (statsError) {
-      console.error("LeetCode stats update failed during login:", statsError);
-    }
+    // Update all platform stats
+    const updatedUser = await updateAllPlatformStats(user);
 
     // Generate JWT token
     const token = jwt.sign(
-      {
-        id: updatedUser._id,
-        username: updatedUser.username,
-        email: updatedUser.email
-      },
+      { id: updatedUser._id, username: updatedUser.username, email: updatedUser.email },
       process.env.JWT_SECRET,
       { expiresIn: "30d" }
     );
@@ -270,9 +231,7 @@ const loginUser = async (req, res) => {
 
   } catch (error) {
     console.error("Login error:", error);
-    res.status(500).json({
-      message: "Login failed. Please try again later."
-    });
+    res.status(500).json({ message: "Login failed. Please try again later." });
   }
 };
 

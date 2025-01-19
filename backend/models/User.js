@@ -29,30 +29,17 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    platforms: {
-      leetcode: {
-        username: {
-          type: String,
-          sparse: true,
-        },
-        totalQuestionsSolved: {
-          type: Number,
-          default: 0,
-        },
-        questionsSolvedByDifficulty: {
-          easy: { type: Number, default: 0 },
-          medium: { type: Number, default: 0 },
-          hard: { type: Number, default: 0 },
-        },
-        attendedContestsCount: {
-          type: Number,
-          default: 0,
-        },
-        contestRating: {
-          type: Number,
-          default: 0,
-        },
+    socialNetworks: {
+      linkedin: {
+        type: String,
+        default: "",
       },
+      twitter: {
+        type: String,
+        default: "",
+      }
+    },
+    platforms: {
       codeforces: {
         username: {
           type: String,
@@ -100,11 +87,26 @@ const userSchema = new mongoose.Schema(
           type: Number,
           default: 0,
         },
-        contributions: {
+      },
+      leetcode: {
+        username: {
+          type: String,
+          sparse: true,
+        },
+        totalQuestionsSolved: {
           type: Number,
           default: 0,
         },
-        stars: {
+        questionsSolvedByDifficulty: {
+          easy: { type: Number, default: 0 },
+          medium: { type: Number, default: 0 },
+          hard: { type: Number, default: 0 },
+        },
+        attendedContestsCount: {
+          type: Number,
+          default: 0,
+        },
+        contestRating: {
           type: Number,
           default: 0,
         },
@@ -118,6 +120,7 @@ const userSchema = new mongoose.Schema(
   }
 );
 
+// Virtual properties for rooms
 userSchema.virtual("rooms", {
   ref: "Room",
   localField: "_id",
@@ -135,11 +138,9 @@ userSchema.index({ "platforms.leetcode.totalQuestionsSolved": -1 });
 userSchema.index({ "platforms.leetcode.contestRating": -1 });
 userSchema.index({ "platforms.leetcode.username": 1 }, { sparse: false });
 userSchema.index({ "platforms.leetcode.attendedContestsCount": -1 });
-
 userSchema.index({ "platforms.codeforces.currentRating": -1 });
 userSchema.index({ "platforms.codeforces.maxRating": -1 });
 userSchema.index({ "platforms.codeforces.username": 1 }, { sparse: false });
-
 userSchema.index({ "platforms.github.publicRepos": -1 });
 userSchema.index({ "platforms.github.followers": -1 });
 userSchema.index({ "platforms.github.username": 1 }, { sparse: false });
