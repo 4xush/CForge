@@ -53,7 +53,62 @@ const userSchema = new mongoose.Schema(
           default: 0,
         },
       },
-      // Other platforms can be added here
+      codeforces: {
+        username: {
+          type: String,
+          sparse: true,
+        },
+        currentRating: {
+          type: Number,
+          default: 0,
+        },
+        maxRating: {
+          type: Number,
+          default: 0,
+        },
+        rank: {
+          type: String,
+          default: "",
+        },
+        maxRank: {
+          type: String,
+          default: "",
+        },
+        contribution: {
+          type: Number,
+          default: 0,
+        },
+        friendOfCount: {
+          type: Number,
+          default: 0,
+        },
+      },
+      github: {
+        username: {
+          type: String,
+          sparse: true,
+        },
+        publicRepos: {
+          type: Number,
+          default: 0,
+        },
+        followers: {
+          type: Number,
+          default: 0,
+        },
+        following: {
+          type: Number,
+          default: 0,
+        },
+        contributions: {
+          type: Number,
+          default: 0,
+        },
+        stars: {
+          type: Number,
+          default: 0,
+        },
+      },
     },
   },
   {
@@ -78,8 +133,16 @@ userSchema.virtual("createdRooms", {
 // Indexes for performance optimization
 userSchema.index({ "platforms.leetcode.totalQuestionsSolved": -1 });
 userSchema.index({ "platforms.leetcode.contestRating": -1 });
-userSchema.index({ "platforms.leetcode.username": 1 }, { sparse: false }); // allow duplicate Leetcode username
+userSchema.index({ "platforms.leetcode.username": 1 }, { sparse: false });
 userSchema.index({ "platforms.leetcode.attendedContestsCount": -1 });
+
+userSchema.index({ "platforms.codeforces.currentRating": -1 });
+userSchema.index({ "platforms.codeforces.maxRating": -1 });
+userSchema.index({ "platforms.codeforces.username": 1 }, { sparse: false });
+
+userSchema.index({ "platforms.github.publicRepos": -1 });
+userSchema.index({ "platforms.github.followers": -1 });
+userSchema.index({ "platforms.github.username": 1 }, { sparse: false });
 
 const User = mongoose.model("User", userSchema);
 

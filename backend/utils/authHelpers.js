@@ -53,9 +53,65 @@ const checkLeetCodeUsername = async (username) => {
   }
 };
 
+
+// Function to check GitHub username
+const checkGitHubUsername = async (username) => {
+  if (!username || typeof username !== "string") {
+    throw new Error("Invalid GitHub username format");
+  }
+
+  try {
+    const response = await axios.get(
+      `https://api.github.com/users/${username}`,
+      {
+        timeout: 5000,
+        headers: { "User-Agent": "axios/1.7.4" },
+      }
+    );
+
+    return response.status === 200;
+  } catch (error) {
+    if (error.response?.status === 404) {
+      return false;
+    }
+    console.error("GitHub API error:", error.message || error);
+    throw new Error(
+      "Unable to verify GitHub username. Please check your connection or try again later."
+    );
+  }
+};
+
+// Function to check Codeforces username
+const checkCodeforcesUsername = async (username) => {
+  if (!username || typeof username !== "string") {
+    throw new Error("Invalid Codeforces username format");
+  }
+
+  try {
+    const response = await axios.get(
+      `https://codeforces.com/api/user.info?handles=${username}`,
+      {
+        timeout: 5000,
+      }
+    );
+
+    return response.data.status === "OK";
+  } catch (error) {
+    if (error.response?.status === 404) {
+      return false;
+    }
+    console.error("Codeforces API error:", error.message || error);
+    throw new Error(
+      "Unable to verify Codeforces username. Please check your connection or try again later."
+    );
+  }
+};
+
 module.exports = {
   validateEmail,
   validatePassword,
   validateFullName,
   checkLeetCodeUsername,
+  checkGitHubUsername,
+  checkCodeforcesUsername,
 };

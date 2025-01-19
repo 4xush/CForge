@@ -1,4 +1,3 @@
-// services/leetcodeStatsService.js
 const User = require("../models/User");
 const { getLeetCodeStats } = require("./leetcodeService");
 
@@ -74,11 +73,6 @@ const updateUserLeetCodeStats = async (user, throwError = false, force = false) 
     }
 };
 
-/**
- * Force updates a user's LeetCode stats by user ID
- * @param {string} userId - User's MongoDB ID
- * @returns {Promise<Object>} Updated user document
- */
 const refreshUserLeetCodeStats = async (userId) => {
     try {
         const user = await User.findById(userId);
