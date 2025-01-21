@@ -197,3 +197,45 @@ exports.updateProfilePicture = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+exports.updateSocialNetworks = async (req, res) => {
+  const { linkedin, twitter } = req.body;
+
+  try {
+    // Validate usernames if provided
+    const linkedinRegex = /^[a-zA-Z0-9_-]+$/; // LinkedIn username format
+    const twitterRegex = /^[a-zA-Z0-9_]+$/; // Twitter username format
+
+    if (linkedin && !linkedinRegex.test(linkedin)) {
+      return res.status(400).json({ message: "Invalid LinkedIn username format" });
+    }
+
+    if (twitter && !twitterRegex.test(twitter)) {
+      return res.status(400).json({ message: "Invalid Twitter username format" });
+    }
+
+    // Find and update the user
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Initialize or update socialNetworks field
+    user.socialNetworks = {
+      linkedin: linkedin || '',
+      twitter: twitter || ''
+    };
+
+    // Save the updated user
+    await user.save();
+
+    res.status(200).json({
+      message: "Social networks updated successfully",
+      socialNetworks: user.socialNetworks
+    });
+
+  } catch (error) {
+    console.error("Error updating social networks:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};

@@ -9,7 +9,12 @@ import {
     Star,
     User,
     Mail,
-    GitBranch
+    GitBranch,
+    Github,
+    Layout,
+    Users,
+    Linkedin,
+    Twitter
 } from 'lucide-react';
 import ApiService from '../services/ApiService';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -42,6 +47,38 @@ const PlatformCard = ({ platform, stats, icon: Icon, color }) => (
     </Card>
 );
 
+const SocialLinks = ({ socialNetworks }) => {
+    const { linkedin, twitter } = socialNetworks || {};
+
+    if (!linkedin && !twitter) return null;
+
+    return (
+        <div className="flex space-x-4">
+            {linkedin && (
+                <a
+                    href={`https://www.linkedin.com/in/${linkedin}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-700"
+                >
+                    <Linkedin className="h-5 w-5" />
+                </a>
+            )}
+            {twitter && (
+                <a
+                    href={`https://twitter.com/${twitter}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:text-blue-500"
+                >
+                    <Twitter className="h-5 w-5" />
+                </a>
+            )}
+        </div>
+    );
+};
+
+
 const ProfileHeader = ({ user }) => (
     <Card className="w-full bg-gradient-to-r from-blue-50 to-indigo-50">
         <CardContent className="pt-6">
@@ -63,7 +100,10 @@ const ProfileHeader = ({ user }) => (
                 </div>
                 <div className="flex-1 space-y-4 text-center md:text-left">
                     <div>
-                        <h2 className="text-2xl font-bold text-gray-900">{user?.fullName || 'Unknown User'}</h2>
+                        <div className="flex items-center justify-center md:justify-start gap-4">
+                            <h2 className="text-2xl font-bold text-gray-900">{user?.fullName || 'Unknown User'}</h2>
+                            <SocialLinks socialNetworks={user?.socialNetworks} />
+                        </div>
                         <p className="text-gray-500">@{user?.username || 'N/A'}</p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
@@ -74,7 +114,7 @@ const ProfileHeader = ({ user }) => (
                         <div className="flex items-center space-x-2">
                             <GitBranch className="h-4 w-4 text-gray-500" />
                             <span className="text-gray-600">
-                                Joined {user?.createdAt ? new Date(user.createdAt).getFullYear() : 'Unknown Year'}
+                                Joined {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Unknown Date'}
                             </span>
                         </div>
                     </div>
@@ -98,9 +138,8 @@ const UserProfile = () => {
                 const response = await ApiService.get(`/u/${username}`);
                 setUser(response.data);
             } catch (err) {
-                // console.log(err.response.status);
                 if (err.response?.status === 404) {
-                    navigate('/404/');
+                    navigate('/404');
                 } else {
                     setError('Failed to fetch user profile. Please try again later.');
                 }
@@ -109,10 +148,10 @@ const UserProfile = () => {
             }
         };
         fetchProfile();
-    }, [username]);
+    }, [username, navigate]);
 
     if (loading) return <div className="text-center p-8">Loading...</div>;
-    if (error) return <div className="text-center p-8 ">{error}</div>;
+    if (error) return <div className="text-center p-8">{error}</div>;
     if (!user) return <div className="text-center p-8">User not found</div>;
 
     const leetcodeStats = {
@@ -159,35 +198,59 @@ const UserProfile = () => {
     };
 
     const codeforcesStats = {
-        username: null,
+        username: user?.platforms?.codeforces?.username,
         metrics: [
             {
-                icon: <Star className="h-5 w-5 text-gray-400 mx-auto" />,
-                value: '-',
-                label: 'Rating'
+                icon: <Trophy className="h-5 w-5 text-yellow-500 mx-auto" />,
+                value: user?.platforms?.codeforces?.currentRating || 0,
+                label: 'Current Rating'
             },
             {
-                icon: <Code2 className="h-5 w-5 text-gray-400 mx-auto" />,
-                value: '-',
-                label: 'Problems'
+                icon: <Award className="h-5 w-5 text-blue-500 mx-auto" />,
+                value: user?.platforms?.codeforces?.maxRating || 0,
+                label: 'Max Rating'
             },
             {
-                icon: <Trophy className="h-5 w-5 text-gray-400 mx-auto" />,
-                value: '-',
-                label: 'Contests'
+                icon: <Star className="h-5 w-5 text-purple-500 mx-auto" />,
+                value: user?.platforms?.codeforces?.contribution || 0,
+                label: 'Contribution'
             }
         ],
         additionalContent: (
-            <div className="text-center py-4 text-gray-500">
-                Platform not connected
+            <div className="text-center p-4 bg-gray-50 rounded-lg mt-4">
+                <div className="text-lg font-semibold text-gray-700">
+                    {user?.platforms?.codeforces?.rank || 'Unrated'}
+                </div>
+                <div className="text-sm text-gray-600">Current Rank</div>
             </div>
         )
+    };
+
+    const githubStats = {
+        username: user?.platforms?.github?.username,
+        metrics: [
+            {
+                icon: <Layout className="h-5 w-5 text-gray-700 mx-auto" />,
+                value: user?.platforms?.github?.publicRepos || 0,
+                label: 'Repositories'
+            },
+            {
+                icon: <Users className="h-5 w-5 text-blue-500 mx-auto" />,
+                value: user?.platforms?.github?.followers || 0,
+                label: 'Followers'
+            },
+            {
+                icon: <User className="h-5 w-5 text-green-500 mx-auto" />,
+                value: user?.platforms?.github?.following || 0,
+                label: 'Following'
+            }
+        ]
     };
 
     return (
         <div className="max-w-6xl mx-auto p-4 space-y-6">
             <ProfileHeader user={user} />
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <PlatformCard
                     platform="LeetCode"
                     stats={leetcodeStats}
@@ -199,6 +262,12 @@ const UserProfile = () => {
                     stats={codeforcesStats}
                     icon={Code2}
                     color="text-red-500"
+                />
+                <PlatformCard
+                    platform="GitHub"
+                    stats={githubStats}
+                    icon={Github}
+                    color="text-gray-700"
                 />
             </div>
         </div>

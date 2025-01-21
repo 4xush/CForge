@@ -3,7 +3,9 @@ import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { User, Mail, Key, Trash2, CircleUser, AlertTriangle } from 'lucide-react';
 import ApiService from '../services/ApiService';
-import SettingField from '../components/SettingField';
+import SettingField from '../components/ui/SettingField';
+import AddPlatform from '../components/AddPlatform';
+import SocialNetworks from '../components/SocialNetworks';
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -201,14 +203,17 @@ const Settings = () => {
 
         {/* Tabs */}
         <div className="flex mb-6">
-          {['basic', 'account'].map(tab => (
+          {['basic', 'platforms', 'social', 'account'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-4 py-2 font-medium transition-colors
-                ${activeTab === tab ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-400 hover:text-white'}`}
+      ${activeTab === tab ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-400 hover:text-white'}`}
             >
-              {tab === 'basic' ? 'Basic Info' : 'Account'}
+              {tab === 'basic' ? 'Basic Info' :
+                tab === 'platforms' ? 'Platforms' :
+                  tab === 'social' ? 'Social Networks' :
+                    'Account'}
             </button>
           ))}
         </div>
@@ -230,47 +235,67 @@ const Settings = () => {
                 onEdit={value => handleEdit('username', value)}
               />
             </>
-          ) : (
-            <>
-              <SettingField
-                icon={<User />}
-                label="LeetCode ID"
-                value={profileData?.platforms?.leetcode?.username}
-                onEdit={value => handleEdit('leetcodeUsername', value)}
+          ) : activeTab === 'platforms' ? (
+            <AddPlatform
+              platforms={profileData?.platforms}
+              onPlatformsUpdate={(platforms) => {
+                setProfileData(prev => ({
+                  ...prev,
+                  platforms
+                }));
+              }}
+            />) : activeTab === 'social' ? (
+              <SocialNetworks
+                socialNetworks={profileData?.socialNetworks}
+                onSocialNetworksUpdate={(socialNetworks) => {
+                  setProfileData(prev => ({
+                    ...prev,
+                    socialNetworks
+                  }));
+                }}
               />
-              <SettingField
-                icon={<Mail />}
-                label="Email"
-                value={profileData?.email}
-                onEdit={value => handleEdit('email', value)}
-              />
-              <div className="pt-4 border-t border-gray-700 space-y-4">
-                {!showPasswordForm ? (
+            )
+            : (
+              <>
+                <SettingField
+                  icon={<User />}
+                  label="LeetCode ID"
+                  value={profileData?.platforms?.leetcode?.username}
+                  onEdit={value => handleEdit('leetcodeUsername', value)}
+                />
+                <SettingField
+                  icon={<Mail />}
+                  label="Email"
+                  value={profileData?.email}
+                  onEdit={value => handleEdit('email', value)}
+                />
+                <div className="pt-4 border-t border-gray-700 space-y-4">
+                  {!showPasswordForm ? (
+                    <button
+                      className="w-full flex items-center justify-between p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors"
+                      onClick={() => setShowPasswordForm(true)}
+                    >
+                      <div className="flex items-center gap-2 text-gray-300">
+                        <Key size={18} />
+                        <span>Change Password</span>
+                      </div>
+                    </button>
+                  ) : (
+                    <PasswordChangeForm />
+                  )}
+
                   <button
-                    className="w-full flex items-center justify-between p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors"
-                    onClick={() => setShowPasswordForm(true)}
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="w-full flex items-center justify-between p-3 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 transition-colors"
                   >
-                    <div className="flex items-center gap-2 text-gray-300">
-                      <Key size={18} />
-                      <span>Change Password</span>
+                    <div className="flex items-center gap-2">
+                      <Trash2 size={18} />
+                      <span>Delete Account</span>
                     </div>
                   </button>
-                ) : (
-                  <PasswordChangeForm />
-                )}
-
-                <button
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="w-full flex items-center justify-between p-3 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <Trash2 size={18} />
-                    <span>Delete Account</span>
-                  </div>
-                </button>
-              </div>
-            </>
-          )}
+                </div>
+              </>
+            )}
         </div>
       </div>
 

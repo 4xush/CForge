@@ -7,7 +7,7 @@ const { updateLeetCodeStats } = require("../jobs/leetCodeUpdater");
 const {
   getUserDetails,
   deleteUserAccount,
-  searchUser,
+  searchUser, setupPlatforms,
 } = require("../controllers/userController");
 
 const {
@@ -17,6 +17,7 @@ const {
   updateLeetCodeUsername,
   updateProfilePicture,
   updateFullName,
+  updateSocialNetworks,
 } = require("../controllers/userSettingsController");
 
 // User profile routes
@@ -26,6 +27,8 @@ router.route("/profile")
 
 router.get("/search", protect, searchUser); //GET /users/search?query=johndoe
 
+// Setup platforms -
+router.post("/setup-platforms", protect, setupPlatforms);
 // User settings routes
 router.put("/update/password", protect, updatePassword);
 router.put("/update/fullName", protect, updateFullName);
@@ -35,5 +38,8 @@ router.route("/update/leetcodeUsername").put(protect, updateLeetCodeUsername);
 router.route("/update/avatar").put(protect, updateProfilePicture);
 
 router.put("/update/leetcode", protect, updateLeetCodeStats);
+
+
+router.put("/update/social-networks", protect, updateSocialNetworks);
 
 module.exports = router;
