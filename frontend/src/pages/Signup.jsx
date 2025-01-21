@@ -11,7 +11,7 @@ const SignUp = () => {
         password: '',
         confirmPassword: '',
         gender: '',
-        leetcodeUsername: '',
+        // leetcodeUsername: '',
     });
     const navigate = useNavigate();
     const { registerUser, isLoading } = useAuthContext();
@@ -36,7 +36,7 @@ const SignUp = () => {
                 username: formData.email.split('@')[0],
                 profilePicture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.fullName}`,
                 gender: formData.gender,
-                leetcodeUsername: formData.leetcodeUsername,
+                // leetcodeUsername: formData.leetcodeUsername,
             };
 
             await registerUser(userData);
@@ -54,7 +54,7 @@ const SignUp = () => {
                 return;
             }
 
-            window.location.replace('/signup')
+            window.location.replace('/dashboard')
         } catch (error) {
             console.error('Registration error:', error);
         }
@@ -113,7 +113,7 @@ const SignUp = () => {
                         <option value="female">Female</option>
                         <option value="other">Other</option>
                     </select>
-                    <input
+                    {/* <input
                         name="leetcodeUsername"
                         type="text"
                         required
@@ -121,7 +121,7 @@ const SignUp = () => {
                         placeholder="LeetCode Username"
                         value={formData.leetcodeUsername}
                         onChange={handleInputChange}
-                    />
+                    /> */}
                 </div>
 
                 <button
