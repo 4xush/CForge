@@ -39,6 +39,10 @@ const userSchema = new mongoose.Schema(
         default: "",
       }
     },
+    isProfileComplete: {
+      type: Boolean,
+      default: false
+    },
     platforms: {
       codeforces: {
         username: {

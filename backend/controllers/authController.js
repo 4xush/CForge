@@ -1,51 +1,15 @@
 const User = require("../models/User");
-
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const {
   validateEmail,
   validatePassword,
   validateFullName,
-  checkLeetCodeUsername,
-  checkGitHubUsername,
-  checkCodeforcesUsername
 } = require("../utils/authHelpers.js");
-
 const generateUsername = require("../utils/usernameGenerator");
-const { updateUserLeetCodeStats } = require("../services/leetcodeStatsService");
-const { updateUserGitHubStats } = require("../services/github/githubStatsServices.js");
-const { updateUserCodeforcesStats } = require("../services/codeforces/codeforcesStatsService.js");
-
-// Helper function to update all platform stats
-const updateAllPlatformStats = async (user, throwError = false) => {
-  let updatedUser = user;
-
-  try {
-    // Update LeetCode stats if username exists
-    if (user.platforms.leetcode.username) {
-      updatedUser = await updateUserLeetCodeStats(updatedUser, throwError);
-    }
-
-    // Update GitHub stats if username exists
-    if (user.platforms.github.username) {
-      updatedUser = await updateUserGitHubStats(updatedUser, throwError);
-    }
-
-    // Update Codeforces stats if username exists
-    if (user.platforms.codeforces.username) {
-      updatedUser = await updateUserCodeforcesStats(updatedUser, throwError);
-    }
-
-    return updatedUser;
-  } catch (error) {
-    console.error("Platform stats update failed:", error);
-    if (throwError) throw error;
-    return updatedUser;
-  }
-};
 
 const signupUser = async (req, res) => {
-  const { fullName, email, password, gender, leetcodeUsername, githubUsername, codeforcesUsername } = req.body;
+  const { fullName, email, password, gender } = req.body;
 
   try {
     // Input validation
@@ -59,11 +23,6 @@ const signupUser = async (req, res) => {
       validationErrors.push("Gender must be either 'male', 'female', or 'other'");
     }
 
-    // Platform username validations
-    if (!leetcodeUsername?.trim()) validationErrors.push("LeetCode username is required");
-    if (githubUsername && typeof githubUsername !== 'string') validationErrors.push("Invalid GitHub username format");
-    if (codeforcesUsername && typeof codeforcesUsername !== 'string') validationErrors.push("Invalid Codeforces username format");
-
     if (validationErrors.length > 0) {
       return res.status(400).json({ message: "Validation failed", errors: validationErrors });
     }
@@ -74,33 +33,11 @@ const signupUser = async (req, res) => {
       return res.status(400).json({ message: "Email is already registered" });
     }
 
-    // Validate platform usernames in parallel
-    try {
-      const [isValidLeetCode, isValidGitHub, isValidCodeforces] = await Promise.all([
-        checkLeetCodeUsername(leetcodeUsername),
-        githubUsername ? checkGitHubUsername(githubUsername) : true,
-        codeforcesUsername ? checkCodeforcesUsername(codeforcesUsername) : true
-      ]);
-
-      if (!isValidLeetCode) {
-        return res.status(400).json({ message: "LeetCode username not found or invalid" });
-      }
-      if (githubUsername && !isValidGitHub) {
-        return res.status(400).json({ message: "GitHub username not found or invalid" });
-      }
-      if (codeforcesUsername && !isValidCodeforces) {
-        return res.status(400).json({ message: "Codeforces username not found or invalid" });
-      }
-    } catch (error) {
-      console.error("Platform username verification failed:", error);
-      return res.status(503).json({ message: "Unable to verify platform usernames. Please try again later." });
-    }
-
     // Generate username and avatar
     const username = await generateUsername(fullName);
     const avatarUrl = `https://ui-avatars.com/api/?background=random&name=${encodeURIComponent(fullName)}`;
 
-    // Create user object with proper platform structure
+    // Create user object with empty platform structure
     const newUser = new User({
       fullName: fullName.trim(),
       username,
@@ -109,41 +46,20 @@ const signupUser = async (req, res) => {
       gender: gender.toLowerCase(),
       profilePicture: avatarUrl,
       platforms: {
-        leetcode: {
-          username: leetcodeUsername.trim(),
-          totalQuestionsSolved: 0,
-          questionsSolvedByDifficulty: { easy: 0, medium: 0, hard: 0 },
-          attendedContestsCount: 0,
-          contestRating: 0
-        },
-        github: githubUsername ? {
-          username: githubUsername.trim(),
-          publicRepos: 0,
-          followers: 0,
-          following: 0
-        } : { username: null },
-        codeforces: codeforcesUsername ? {
-          username: codeforcesUsername.trim(),
-          currentRating: 0,
-          maxRating: 0,
-          rank: "",
-          maxRank: "",
-          contribution: 0,
-          friendOfCount: 0
-        } : { username: null }
-      }
+        leetcode: { username: null },
+        github: { username: null },
+        codeforces: { username: null }
+      },
+      isProfileComplete: false // New field to track if user has added platform usernames
     });
 
     // Validate and save user
     await newUser.validate();
     await newUser.save();
 
-    // Update all platform stats
-    const updatedUser = await updateAllPlatformStats(newUser, false);
-
     // Generate JWT token
     const token = jwt.sign(
-      { id: updatedUser._id, username: updatedUser.username },
+      { id: newUser._id, username: newUser.username },
       process.env.JWT_SECRET,
       { expiresIn: "30d" }
     );
@@ -153,12 +69,13 @@ const signupUser = async (req, res) => {
       message: "User registered successfully",
       token,
       user: {
-        _id: updatedUser._id,
-        fullName: updatedUser.fullName,
-        username: updatedUser.username,
-        email: updatedUser.email,
-        profilePicture: updatedUser.profilePicture,
-        platforms: updatedUser.platforms
+        _id: newUser._id,
+        fullName: newUser.fullName,
+        username: newUser.username,
+        email: newUser.email,
+        profilePicture: newUser.profilePicture,
+        platforms: newUser.platforms,
+        isProfileComplete: newUser.isProfileComplete
       }
     });
 
@@ -201,16 +118,13 @@ const loginUser = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Update login timestamp and platform stats
+    // Update login timestamp
     user.lastLogin = new Date();
     await user.save();
 
-    // Update all platform stats
-    const updatedUser = await updateAllPlatformStats(user);
-
     // Generate JWT token
     const token = jwt.sign(
-      { id: updatedUser._id, username: updatedUser.username, email: updatedUser.email },
+      { id: user._id, username: user.username, email: user.email },
       process.env.JWT_SECRET,
       { expiresIn: "30d" }
     );
@@ -220,12 +134,13 @@ const loginUser = async (req, res) => {
       message: "Login successful",
       token,
       user: {
-        _id: updatedUser._id,
-        fullName: updatedUser.fullName,
-        username: updatedUser.username,
-        email: updatedUser.email,
-        profilePicture: updatedUser.profilePicture,
-        platforms: updatedUser.platforms
+        _id: user._id,
+        fullName: user.fullName,
+        username: user.username,
+        email: user.email,
+        profilePicture: user.profilePicture,
+        platforms: user.platforms,
+        isProfileComplete: user.isProfileComplete
       }
     });
 
