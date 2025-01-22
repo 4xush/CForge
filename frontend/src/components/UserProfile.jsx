@@ -6,16 +6,37 @@ import { ProfileHeader } from './profile/ProfileHeader';
 import { PlatformCard, getPlatformStats } from './profile/PlatformCards';
 import ActivityHeatmap from './profile/ActivityHeatmap';
 import { useHeatmapData } from '../hooks/useHeatmapData';
+import LeetCodeDashboard from '../components/profile/LeetCodeDashboard';
+
+const TabButton = ({ active, onClick, children }) => (
+    <button
+        onClick={onClick}
+        className={`px-4 py-2 font-medium rounded-lg transition-colors ${active
+            ? 'bg-yellow-100 text-yellow-700'
+            : 'text-gray-600 hover:bg-gray-100'
+            }`}
+    >
+        {children}
+    </button>
+);
+
+const PlatformSection = ({ children, title }) => (
+    <div className="bg-white rounded-lg shadow-lg p-6 space-y-4">
+        <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+            {title}
+        </h2>
+        {children}
+    </div>
+);
 
 const UserProfile = () => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [activeTab, setActiveTab] = useState('overview');
     const navigate = useNavigate();
-
     const username = window.location.pathname.split('/').pop();
 
-    // Now we only need one call to get all heatmap data
     const { data: heatmapData, loading: heatmapLoading, error: heatmapError } = useHeatmapData(username);
 
     useEffect(() => {
@@ -36,7 +57,14 @@ const UserProfile = () => {
         fetchProfile();
     }, [username, navigate]);
 
-    if (loading || heatmapLoading) return <div className="text-center p-8">Loading...</div>;
+    if (loading || heatmapLoading) {
+        return (
+            <div className="flex justify-center items-center min-h-screen">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-500"></div>
+            </div>
+        );
+    }
+
     if (error) return <div className="text-center p-8">{error}</div>;
     if (heatmapError) return <div className="text-center p-8">Failed to load activity data</div>;
     if (!user) return <div className="text-center p-8">User not found</div>;
@@ -44,54 +72,79 @@ const UserProfile = () => {
     const platformStats = getPlatformStats(user);
 
     return (
-        <div className="max-w-6xl mx-auto p-4 space-y-6">
+        <div className="max-w-7xl mx-auto p-4 space-y-8">
             <ProfileHeader user={user} />
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <PlatformCard
-                    platform="LeetCode"
-                    stats={platformStats.leetcode}
-                    icon={Code2}
-                    color="text-yellow-500"
-                />
-                <PlatformCard
-                    platform="Codeforces"
-                    stats={platformStats.codeforces}
-                    icon={Code2}
-                    color="text-red-500"
-                />
-                <PlatformCard
-                    platform="GitHub"
-                    stats={platformStats.github}
-                    icon={Github}
-                    color="text-gray-700"
-                />
+
+            <div className="flex space-x-4 mb-6">
+                <TabButton
+                    active={activeTab === 'overview'}
+                    onClick={() => setActiveTab('overview')}
+                >
+                    Overview
+                </TabButton>
+                <TabButton
+                    active={activeTab === 'leetcode'}
+                    onClick={() => setActiveTab('leetcode')}
+                >
+                    LeetCode Stats
+                </TabButton>
             </div>
-            <div className="grid grid-cols-1 gap-6">
-                {heatmapData?.leetcode && Object.keys(heatmapData.leetcode).length > 0 && (
-                    <div className="flex justify-center">
-                        <ActivityHeatmap
-                            data={heatmapData.leetcode}
-                            platform="leetcode"
+
+            {activeTab === 'overview' ? (
+                <>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <PlatformCard
+                            platform="LeetCode"
+                            stats={platformStats.leetcode}
+                            icon={Code2}
+                            color="text-yellow-500"
+                        />
+                        <PlatformCard
+                            platform="Codeforces"
+                            stats={platformStats.codeforces}
+                            icon={Code2}
+                            color="text-red-500"
+                        />
+                        <PlatformCard
+                            platform="GitHub"
+                            stats={platformStats.github}
+                            icon={Github}
+                            color="text-gray-700"
                         />
                     </div>
-                )}
-                {heatmapData?.github && heatmapData.github.length > 0 && (
-                    <div className="flex justify-center">
-                        <ActivityHeatmap
-                            data={heatmapData.github}
-                            platform="github"
-                        />
+
+                    <div className="grid grid-cols-1 gap-6">
+                        {heatmapData?.leetcode && Object.keys(heatmapData.leetcode).length > 0 && (
+                            <div className="flex justify-center">
+                                <ActivityHeatmap
+                                    data={heatmapData.leetcode}
+                                    platform="leetcode"
+                                />
+                            </div>
+                        )}
+                        {heatmapData?.github && heatmapData.github.length > 0 && (
+                            <div className="flex justify-center">
+                                <ActivityHeatmap
+                                    data={heatmapData.github}
+                                    platform="github"
+                                />
+                            </div>
+                        )}
+                        {heatmapData?.codeforces && heatmapData.codeforces.length > 0 && (
+                            <div className="flex justify-center">
+                                <ActivityHeatmap
+                                    data={heatmapData.codeforces}
+                                    platform="codeforces"
+                                />
+                            </div>
+                        )}
                     </div>
-                )}
-                {heatmapData?.codeforces && heatmapData.codeforces.length > 0 && (
-                    <div className="flex justify-center">
-                        <ActivityHeatmap
-                            data={heatmapData.codeforces}
-                            platform="codeforces"
-                        />
-                    </div>
-                )}
-            </div>
+                </>
+            ) : (
+                <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <LeetCodeDashboard />
+                </div>
+            )}
         </div>
     );
 };

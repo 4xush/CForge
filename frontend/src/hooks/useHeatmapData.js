@@ -10,7 +10,7 @@ export const useHeatmapData = (username) => {
         const fetchHeatmapData = async () => {
             try {
                 // Check session storage first
-                const storedData = sessionStorage.getItem(username);
+                const storedData = sessionStorage.getItem(`heatmap-data-${username}`);
 
                 if (storedData) {
                     // If data exists in session storage, parse and use it
@@ -21,10 +21,10 @@ export const useHeatmapData = (username) => {
                 }
 
                 // If no data in session storage, fetch from API
-                const response = await ApiService.get(`/u_hmap/${username}`);
+                const response = await ApiService.get(`/u/hmap/${username}`);
 
                 // Store the entire response in session storage
-                sessionStorage.setItem(username, JSON.stringify(response.data));
+                sessionStorage.setItem(`heatmap-data-${username}`, JSON.stringify(response.data));
 
                 // Set only the heatmaps data in state
                 setData(response.data.heatmaps);
