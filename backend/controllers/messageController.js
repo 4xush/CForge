@@ -85,10 +85,10 @@ exports.getMessages = async (req, res) => {
       query.createdAt = { $lt: lastMessage.createdAt };
     }
 
-    // Changed sort order to ascending (oldest first)
+    // Changed sort order to descending (newest first)
     const messages = await Message.find(query)
       .populate("sender", "username profilePicture")
-      .sort({ createdAt: 1 })  // for ascending order (old to new)
+      .sort({ createdAt: -1 })  // Changed to descending order (new to old)
       .limit(sanitizedLimit + 1)
       .lean();
 
@@ -101,6 +101,7 @@ exports.getMessages = async (req, res) => {
       ...msg,
       content: decrypt(msg.content, msg.iv),
     }));
+    console.log(decryptedMessages);
 
     // Add total count for initial load (optional)
     let totalCount;

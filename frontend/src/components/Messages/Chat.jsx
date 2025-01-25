@@ -1,129 +1,124 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useRoomContext } from '../../context/RoomContext';
-import { useAuthContext } from '../../context/AuthContext';
-import { useMessageContext } from '../../context/MessageContext';
-import Message from './ui/Message';
-import MessageInput from './MessageInput';
-import ContextMenu from './ChatContextMenu';
-import { format, isToday, isYesterday, isSameYear } from 'date-fns';
+import React, { useEffect, useRef, useState } from "react"
+import { useRoomContext } from "../../context/RoomContext"
+import { useAuthContext } from "../../context/AuthContext"
+import { useMessageContext } from "../../context/MessageContext"
+import Message from "./ui/Message"
+import MessageInput from "./MessageInput"
+import ContextMenu from "./ChatContextMenu"
+import { format, isToday, isYesterday, isSameYear } from "date-fns"
 
 const Chat = () => {
-    const { selectedRoom } = useRoomContext();
-    const { authUser } = useAuthContext();
-    const {
-        messages,
-        loading,
-        hasMore,
-        fetchMessages,
-        addMessage,
-        deleteMessage,
-        editMessage
-    } = useMessageContext();
+    const { selectedRoom } = useRoomContext()
+    const { authUser } = useAuthContext()
+    const { messages, loading, hasMore, fetchMessages, addMessage, deleteMessage, editMessage } = useMessageContext()
 
-    const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, messageId: null });
-    const [editingMessage, setEditingMessage] = useState(null);
-    const [loadingMore, setLoadingMore] = useState(false);
-    const messagesEndRef = useRef(null);
-    const contextMenuRef = useRef(null);
+    const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, messageId: null })
+    const [editingMessage, setEditingMessage] = useState(null)
+    const [loadingMore, setLoadingMore] = useState(false)
+    const messagesEndRef = useRef(null)
+    const contextMenuRef = useRef(null)
 
     useEffect(() => {
         if (selectedRoom) {
-            fetchMessages();
+            fetchMessages()
         }
-    }, [selectedRoom, fetchMessages]);
+    }, [selectedRoom, fetchMessages])
 
     useEffect(() => {
         if (!loadingMore) {
-            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
         }
-    }, [messages, loadingMore]);
+    }, [loadingMore]) // Removed unnecessary dependency: messages
 
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (contextMenuRef.current && !contextMenuRef.current.contains(event.target)) {
-                closeContextMenu();
+                closeContextMenu()
             }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+        }
+        document.addEventListener("mousedown", handleClickOutside)
+        return () => document.removeEventListener("mousedown", handleClickOutside)
+    }, [])
 
     const loadOlderMessages = async () => {
-        if (!hasMore || loadingMore || !messages.length) return;
+        if (!hasMore || loadingMore || !messages.length) return
 
-        setLoadingMore(true);
+        setLoadingMore(true)
         try {
-            const oldestMessage = messages[messages.length - 1];
-            await fetchMessages(oldestMessage._id);
+            const oldestMessage = messages[0]
+            await fetchMessages(oldestMessage._id)
         } catch (error) {
-            console.error('Error loading older messages:', error);
+            console.error("Error loading older messages:", error)
         } finally {
-            setLoadingMore(false);
+            setLoadingMore(false)
         }
-    };
+    }
 
     const handleContextMenu = (e, messageId) => {
-        e.preventDefault();
-        const message = messages.find(msg => msg._id === messageId);
+        e.preventDefault()
+        const message = messages.find((msg) => msg._id === messageId)
         if (canModifyMessage(message)) {
             setContextMenu({
                 visible: true,
                 x: e.clientX,
                 y: e.clientY,
-                messageId
-            });
+                messageId,
+            })
         }
-    };
+    }
 
-    const closeContextMenu = () => setContextMenu({ visible: false, x: 0, y: 0, messageId: null });
+    const closeContextMenu = () => setContextMenu({ visible: false, x: 0, y: 0, messageId: null })
 
     const canModifyMessage = (message) => {
-        if (!authUser) return false;
-        if (message.sender._id === authUser._id) return true;
-        return selectedRoom.admins.some(admin => admin.toString() === authUser._id.toString());
-    };
+        if (!authUser) return false
+        if (message.sender._id === authUser._id) return true
+        return selectedRoom.admins.some((admin) => admin.toString() === authUser._id.toString())
+    }
 
     const handleDeleteMessage = async (messageId) => {
         try {
-            await deleteMessage(messageId);
-            closeContextMenu();
+            await deleteMessage(messageId)
+            closeContextMenu()
         } catch (error) {
-            console.error('Delete error:', error);
+            console.error("Delete error:", error)
         }
-    };
+    }
 
     const handleEditMessage = async (messageId, newContent) => {
         try {
-            await editMessage(messageId, newContent);
-            setEditingMessage(null);
+            await editMessage(messageId, newContent)
+            setEditingMessage(null)
         } catch (error) {
-            console.error('Edit error:', error);
+            console.error("Edit error:", error)
         }
-    };
+    }
 
     const startEditing = (message) => {
-        setEditingMessage(message);
-        closeContextMenu();
-    };
+        setEditingMessage(message)
+        closeContextMenu()
+    }
 
-    const cancelEditing = () => setEditingMessage(null);
+    const cancelEditing = () => setEditingMessage(null)
 
     const formatMessageDate = (date) => {
-        const messageDate = new Date(date);
-        if (isToday(messageDate)) return 'Today';
-        if (isYesterday(messageDate)) return 'Yesterday';
-        if (isSameYear(messageDate, new Date())) return format(messageDate, 'MMMM d');
-        return format(messageDate, 'MMMM d, yyyy');
-    };
+        const messageDate = new Date(date)
+        if (isToday(messageDate)) return "Today"
+        if (isYesterday(messageDate)) return "Yesterday"
+        if (isSameYear(messageDate, new Date())) return format(messageDate, "MMMM d")
+        return format(messageDate, "MMMM d, yyyy")
+    }
 
-    if (!selectedRoom) return <div className="text-center text-gray-500 mt-4">Select a room to view messages</div>;
-    if (loading && !loadingMore) return <div className="text-center text-gray-500 mt-4">Loading messages...</div>;
+    if (!selectedRoom) return <div className="text-center text-gray-500 mt-4">Select a room to view messages</div>
+    if (loading && !loadingMore) return <div className="text-center text-gray-500 mt-4">Loading messages...</div>
 
     const groupedMessages = messages.reduce((groups, message) => {
-        const date = formatMessageDate(message.createdAt);
-        (groups[date] = groups[date] || []).push(message);
-        return groups;
-    }, {});
+        const date = formatMessageDate(message.createdAt)
+        if (!groups[date]) {
+            groups[date] = []
+        }
+        groups[date].push(message)
+        return groups
+    }, {})
 
     return (
         <div className="flex flex-col h-full">
@@ -135,7 +130,7 @@ const Chat = () => {
                             disabled={loadingMore}
                             className="px-4 py-2 text-sm bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 disabled:bg-gray-100 disabled:text-gray-400 transition-colors duration-200"
                         >
-                            {loadingMore ? 'Loading...' : 'Load older messages'}
+                            {loadingMore ? "Loading..." : "Load older messages"}
                         </button>
                     </div>
                 )}
@@ -144,7 +139,7 @@ const Chat = () => {
                     <div key={date}>
                         <div className="text-center text-xs text-gray-500 my-2">{date}</div>
                         {msgs.map((msg) => (
-                            <div key={msg._id} className="relative group">
+                            <div key={`${msg._id}-${msg.createdAt}`} className="relative group">
                                 {editingMessage?._id === msg._id ? (
                                     <div className="px-4 py-2">
                                         <MessageInput
@@ -156,10 +151,12 @@ const Chat = () => {
                                     </div>
                                 ) : (
                                     <Message
-                                        avatar={msg.sender.profilePicture ||
-                                            `https://avatar.iran.liara.run/username?username=${msg.sender.username}`}
+                                        avatar={
+                                            msg.sender.profilePicture ||
+                                            `https://avatar.iran.liara.run/username?username=${msg.sender.username}`
+                                        }
                                         senderName={msg.sender.username}
-                                        time={format(new Date(msg.createdAt), 'HH:mm')}
+                                        time={format(new Date(msg.createdAt), "HH:mm")}
                                         message={msg.content}
                                         isEdited={msg.isEdited}
                                         onContextMenu={(e) => handleContextMenu(e, msg._id)}
@@ -170,9 +167,7 @@ const Chat = () => {
                     </div>
                 ))}
 
-                {messages.length === 0 && (
-                    <div className="text-center text-gray-500 mt-4">No messages yet</div>
-                )}
+                {messages.length === 0 && <div className="text-center text-gray-500 mt-4">No messages yet</div>}
                 <div ref={messagesEndRef} />
             </div>
 
@@ -180,15 +175,15 @@ const Chat = () => {
                 <div
                     ref={contextMenuRef}
                     style={{
-                        position: 'fixed',
+                        position: "fixed",
                         top: `${contextMenu.y}px`,
                         left: `${contextMenu.x}px`,
                     }}
                 >
                     <ContextMenu
                         onEdit={() => {
-                            const messageToEdit = messages.find(m => m._id === contextMenu.messageId);
-                            startEditing(messageToEdit);
+                            const messageToEdit = messages.find((m) => m._id === contextMenu.messageId)
+                            startEditing(messageToEdit)
                         }}
                         onDelete={() => handleDeleteMessage(contextMenu.messageId)}
                         onCancel={closeContextMenu}
@@ -200,7 +195,8 @@ const Chat = () => {
                 <MessageInput onMessageSent={addMessage} />
             </div>
         </div>
-    );
-};
+    )
+}
 
-export default Chat;
+export default Chat
+
