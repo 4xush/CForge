@@ -21,6 +21,9 @@ import {
 import { BookOpen, Brain, Code, RotateCw, AlertCircle } from 'lucide-react';
 import { useLeetCodeStats } from '../../hooks/useLeetCodeStats';
 
+import UserLevelCard from "./LeetCodeLevelCard";
+
+
 const TabPanel = (props) => {
     const { children, value, index, ...other } = props;
     return (
@@ -38,11 +41,12 @@ const TabPanel = (props) => {
     );
 };
 
-const LeetCodeDashboard = () => {
+const LeetCodeDashboard = ({ leetcodeData }) => {
     const username = window.location.pathname.split('/').pop();
     const { data, loading, error, refreshStats } = useLeetCodeStats(username);
     const [tabValue, setTabValue] = useState(0);
-
+    const currentData = leetcodeData;
+    console.log(currentData);
     if (loading) {
         return (
             <Box display="flex" justifyContent="center" alignItems="center" minHeight="64px">
@@ -127,7 +131,7 @@ const LeetCodeDashboard = () => {
                                 </Box>
                                 <Typography variant="h4">{total}</Typography>
                                 <Typography variant="body2" color="text.secondary">
-                                    Problems Categorized
+                                    Problems Included
                                 </Typography>
                             </CardContent>
                         </Card>
@@ -183,7 +187,7 @@ const LeetCodeDashboard = () => {
                                 <TableRow>
                                     <TableCell>Category</TableCell>
                                     <TableCell>Tag</TableCell>
-                                    <TableCell align="right">Problems Categorized</TableCell>
+                                    <TableCell align="right">Problems Included</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -201,6 +205,7 @@ const LeetCodeDashboard = () => {
                     </TableContainer>
                 </TabPanel>
             </Paper>
+            <UserLevelCard leetcodeData={currentData} />
         </div>
     );
 };

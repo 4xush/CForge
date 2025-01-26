@@ -20,14 +20,6 @@ const TabButton = ({ active, onClick, children }) => (
     </button>
 );
 
-const PlatformSection = ({ children, title }) => (
-    <div className="bg-white rounded-lg shadow-lg p-6 space-y-4">
-        <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-            {title}
-        </h2>
-        {children}
-    </div>
-);
 
 const UserProfile = () => {
     const [user, setUser] = useState(null);
@@ -36,7 +28,6 @@ const UserProfile = () => {
     const [activeTab, setActiveTab] = useState('overview');
     const navigate = useNavigate();
     const username = window.location.pathname.split('/').pop();
-
     const { data: heatmapData, loading: heatmapLoading, error: heatmapError } = useHeatmapData(username);
 
     useEffect(() => {
@@ -65,6 +56,8 @@ const UserProfile = () => {
         );
     }
 
+    const leetcodeData = user.platforms.leetcode;
+    // console.log(leetcodeData);
     if (error) return <div className="text-center p-8">{error}</div>;
     if (heatmapError) return <div className="text-center p-8">Failed to load activity data</div>;
     if (!user) return <div className="text-center p-8">User not found</div>;
@@ -142,7 +135,7 @@ const UserProfile = () => {
                 </>
             ) : (
                 <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-                    <LeetCodeDashboard />
+                    <LeetCodeDashboard leetcodeData={leetcodeData} />
                 </div>
             )}
         </div>
