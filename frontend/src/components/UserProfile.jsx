@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Code2, Github } from 'lucide-react';
 import ApiService from '../services/ApiService';
-import { ProfileHeader } from './profile/ProfileHeader';
-import { PlatformCard, getPlatformStats } from './profile/PlatformCards';
-import ActivityHeatmap from './profile/ActivityHeatmap';
+import { ProfileHeader } from './Profile/ProfileHeader';
+import { PlatformCard, getPlatformStats } from './Profile/PlatformCards';
+import ActivityHeatmap from './Profile/ActivityHeatmap';
 import { useHeatmapData } from '../hooks/useHeatmapData';
-import LeetCodeDashboard from '../components/profile/LeetCodeDashboard';
+import LeetCodeDashboard from '../components/Profile/LeetCodeDashboard';
 
 const TabButton = ({ active, onClick, children }) => (
     <button

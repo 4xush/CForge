@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
 import { User, Mail, Key, Trash2, CircleUser, AlertTriangle } from 'lucide-react';
 import ApiService from '../services/ApiService';
 import SettingField from '../components/ui/SettingField';
 import AddPlatform from '../components/AddPlatform';
 import SocialNetworks from '../components/SocialNetworks';
+import { useAuthContext } from '../context/AuthContext';
 
 const Settings = () => {
-  const navigate = useNavigate();
+  const { authUser, updateUser, logout } = useAuthContext();
   const [activeTab, setActiveTab] = useState('basic');
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -23,6 +23,7 @@ const Settings = () => {
     try {
       const response = await ApiService.get('users/profile');
       setProfileData(response.data);
+      updateUser(response.data);
     } catch (error) {
       toast.error('Failed to load profile data');
       console.error('Error fetching profile:', error);
@@ -34,8 +35,10 @@ const Settings = () => {
   const handleEdit = async (field, value) => {
     try {
       await ApiService.put(`/users/update/${field}`, { [field]: value });
+      const updatedData = { ...profileData, [field]: value };
+      setProfileData(updatedData);
+      updateUser(updatedData);
       toast.success(`${field} updated successfully`);
-      window.location.reload();
     } catch (error) {
       toast.error(error.response?.data?.message || `Failed to update ${field}`);
       console.error(`Error updating ${field}:`, error);
@@ -55,7 +58,6 @@ const Settings = () => {
       });
       toast.success('Password updated successfully');
       setShowPasswordForm(false);
-      window.location.reload();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to update password');
     }
@@ -65,10 +67,22 @@ const Settings = () => {
     try {
       await ApiService.delete('/users/profile');
       toast.success('Account deleted successfully');
-      navigate('/signup');
+      logout();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to delete account');
     }
+  };
+
+  const handlePlatformsUpdate = (platforms) => {
+    const updatedData = { ...profileData, platforms };
+    setProfileData(updatedData);
+    updateUser(updatedData);
+  };
+
+  const handleSocialNetworksUpdate = (socialNetworks) => {
+    const updatedData = { ...profileData, socialNetworks };
+    setProfileData(updatedData);
+    updateUser(updatedData);
   };
 
   const DeleteConfirmDialog = () => (
@@ -183,6 +197,12 @@ const Settings = () => {
     );
   };
 
+  if (loading) {
+    return <div className="min-h-screen bg-gray-900 text-white p-4 flex items-center justify-center">
+      Loading...
+    </div>;
+  }
+
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
       <div className="max-w-2xl mx-auto">
@@ -208,7 +228,7 @@ const Settings = () => {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-4 py-2 font-medium transition-colors
-      ${activeTab === tab ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-400 hover:text-white'}`}
+                ${activeTab === tab ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-400 hover:text-white'}`}
             >
               {tab === 'basic' ? 'Basic Info' :
                 tab === 'platforms' ? 'Platforms' :
@@ -238,64 +258,54 @@ const Settings = () => {
           ) : activeTab === 'platforms' ? (
             <AddPlatform
               platforms={profileData?.platforms}
-              onPlatformsUpdate={(platforms) => {
-                setProfileData(prev => ({
-                  ...prev,
-                  platforms
-                }));
-              }}
-            />) : activeTab === 'social' ? (
-              <SocialNetworks
-                socialNetworks={profileData?.socialNetworks}
-                onSocialNetworksUpdate={(socialNetworks) => {
-                  setProfileData(prev => ({
-                    ...prev,
-                    socialNetworks
-                  }));
-                }}
+              onPlatformsUpdate={handlePlatformsUpdate}
+            />
+          ) : activeTab === 'social' ? (
+            <SocialNetworks
+              socialNetworks={profileData?.socialNetworks}
+              onSocialNetworksUpdate={handleSocialNetworksUpdate}
+            />
+          ) : (
+            <>
+              <SettingField
+                icon={<User />}
+                label="LeetCode ID"
+                value={profileData?.platforms?.leetcode?.username}
+                onEdit={value => handleEdit('leetcodeUsername', value)}
               />
-            )
-            : (
-              <>
-                <SettingField
-                  icon={<User />}
-                  label="LeetCode ID"
-                  value={profileData?.platforms?.leetcode?.username}
-                  onEdit={value => handleEdit('leetcodeUsername', value)}
-                />
-                <SettingField
-                  icon={<Mail />}
-                  label="Email"
-                  value={profileData?.email}
-                  onEdit={value => handleEdit('email', value)}
-                />
-                <div className="pt-4 border-t border-gray-700 space-y-4">
-                  {!showPasswordForm ? (
-                    <button
-                      className="w-full flex items-center justify-between p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors"
-                      onClick={() => setShowPasswordForm(true)}
-                    >
-                      <div className="flex items-center gap-2 text-gray-300">
-                        <Key size={18} />
-                        <span>Change Password</span>
-                      </div>
-                    </button>
-                  ) : (
-                    <PasswordChangeForm />
-                  )}
-
+              <SettingField
+                icon={<Mail />}
+                label="Email"
+                value={profileData?.email}
+                onEdit={value => handleEdit('email', value)}
+              />
+              <div className="pt-4 border-t border-gray-700 space-y-4">
+                {!showPasswordForm ? (
                   <button
-                    onClick={() => setShowDeleteConfirm(true)}
-                    className="w-full flex items-center justify-between p-3 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 transition-colors"
+                    className="w-full flex items-center justify-between p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors"
+                    onClick={() => setShowPasswordForm(true)}
                   >
-                    <div className="flex items-center gap-2">
-                      <Trash2 size={18} />
-                      <span>Delete Account</span>
+                    <div className="flex items-center gap-2 text-gray-300">
+                      <Key size={18} />
+                      <span>Change Password</span>
                     </div>
                   </button>
-                </div>
-              </>
-            )}
+                ) : (
+                  <PasswordChangeForm />
+                )}
+
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="w-full flex items-center justify-between p-3 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Trash2 size={18} />
+                    <span>Delete Account</span>
+                  </div>
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

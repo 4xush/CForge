@@ -1,4 +1,4 @@
-// src/components/profile/ProfileHeader.jsx
+// src/components/Profile/ProfileHeader.jsx
 import React from 'react';
 import { Camera, Mail, GitBranch } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';

@@ -1,4 +1,4 @@
-// src/components/profile/PlatformCards.jsx
+// src/components/Profile/PlatformCards.jsx
 import React from 'react';
 import { Trophy, Book, Medal, Layout, Users, User, Award, Star } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';

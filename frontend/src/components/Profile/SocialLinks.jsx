@@ -1,4 +1,4 @@
-// src/components/profile/SocialLinks.jsx
+// src/components/Profile/SocialLinks.jsx
 import React from 'react';
 import { Linkedin, Twitter } from 'lucide-react';
 
