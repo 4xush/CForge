@@ -101,7 +101,6 @@ exports.getMessages = async (req, res) => {
       ...msg,
       content: decrypt(msg.content, msg.iv),
     }));
-    console.log(decryptedMessages);
 
     // Add total count for initial load (optional)
     let totalCount;

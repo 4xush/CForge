@@ -65,8 +65,8 @@ class ApiService {
         return this.api.put(url, data);
     }
 
-    async delete(url) {
-        return this.api.delete(url);
+    async delete(url, data) {
+        return this.api.delete(url, { data }); // Pass the data here as part of config
     }
 }
 

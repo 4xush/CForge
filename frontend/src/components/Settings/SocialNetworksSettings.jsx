@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Linkedin, Twitter } from 'lucide-react';
-import ApiService from '../services/ApiService';
+import ApiService from '../../services/ApiService';
 import { toast } from 'react-hot-toast';
 
 const SocialNetworks = ({ socialNetworks, onSocialNetworksUpdate }) => {

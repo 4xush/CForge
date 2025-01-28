@@ -6,7 +6,6 @@ const { protect } = require("../middleware/authMiddleware");
 const { updateLeetCodeStats } = require("../jobs/leetCodeUpdater");
 const {
   getUserDetails,
-  deleteUserAccount,
   searchUser, setupPlatforms,
 } = require("../controllers/userController");
 
@@ -15,6 +14,7 @@ const {
   updateUsername,
   updateEmail,
   updateLeetCodeUsername,
+  deleteUserAccount,
   updateProfilePicture,
   updateFullName,
   updateSocialNetworks,

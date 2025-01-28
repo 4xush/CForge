@@ -153,7 +153,7 @@ const Chat = () => {
                                     <Message
                                         avatar={
                                             msg.sender.profilePicture ||
-                                            `https://avatar.iran.liara.run/username?username=${msg.sender.username}`
+                                            `https://ui-avatars.com/api/?background=random&name=${encodeURIComponent(msg.sender.username)}`
                                         }
                                         senderName={msg.sender.username}
                                         time={format(new Date(msg.createdAt), "HH:mm")}

@@ -35,11 +35,6 @@ const RoomList = ({ setRoomFormVisible }) => {
                                     : 'bg-gray-700/50 hover:bg-orange-500/20 text-white'
                                 }`}
                         >
-                            <img
-                                src={`https://avatar.iran.liara.run/username?username=[${room.name}]`}
-                                alt={room.name}
-                                className="w-6 h-6 rounded-full"
-                            />
                             <span className="text-sm">{room.name}</span>
                         </button>
                     </div>
