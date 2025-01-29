@@ -44,7 +44,7 @@ export const RoomProvider = ({ children }) => {
             setLoading(false);
         }
     }, []);
-
+    // console.log(rooms);
     const selectRoom = useCallback(
         async (roomId) => {
             const token = localStorage.getItem('app-token');

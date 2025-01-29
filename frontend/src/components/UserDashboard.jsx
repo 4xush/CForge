@@ -6,7 +6,7 @@ import { ProfileHeader } from './Profile/ProfileHeader';
 import { PlatformCard, getPlatformStats } from './Profile/PlatformCards';
 import ActivityHeatmap from './Profile/ActivityHeatmap';
 import { useHeatmapData } from '../hooks/useHeatmapData';
-import LeetCodeDashboard from '../components/Profile/LeetCodeDashboard';
+import LeetCodeDashboard from './Profile/LeetCodeDashboard';
 
 const TabButton = ({ active, onClick, children }) => (
     <button
@@ -20,20 +20,18 @@ const TabButton = ({ active, onClick, children }) => (
     </button>
 );
 
-
 const UserProfile = () => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('overview');
     const navigate = useNavigate();
-    const username = window.location.pathname.split('/').pop();
-    const { data: heatmapData, loading: heatmapLoading, error: heatmapError } = useHeatmapData(username);
 
+    // Fetch user data first
     useEffect(() => {
         const fetchProfile = async () => {
             try {
-                const response = await ApiService.get(`/u/${username}`);
+                const response = await ApiService.get('users/profile');
                 setUser(response.data);
             } catch (err) {
                 if (err.response?.status === 404) {
@@ -45,10 +43,16 @@ const UserProfile = () => {
                 setLoading(false);
             }
         };
-        fetchProfile();
-    }, [username, navigate]);
 
-    if (loading || heatmapLoading) {
+        fetchProfile();
+    }, [navigate]);
+
+    // Fetch heatmap data only after user data is available
+    const { data: heatmapData, loading: heatmapLoading, error: heatmapError } = useHeatmapData(user?.username);
+
+    const combinedLoading = loading || heatmapLoading;
+
+    if (combinedLoading) {
         return (
             <div className="flex justify-center items-center min-h-screen">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-500"></div>
@@ -56,12 +60,11 @@ const UserProfile = () => {
         );
     }
 
-    const leetcodeData = user.platforms.leetcode;
-    // console.log(leetcodeData);
     if (error) return <div className="text-center p-8">{error}</div>;
-    if (heatmapError) return <div className="text-center p-8">Failed to load activity data</div>;
     if (!user) return <div className="text-center p-8">User not found</div>;
+    if (heatmapError) return <div className="text-center p-8">Failed to load activity data</div>;
 
+    const leetcodeData = user.platforms.leetcode;
     const platformStats = getPlatformStats(user);
 
     return (
@@ -135,7 +138,7 @@ const UserProfile = () => {
                 </>
             ) : (
                 <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-                    <LeetCodeDashboard leetcodeData={leetcodeData} />
+                    <LeetCodeDashboard leetcodeData={leetcodeData} nestedUsername={user?.username} />
                 </div>
             )}
         </div>

@@ -4,7 +4,6 @@ const axios = require("axios");
 exports.getPublicUserProfile = async (req, res) => {
     try {
         const username = req.params.username;
-        // user by username, exclude sensitive information
         const user = await User.findOne({ username }).select('-password -_id')
 
         if (!user) {

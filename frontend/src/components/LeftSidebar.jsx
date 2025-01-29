@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { PanelRightIcon, SettingsIcon, HelpCircleIcon } from 'lucide-react';
+import { PanelRightIcon, SettingsIcon, HelpCircleIcon, LayoutDashboardIcon } from 'lucide-react';
 import { useAuthContext } from '../context/AuthContext';
 import DashboardButton from './ui/DashboardButtons';
 import RoomList from './RoomList';
@@ -18,29 +18,32 @@ const LeftSidebar = () => {
         setRoomFormVisible(false);
         window.location.reload();
     };
+
     const isActive = (path) => location.pathname.startsWith(path);
 
     return (
         <>
-            <div
-                className={`w-full md:w-64 bg-gray-800 p-3 flex flex-col justify-between 'hidden' md:block border-r border-gray-700 relative h-screen overflow-y-auto`}
-            >
+            <div className="w-full md:w-64 bg-gray-800 p-3 flex flex-col justify-between hidden md:block border-r border-gray-700 relative h-screen overflow-y-auto">
                 <div className="flex flex-col h-full">
                     <Link to="/dashboard" className="text-xl font-bold mb-6 text-white">CForge</Link>
 
                     <div className="flex-1">
                         <DashboardButton
-                            icon={PanelRightIcon}
-                            label="Rooms"
-                            isActive={isActive('/rooms')}
+                            icon={LayoutDashboardIcon}
+                            label="Dashboard"
+                            isActive={isActive('/dashboard')}
                             onClick={() => navigate('/dashboard')}
                         />
 
-                        {/* Always visible RoomList */}
+                        <DashboardButton
+                            icon={PanelRightIcon}
+                            label="Rooms"
+                            isActive={isActive('/rooms')}
+                            onClick={() => navigate('/rooms')}
+                        />
+
                         <div className="mt-2">
-                            <RoomList
-                                setRoomFormVisible={setRoomFormVisible}
-                            />
+                            <RoomList setRoomFormVisible={setRoomFormVisible} />
                         </div>
 
                         <DashboardButton
@@ -60,9 +63,7 @@ const LeftSidebar = () => {
                     </div>
 
                     <div className="mt-auto pt-4 border-t border-gray-700">
-                        <UserProfileModal
-                            onLogout={logout}
-                        />
+                        <UserProfileModal onLogout={logout} />
                     </div>
                 </div>
             </div>
@@ -82,4 +83,3 @@ const LeftSidebar = () => {
 };
 
 export default LeftSidebar;
-

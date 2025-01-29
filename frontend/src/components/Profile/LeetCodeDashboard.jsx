@@ -41,12 +41,11 @@ const TabPanel = (props) => {
     );
 };
 
-const LeetCodeDashboard = ({ leetcodeData }) => {
-    const username = window.location.pathname.split('/').pop();
+const LeetCodeDashboard = ({ leetcodeData, nestedUsername }) => {
+    const username = nestedUsername;
     const { data, loading, error, refreshStats } = useLeetCodeStats(username);
     const [tabValue, setTabValue] = useState(0);
     const currentData = leetcodeData;
-    console.log(currentData);
     if (loading) {
         return (
             <Box display="flex" justifyContent="center" alignItems="center" minHeight="64px">

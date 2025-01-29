@@ -8,13 +8,14 @@ import Layout from './components/Layout';
 import PrivateRoute from './components/PrivateRoute.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import FullScreenLoader from './components/FullScreenLoader';
+import RoomPage from './pages/RoomPage.jsx';
 
 // Lazy loaded components
 const LoginPage = React.lazy(() => import('./pages/Login'));
 const SignupPage = React.lazy(() => import('./pages/Signup'));
 const WelcomePage = React.lazy(() => import('./pages/LandingPage'));
-const DashboardPage = React.lazy(() => import('./pages/Dashboard'));
-const UserProfile = React.lazy(() => import('./components/UserProfile'));
+const DashboardPage = React.lazy(() => import('./components/UserDashboard.jsx'));
+const PublicUserProfile = React.lazy(() => import('./pages/PublicUser.jsx'));
 const RoomInviteHandler = React.lazy(() => import('./pages/RoomInviteHandler'));
 const RoomLeaderboard = React.lazy(() => import('./pages/RoomLeaderboardPage'));
 const RoomChat = React.lazy(() => import('./pages/RoomChatPage'));
@@ -60,7 +61,7 @@ const App = () => {
                       path="/u/:username"
                       element={
                         <ErrorBoundary>
-                          <UserProfile />
+                          <PublicUserProfile />
                         </ErrorBoundary>
                       }
                     />
@@ -70,6 +71,16 @@ const App = () => {
                         <PrivateRoute>
                           <ErrorBoundary>
                             <DashboardPage />
+                          </ErrorBoundary>
+                        </PrivateRoute>
+                      }
+                    />
+                    <Route
+                      path="/rooms/"
+                      element={
+                        <PrivateRoute>
+                          <ErrorBoundary>
+                            <RoomPage />
                           </ErrorBoundary>
                         </PrivateRoute>
                       }
