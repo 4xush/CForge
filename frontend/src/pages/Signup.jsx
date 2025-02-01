@@ -54,7 +54,7 @@ const SignUp = () => {
                 return;
             }
 
-            window.location.replace('/dashboard')
+            window.location.href = '/settings?tab=platforms';
         } catch (error) {
             console.error('Registration error:', error);
         }

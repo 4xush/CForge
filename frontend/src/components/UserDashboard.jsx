@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Code2, Github } from 'lucide-react';
+import { Code2, Github, RotateCw } from 'lucide-react';
 import ApiService from '../services/ApiService';
 import { ProfileHeader } from './Profile/ProfileHeader';
 import { PlatformCard, getPlatformStats } from './Profile/PlatformCards';
@@ -23,32 +23,46 @@ const TabButton = ({ active, onClick, children }) => (
 const UserProfile = () => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('overview');
     const navigate = useNavigate();
 
+    const fetchProfile = async () => {
+        try {
+            const response = await ApiService.get('users/profile');
+            setUser(response.data);
+        } catch (err) {
+            if (err.response?.status === 404) {
+                navigate('/404');
+            } else {
+                setError('Failed to fetch user profile. Please try again later.');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // Fetch user data first
     useEffect(() => {
-        const fetchProfile = async () => {
-            try {
-                const response = await ApiService.get('users/profile');
-                setUser(response.data);
-            } catch (err) {
-                if (err.response?.status === 404) {
-                    navigate('/404');
-                } else {
-                    setError('Failed to fetch user profile. Please try again later.');
-                }
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchProfile();
     }, [navigate]);
 
     // Fetch heatmap data only after user data is available
     const { data: heatmapData, loading: heatmapLoading, error: heatmapError } = useHeatmapData(user?.username);
+
+    const handleRefresh = async () => {
+        setRefreshing(true);
+        try {
+            await ApiService.put('users/platform/refresh');
+            // Refetch profile data to get updated stats
+            await fetchProfile();
+        } catch (err) {
+            setError('Failed to refresh platform data. Please try again later.');
+        } finally {
+            setRefreshing(false);
+        }
+    };
 
     const combinedLoading = loading || heatmapLoading;
 
@@ -71,19 +85,33 @@ const UserProfile = () => {
         <div className="max-w-7xl mx-auto p-4 space-y-8">
             <ProfileHeader user={user} />
 
-            <div className="flex space-x-4 mb-6">
-                <TabButton
-                    active={activeTab === 'overview'}
-                    onClick={() => setActiveTab('overview')}
+            <div className="flex justify-between items-center mb-6">
+                <div className="flex space-x-4">
+                    <TabButton
+                        active={activeTab === 'overview'}
+                        onClick={() => setActiveTab('overview')}
+                    >
+                        Overview
+                    </TabButton>
+                    <TabButton
+                        active={activeTab === 'leetcode'}
+                        onClick={() => setActiveTab('leetcode')}
+                    >
+                        LeetCode Stats
+                    </TabButton>
+                </div>
+                <button
+                    onClick={handleRefresh}
+                    disabled={refreshing}
+                    className={`flex items-center px-4 py-2 font-medium rounded-lg transition-colors
+                        ${refreshing
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            : 'text-gray-600 hover:bg-gray-100'
+                        }`}
                 >
-                    Overview
-                </TabButton>
-                <TabButton
-                    active={activeTab === 'leetcode'}
-                    onClick={() => setActiveTab('leetcode')}
-                >
-                    LeetCode Stats
-                </TabButton>
+                    <RotateCw className={`h-4 w-4 mr-2  ${refreshing ? 'animate-spin' : ''}`} />
+                    {refreshing ? 'Refreshing...' : 'Refresh'}
+                </button>
             </div>
 
             {activeTab === 'overview' ? (

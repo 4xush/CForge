@@ -13,6 +13,16 @@ const Settings = () => {
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Add this at the start of your Settings component
+  useEffect(() => {
+    // Check for tab parameter in URL
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab');
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, []);
+
   useEffect(() => {
     fetchProfileData();
   }, []);
