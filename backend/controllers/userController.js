@@ -4,9 +4,9 @@ const {
   checkGitHubUsername,
   checkCodeforcesUsername
 } = require("../utils/authHelpers.js");
-const { updateUserLeetCodeStats } = require("../services/leetcodeStatsService");
-const { updateUserGitHubStats } = require("../services/github/githubStatsServices.js");
-const { updateUserCodeforcesStats } = require("../services/codeforces/codeforcesStatsService.js");
+const updateUserLeetCodeStats = require("../services/leetcode/leetcodeStatsService.js");
+const updateUserGitHubStats = require("../services/github/githubStatsServices.js");
+const updateUserCodeforcesStats = require("../services/codeforces/codeforcesStatsService.js");
 
 exports.getUserDetails = async (req, res) => {
   try {

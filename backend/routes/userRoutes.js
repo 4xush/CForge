@@ -4,10 +4,12 @@ const { protect } = require("../middleware/authMiddleware");
 
 // Controller imports
 const { updateLeetCodeStats } = require("../jobs/leetCodeUpdater");
+const { refreshUserPlatforms } = require('../controllers/platformDataController');
 const {
   getUserDetails,
   searchUser, setupPlatforms,
 } = require("../controllers/userController");
+
 
 const {
   updatePassword,
@@ -39,6 +41,7 @@ router.route("/update/avatar").put(protect, updateProfilePicture);
 
 router.put("/update/leetcode", protect, updateLeetCodeStats);
 
+router.put("/platform/refresh/", protect, refreshUserPlatforms);
 
 router.put("/update/social-networks", protect, updateSocialNetworks);
 

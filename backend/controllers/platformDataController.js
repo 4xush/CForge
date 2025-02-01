@@ -1,6 +1,10 @@
 const User = require('../models/User');
 const axios = require('axios');
 
+const { updateUserCodeforcesStats } = require('../services/codeforces/codeforcesStatsService');
+const { updateUserGitHubStats } = require('../services/github/githubStatsServices');
+const { updateUserLeetCodeStats } = require('../services/leetcode/leetcodeStatsService');
+
 exports.getUserQuestionStats = async (req, res) => {
     try {
         const username = req.params.username;
@@ -70,5 +74,57 @@ exports.getUserQuestionStats = async (req, res) => {
         }
 
         res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
+
+exports.refreshUserPlatforms = async (req, res) => {
+    const userId = req.user.id; // From auth middleware
+
+    try {
+        // Find user
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Check if user has any platform linked
+        const { leetcode, github, codeforces } = user.platforms;
+        if (!leetcode?.username && !github?.username && !codeforces?.username) {
+            return res.status(400).json({ message: "No linked platform to refresh" });
+        }
+
+        // Refresh platform stats
+        let updatedUser = user;
+        try {
+            if (leetcode?.username) {
+                updatedUser = await updateUserLeetCodeStats(updatedUser, false);
+            }
+            if (github?.username) {
+                updatedUser = await updateUserGitHubStats(updatedUser, false);
+            }
+            if (codeforces?.username) {
+                updatedUser = await updateUserCodeforcesStats(updatedUser, false);
+            }
+        } catch (error) {
+            console.error("Platform stats refresh failed:", error);
+        }
+
+        res.status(200).json({
+            message: "Platform data refreshed successfully",
+            user: {
+                _id: updatedUser._id,
+                fullName: updatedUser.fullName,
+                username: updatedUser.username,
+                email: updatedUser.email,
+                profilePicture: updatedUser.profilePicture,
+                platforms: updatedUser.platforms,
+                isProfileComplete: updatedUser.isProfileComplete
+            }
+        });
+    } catch (error) {
+        console.error("Platform refresh error:", error);
+        res.status(500).json({
+            message: "Failed to refresh platform data. Please try again later."
+        });
     }
 };

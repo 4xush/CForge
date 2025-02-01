@@ -8,7 +8,7 @@ const validateEmail = (email) => {
 const validatePassword = (password) => {
   return (
     password &&
-    password.length >= 8);
+    password.length >= 6);
 };
 
 const validateFullName = (name) => {

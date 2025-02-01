@@ -1,4 +1,4 @@
-const { getLeetCodeStats } = require("../services/leetcodeService");
+const { getLeetCodeStats } = require("../services/leetcode/leetcodeService");
 const User = require("../models/User");
 
 exports.updateLeetCodeStats = async (req, res) => {
