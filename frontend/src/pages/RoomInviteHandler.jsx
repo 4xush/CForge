@@ -9,25 +9,31 @@ const RoomInviteHandler = () => {
     const { authUser, isLoading } = useAuthContext();
 
     useEffect(() => {
+        console.log('RoomInviteHandler - authUser:', authUser);
+        console.log('RoomInviteHandler - isLoading:', isLoading);
+        console.log('RoomInviteHandler - inviteCode:', inviteCode);
+
         if (!isLoading) {
             handleInviteLink();
         }
-    }, [isLoading, inviteCode]);
+    }, [isLoading, authUser, inviteCode]);
 
     const handleInviteLink = async () => {
         // Get the current invite code or check for a pending one
-        const currentInviteCode = inviteCode || localStorage.getItem('app-pendingInviteCode');
+        const currentInviteCode = inviteCode || sessionStorage.getItem('app-pendingInviteCode');
+
+        console.log('Current Invite Code:', currentInviteCode);
 
         // Validate invite code
         if (!currentInviteCode) {
             toast.error('Invalid invite link');
-            navigate('/dashboard');
+            navigate('/rooms');
             return;
         }
 
         if (!authUser) {
             // Store invite code for after login
-            localStorage.setItem('app-pendingInviteCode', currentInviteCode);
+            sessionStorage.setItem('app-pendingInviteCode', currentInviteCode);
             toast.error('Please login to join the room');
             navigate('/login', {
                 state: {
@@ -40,10 +46,10 @@ const RoomInviteHandler = () => {
 
         try {
             // Clear any pending invite code
-            localStorage.removeItem('app-pendingInviteCode');
+            sessionStorage.removeItem('app-pendingInviteCode');
 
-            // If user is logged in, redirect to dashboard with invite code
-            navigate('/dashboard', {
+            // If user is logged in, redirect to rooms with invite code
+            navigate('/rooms', {
                 state: {
                     inviteCode: currentInviteCode,
                     showInviteModal: true
@@ -53,7 +59,7 @@ const RoomInviteHandler = () => {
         } catch (error) {
             console.error('Error handling invite link:', error);
             toast.error('Failed to process invite link');
-            navigate('/dashboard');
+            navigate('/rooms');
         }
     };
 

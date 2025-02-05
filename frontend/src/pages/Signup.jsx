@@ -36,21 +36,15 @@ const SignUp = () => {
                 username: formData.email.split('@')[0],
                 profilePicture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.fullName}`,
                 gender: formData.gender,
-                // leetcodeUsername: formData.leetcodeUsername,
             };
 
             await registerUser(userData);
             toast.success('Registration successful!');
 
-            const pendingInviteCode = localStorage.getItem('app-pendingInviteCode');
+            const pendingInviteCode = sessionStorage.getItem('app-pendingInviteCode');
             if (pendingInviteCode) {
-                localStorage.removeItem('app-pendingInviteCode');
-                navigate('/dashboard', {
-                    state: {
-                        inviteCode: pendingInviteCode,
-                        showInviteModal: true,
-                    },
-                });
+                sessionStorage.removeItem('app-pendingInviteCode');
+                window.location.href = `/rooms/join/${pendingInviteCode}`;
                 return;
             }
 

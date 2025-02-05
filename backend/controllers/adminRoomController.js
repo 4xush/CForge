@@ -27,7 +27,7 @@ exports.updateRoom = async (req, res) => {
     room.maxMembers = maxMembers || room.maxMembers;
 
     await room.save();
-    res.json({ message: "Room updated successfully", room });
+    res.json({ success: true, message: "Room updated successfully", room });
   } catch (error) {
     res
       .status(500)
@@ -61,7 +61,7 @@ exports.addAdmin = async (req, res) => {
 
     room.admins.push(userId);
     await room.save();
-    res.json({ message: "Admin added successfully", room });
+    res.json({ success: true, message: "Admin added successfully", room });
   } catch (error) {
     res
       .status(500)
@@ -91,7 +91,7 @@ exports.removeAdmin = async (req, res) => {
 
     room.admins = room.admins.filter((admin) => admin.toString() !== userId.toString());
     await room.save();
-    res.json({ message: "Admin removed successfully", room });
+    res.json({ success: true, message: "Admin removed successfully", room });
   } catch (error) {
     res
       .status(500)
@@ -127,7 +127,7 @@ exports.muteUser = async (req, res) => {
     }
 
     await room.save();
-    res.json({ message: "User muted successfully", room });
+    res.json({ success: true, message: "User muted successfully", room });
   } catch (error) {
     res
       .status(500)
@@ -153,7 +153,7 @@ exports.unmuteUser = async (req, res) => {
 
     room.mutedUsers = room.mutedUsers.filter((mute) => mute.user.toString() !== userId.toString());
     await room.save();
-    res.json({ message: "User unmuted successfully", room });
+    res.json({ success: true, message: "User unmuted successfully", room });
   } catch (error) {
     res
       .status(500)
@@ -185,7 +185,7 @@ exports.kickUser = async (req, res) => {
     room.admins = room.admins.filter((admin) => admin.toString() !== userId.toString());
     room.mutedUsers = room.mutedUsers.filter((mute) => mute.user.toString() !== userId.toString());
     await room.save();
-    res.json({ message: "User kicked successfully", room });
+    res.json({ success: true, message: "User kicked successfully", room });
   } catch (error) {
     res
       .status(500)
@@ -217,7 +217,7 @@ exports.approveJoinRequest = async (req, res) => {
     room.members.push(userId);
     room.joinRequests = room.joinRequests.filter((request) => request.user.toString() !== userId.toString());
     await room.save();
-    res.json({ message: "Join request approved successfully", room });
+    res.json({ success: true, message: "Join request approved successfully", room });
   } catch (error) {
     res
       .status(500)
@@ -243,7 +243,7 @@ exports.rejectJoinRequest = async (req, res) => {
 
     room.joinRequests = room.joinRequests.filter((request) => request.user.toString() !== userId.toString());
     await room.save();
-    res.json({ message: "Join request rejected successfully", room });
+    res.json({ success: true, message: "Join request rejected successfully", room });
   } catch (error) {
     res
       .status(500)
@@ -267,7 +267,7 @@ exports.deleteRoom = async (req, res) => {
     }
 
     await room.remove();
-    res.json({ message: "Room deleted successfully" });
+    res.json({ success: true, message: "Room deleted successfully" });
   } catch (error) {
     res
       .status(500)

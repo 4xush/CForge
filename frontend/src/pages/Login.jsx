@@ -17,23 +17,21 @@ const Login = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
         try {
             await loginUser(formData.email, formData.password);
             toast.success('Login successful!');
 
-            // Optional: Perform any other actions, like checking for a pending invite code.
-            const pendingInviteCode = localStorage.getItem('app-pendingInviteCode');
+            // Check for pending invite code in sessionStorage
+            const pendingInviteCode = sessionStorage.getItem('app-pendingInviteCode');
             if (pendingInviteCode) {
-                localStorage.removeItem('app-pendingInviteCode');
-                window.location.replace('/dashboard'); // Use window.location.replace to navigate
+                sessionStorage.removeItem('app-pendingInviteCode');
+                window.location.replace(`/rooms/join/${pendingInviteCode}`);
                 return;
             }
 
-            // Navigate to the dashboard without reloading using window.location.replace
+            // Default redirect
             window.location.replace('/dashboard');
         } catch (error) {
-            // Handle login failure (e.g., show toast or error message)
             toast.error('Login failed. Please check your credentials.');
         }
     };
