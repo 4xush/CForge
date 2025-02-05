@@ -24,11 +24,12 @@ const Chat = () => {
         }
     }, [selectedRoom, fetchMessages])
 
+    // Add messages to useEffect dependencies
     useEffect(() => {
         if (!loadingMore) {
-            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
         }
-    }, [loadingMore]) // Removed unnecessary dependency: messages
+    }, [loadingMore, messages]); // Add messages here
 
     useEffect(() => {
         const handleClickOutside = (event) => {

@@ -15,7 +15,7 @@ exports.getAllRoomsForUser = async (req, res) => {
     const userId = req.user._id;
 
     const rooms = await Room.find({ members: userId })
-      .select("roomId name description isPublic members admins")
+      .select("roomId name description isPublic members admins maxMembers createdAt")
       .exec();
 
     res.json({ rooms });

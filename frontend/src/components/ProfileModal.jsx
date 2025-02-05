@@ -35,15 +35,16 @@ const UserProfileModal = ({ onLogout }) => {
         <div
             ref={modalRef}
             className={`
-                mt-auto bg-gray-900 rounded-t-xl border-t border-x border-gray-700
+                mt-auto bg-gray-900 rounded-xl border border-gray-700
                 transition-all duration-300 ease-in-out 
-                ${isExpanded ? 'h-auto' : 'h-16 '}
+                ${isExpanded ? 'h-auto' : 'h-16'}
+                hover:bg-gray-800 cursor-pointer
             `}
             onClick={() => setIsExpanded(!isExpanded)}
         >
             {/* Collapsed View */}
-            <div className="flex items-center px-4 h-16 mb-2 cursor-pointer">
-                <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-800 mr-3">
+            <div className="flex items-center px-4 h-16 mb-2">
+                <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-800 mr-3 ring-2 ring-gray-700 transition-all hover:ring-gray-600">
                     {authUser?.profilePicture ? (
                         <img
                             src={authUser.profilePicture}
@@ -57,12 +58,17 @@ const UserProfileModal = ({ onLogout }) => {
                     )}
                 </div>
                 <div className="flex-1">
-                    <h3 className="text-sm font-semibold text-white">{authUser?.fullName}</h3>
+                    <h3 className="text-sm font-semibold text-white transition-colors hover:text-gray-300">
+                        {authUser?.fullName}
+                    </h3>
                     <p className="text-xs text-gray-400">@{authUser?.username}</p>
                 </div>
                 <ChevronRight
                     size={20}
-                    className={`text-gray-400 transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`}
+                    className={`
+                        text-gray-400 transition-transform duration-300 
+                        ${isExpanded ? 'rotate-90' : ''}
+                    `}
                 />
             </div>
 
@@ -76,20 +82,38 @@ const UserProfileModal = ({ onLogout }) => {
                     <div className="space-y-2">
                         <button
                             onClick={handleViewFullProfile}
-                            className="w-full bg-gray-800 hover:bg-gray-700 text-white py-2 px-4 rounded-lg flex items-center justify-between transition-colors"
+                            className="
+                                w-full bg-gray-800 hover:bg-gray-700 
+                                text-white py-2 px-4 rounded-lg 
+                                flex items-center justify-between 
+                                transition-colors group
+                            "
                         >
-                            <span>View Full Profile</span>
-                            <ChevronRight size={20} />
+                            <span className="transition-colors group-hover:text-gray-300">
+                                View Full Profile
+                            </span>
+                            <ChevronRight
+                                size={20}
+                                className="transition-transform group-hover:translate-x-1"
+                            />
                         </button>
                         <button
                             onClick={handleLogoutClick}
-                            className="w-full bg-red-900/20 hover:bg-red-900/30 text-red-400 py-2 px-4 rounded-lg flex items-center justify-between transition-colors"
+                            className="
+                                w-full bg-red-900/20 hover:bg-red-900/30 
+                                text-red-400 py-2 px-4 rounded-lg 
+                                flex items-center justify-between 
+                                transition-colors group
+                            "
                         >
-                            <span className="flex items-center">
+                            <span className="flex items-center transition-colors group-hover:text-red-300">
                                 <LogOut size={18} className="mr-2" />
                                 Logout
                             </span>
-                            <ChevronRight size={20} />
+                            <ChevronRight
+                                size={20}
+                                className="transition-transform group-hover:translate-x-1"
+                            />
                         </button>
                     </div>
                 </CardContent>

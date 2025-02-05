@@ -27,16 +27,19 @@ export const MessageProvider = ({ children }) => {
                 // Only update state if this is the latest fetch request
                 if (currentFetchId === fetchIdRef.current) {
                     setMessages((prevMessages) => {
-                        const newMessages = response.data.messages
+                        // Inside fetchMessages setMessages callback
+                        const newMessages = response.data.messages;
+
                         if (!lastMessageId) {
-                            // Initial load: replace all messages
-                            return newMessages
+                            // Initial load: reverse messages to show oldest -> newest
+                            return newMessages.reverse();
                         } else {
-                            // Loading more: add older messages at the beginning
-                            const uniqueNewMessages = newMessages.filter(
-                                (newMsg) => !prevMessages.some((prevMsg) => prevMsg._id === newMsg._id),
-                            )
-                            return [...uniqueNewMessages, ...prevMessages]
+                            // Loading more: reverse older messages and prepend
+                            const reversedMessages = newMessages.reverse();
+                            const uniqueNewMessages = reversedMessages.filter(
+                                (newMsg) => !prevMessages.some((prevMsg) => prevMsg._id === newMsg._id)
+                            );
+                            return [...uniqueNewMessages, ...prevMessages];
                         }
                     })
 
