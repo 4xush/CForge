@@ -20,7 +20,7 @@ export const generateInviteLink = async (roomId) => {
     }
 };
 
-export const verifyInvite = async (inviteCode) => {
+export const verifyRoomInvite = async (inviteCode) => {
     try {
         const response = await api.get(`${BASE_URL}/invite/${inviteCode}/verify`);
         return response.data;
@@ -62,7 +62,7 @@ export const createRoom = async (formData) => {
 export default {
     getRoomDetails,
     generateInviteLink,
-    verifyInvite,
+    verifyRoomInvite,
     joinRoom,
     getLeaderboard,
     createRoom

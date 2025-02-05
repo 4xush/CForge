@@ -16,8 +16,8 @@ const JoinRoomForm = ({ onClose, onRoomJoined }) => {
             setValidationError('Room code is required');
             return false;
         }
-        if (code.length < 3 || code.length > 8) {
-            setValidationError('Room code must be between 3 and 8 characters');
+        if (code.length < 2 || code.length > 8) {
+            setValidationError('Room code must be between 2 and 8 characters');
             return false;
         }
         if (!/^[A-Za-z0-9]+$/.test(code)) {

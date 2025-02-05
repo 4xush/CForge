@@ -21,7 +21,7 @@ export const MessageProvider = ({ children }) => {
             const currentFetchId = ++fetchIdRef.current
 
             try {
-                const query = lastMessageId ? `?lastMessageId=${lastMessageId}&limit=20` : "?limit=20"
+                const query = lastMessageId ? `?lastMessageId=${lastMessageId}&limit=50` : "?limit=50"
                 const response = await api.get(`/rooms/${selectedRoom._id}/messages${query}`)
 
                 // Only update state if this is the latest fetch request
