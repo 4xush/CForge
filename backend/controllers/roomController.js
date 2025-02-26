@@ -160,6 +160,7 @@ exports.getRoomDetails = async (req, res) => {
       createdBy: room.creator ? room.creator.username : "Unknown", // dynamincally changing the db instance in response
       admins: room.admins,
       members: room.members,
+      maxMembers: room.maxMembers,
     };
 
     res.json(roomDetails);

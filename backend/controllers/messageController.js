@@ -14,27 +14,6 @@ exports.sendMessage = async (req, res) => {
     if (!room) {
       return res.status(404).json({ message: "Room not found" });
     }
-
-    // Check if the user is muted
-    const mutedUser = room.mutedUsers.find(
-      (muted) => muted.user.toString() === senderId.toString()
-    );
-
-    if (mutedUser) {
-      const currentTime = new Date();
-      if (mutedUser.muteUntil && mutedUser.muteUntil > currentTime) {
-        return res.status(403).json({
-          message: "You are muted and cannot send messages until " + mutedUser.muteUntil,
-        });
-      } else {
-        // Remove expired mute
-        room.mutedUsers = room.mutedUsers.filter(
-          (muted) => muted.user.toString() !== senderId.toString()
-        );
-        await room.save();
-      }
-    }
-
     // Encrypt the message content
     const { encryptedData, iv } = encrypt(content);
 

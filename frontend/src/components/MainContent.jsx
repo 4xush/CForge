@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
-import TopBar from './TopBar';
+import TopBar from './Rooms/TopBar';
 
 const MainContent = ({ children }) => {
     const location = useLocation();

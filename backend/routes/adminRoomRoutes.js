@@ -8,8 +8,6 @@ const {
   updateRoom,
   addAdmin,
   removeAdmin,
-  muteUser,
-  unmuteUser,
   kickUser,
   approveJoinRequest,
   rejectJoinRequest,
@@ -25,10 +23,6 @@ router.delete("/:roomId", protect, deleteRoom);
 // Admin management routes
 router.post("/:roomId/admins/add", protect, addAdmin);
 router.post("/:roomId/admins/remove", protect, removeAdmin);
-
-// User management routes
-router.post("/:roomId/mute", protect, muteUser);
-router.post("/:roomId/unmute", protect, unmuteUser);
 router.post("/:roomId/kick", protect, kickUser);
 
 // Join request management

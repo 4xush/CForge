@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { PanelRightIcon, SettingsIcon, HelpCircleIcon, LayoutDashboardIcon } from 'lucide-react';
 import { useAuthContext } from '../context/AuthContext';
 import DashboardButton from './ui/DashboardButtons';
-import RoomList from './RoomList';
+import RoomList from './Rooms/RoomList';
 import UserProfileModal from './ProfileModal';
 import CreateJoinModal from './CreateRoom/CreateJoinRoomModal';
 

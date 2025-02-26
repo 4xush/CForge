@@ -8,7 +8,7 @@ const isAdmin = (room, userId) => {
 // Update Room
 exports.updateRoom = async (req, res) => {
   try {
-    const { name, description, isPublic, maxMembers } = req.body;
+    const { name, description, isPublic, maxMembers, roomId } = req.body;
     const room = await Room.findOne({ roomId: req.params.roomId });
 
     if (!room) {
@@ -25,7 +25,7 @@ exports.updateRoom = async (req, res) => {
     room.description = description || room.description;
     room.isPublic = isPublic !== undefined ? isPublic : room.isPublic;
     room.maxMembers = maxMembers || room.maxMembers;
-
+    room.roomId = roomId || room.roomId;
     await room.save();
     res.json({ success: true, message: "Room updated successfully", room });
   } catch (error) {
@@ -85,81 +85,26 @@ exports.removeAdmin = async (req, res) => {
         .json({ message: "Only admins can remove other admins" });
     }
 
+    if (req.user._id.toString() === userId.toString()) {
+      return res.status(400).json({ message: "You cannot remove yourself as an admin" });
+    }
+
     if (!room.admins.includes(userId)) {
       return res.status(400).json({ message: "User is not an admin" });
     }
 
     room.admins = room.admins.filter((admin) => admin.toString() !== userId.toString());
     await room.save();
-    res.json({ success: true, message: "Admin removed successfully", room });
+    return res.json({ success: true, message: "Admin removed successfully", room });
   } catch (error) {
-    res
+    console.error("Error removing admin:", error);
+    return res
       .status(500)
-      .json({ message: "Error removing admin", error: error.message });
+      .json({ success: false, message: "Failed to remove admin", error: error.message });
   }
 };
 
-// Mute User
-exports.muteUser = async (req, res) => {
-  try {
-    const { userId, muteUntil } = req.body;
-    const room = await Room.findOne({ roomId: req.params.roomId });
 
-    if (!room) {
-      return res.status(404).json({ message: "Room not found" });
-    }
-
-    if (!isAdmin(room, req.user._id)) {
-      return res
-        .status(403)
-        .json({ message: "Only admins can mute users" });
-    }
-
-    if (!room.members.includes(userId)) {
-      return res.status(400).json({ message: "User is not a member of the room" });
-    }
-
-    const existingMute = room.mutedUsers.find((mute) => mute.user.toString() === userId.toString());
-    if (existingMute) {
-      existingMute.muteUntil = muteUntil;
-    } else {
-      room.mutedUsers.push({ user: userId, muteUntil });
-    }
-
-    await room.save();
-    res.json({ success: true, message: "User muted successfully", room });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error muting user", error: error.message });
-  }
-};
-
-// Unmute User
-exports.unmuteUser = async (req, res) => {
-  try {
-    const { userId } = req.body;
-    const room = await Room.findOne({ roomId: req.params.roomId });
-
-    if (!room) {
-      return res.status(404).json({ message: "Room not found" });
-    }
-
-    if (!isAdmin(room, req.user._id)) {
-      return res
-        .status(403)
-        .json({ message: "Only admins can unmute users" });
-    }
-
-    room.mutedUsers = room.mutedUsers.filter((mute) => mute.user.toString() !== userId.toString());
-    await room.save();
-    res.json({ success: true, message: "User unmuted successfully", room });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error unmuting user", error: error.message });
-  }
-};
 
 // Kick User
 exports.kickUser = async (req, res) => {
@@ -183,7 +128,6 @@ exports.kickUser = async (req, res) => {
 
     room.members = room.members.filter((member) => member.toString() !== userId.toString());
     room.admins = room.admins.filter((admin) => admin.toString() !== userId.toString());
-    room.mutedUsers = room.mutedUsers.filter((mute) => mute.user.toString() !== userId.toString());
     await room.save();
     res.json({ success: true, message: "User kicked successfully", room });
   } catch (error) {

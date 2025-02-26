@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { RoomContext } from '../context/RoomContext';
+import { RoomContext } from '../../context/RoomContext';
 import { Plus, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 

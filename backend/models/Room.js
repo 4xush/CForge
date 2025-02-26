@@ -26,17 +26,6 @@ const roomSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    mutedUsers: [
-      {
-        user: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
-        },
-        muteUntil: {
-          type: Date,
-        },
-      },
-    ],
     joinRequests: [
       {
         user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
