@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const LeaderboardTable = ({ users, page, limit, highlightedUserId }) => {
+export const LeaderboardTable = ({ users, page, limit, highlightedUserId, onProfileClick }) => {
     const displayUsers = page === 1 ? users.slice(3) : users;
 
     return (
@@ -22,19 +22,18 @@ export const LeaderboardTable = ({ users, page, limit, highlightedUserId }) => {
                     <tr
                         key={user._id}
                         id={`user-row-${user._id}`}
-                        className={`border-b border-gray-700 transition-colors duration-300 
-                            ${user._id === highlightedUserId ? 'bg-gray-700' : ''} `}
+                        className={`border-b border-gray-700 transition-colors duration-300
+              ${user._id === highlightedUserId ? 'bg-gray-700' : ''}`}
                     >
                         <td className="p-2">{page === 1 ? (index + 4) : ((page - 1) * limit + index + 1)}</td>
                         <td className="p-2 flex items-center">
                             <img
                                 src={user.profilePicture || "/default-avatar.png"}
                                 alt={user.fullName}
-                                className="w-6 h-6 bg-gray-600 rounded-full mr-2 object-cover"
+                                className="w-6 h-6 bg-gray-600 rounded-full mr-2 object-cover cursor-pointer"
+                                onClick={() => onProfileClick(user.username)}
                             />
-                            <span>
-                                {user.fullName}
-                            </span>
+                            <span>{user.fullName}</span>
                         </td>
                         <td className="p-2">{user.platforms.leetcode.totalQuestionsSolved}</td>
                         <td className="p-2">{user.platforms.leetcode.questionsSolvedByDifficulty.easy}</td>

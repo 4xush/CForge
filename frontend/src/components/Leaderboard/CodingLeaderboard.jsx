@@ -5,6 +5,7 @@ import { TopUserCard } from './TopUserCard';
 import SortButton from './SortButton';
 import Pagination from './Pagination';
 import { LeaderboardTable } from './LeaderboardTable';
+import PublicUserProfileModal from '../PublicUserProfileModal';
 import toast from 'react-hot-toast';
 import { getLeaderboard } from '../../api/authApi';
 
@@ -21,6 +22,7 @@ const CodingLeaderboard = ({ selectedRoom }) => {
     const [highlightedUserId, setHighlightedUserId] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [showSearchInput, setShowSearchInput] = useState(false);
+    const [profileModal, setProfileModal] = useState({ isOpen: false, username: null });
 
     const limitOptions = [10, 20, 50, 100];
 
@@ -144,6 +146,17 @@ const CodingLeaderboard = ({ selectedRoom }) => {
         }
     };
 
+    const handleProfileClick = (username) => {
+        setProfileModal({
+            isOpen: true,
+            username: username
+        });
+    };
+
+    const closeProfileModal = () => {
+        setProfileModal({ isOpen: false, username: null });
+    };
+
     if (error) {
         return <div className="text-red-500 text-center">{error}</div>;
     }
@@ -240,6 +253,7 @@ const CodingLeaderboard = ({ selectedRoom }) => {
                                     user={user}
                                     index={index}
                                     isHighlighted={user._id === highlightedUserId}
+                                    onProfileClick={handleProfileClick}
                                 />
                             ))}
                         </div>
@@ -251,6 +265,7 @@ const CodingLeaderboard = ({ selectedRoom }) => {
                                 page={page}
                                 limit={limit}
                                 highlightedUserId={highlightedUserId}
+                                onProfileClick={handleProfileClick}
                             />
                             <Pagination
                                 page={page}
@@ -262,9 +277,13 @@ const CodingLeaderboard = ({ selectedRoom }) => {
                     )}
                 </>
             )}
+            <PublicUserProfileModal
+                username={profileModal.username}
+                isOpen={profileModal.isOpen}
+                onClose={closeProfileModal}
+            />
         </div>
     );
 };
 
 export default CodingLeaderboard;
-
