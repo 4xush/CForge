@@ -19,13 +19,10 @@ export const useHeatmapData = (username) => {
                     setLoading(false);
                     return;
                 }
-
                 // If no data in session storage, fetch from API
                 const response = await ApiService.get(`/u/hmap/${username}`);
-
                 // Store the entire response in session storage
                 sessionStorage.setItem(`heatmap-data-${username}`, JSON.stringify(response.data));
-
                 // Set only the heatmaps data in state
                 setData(response.data.heatmaps);
             } catch (err) {

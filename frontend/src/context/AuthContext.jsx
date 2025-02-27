@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { login, register } from "../api/authApi";
+import { login, register, googleLogin } from "../api/authApi"; // You'll need to create googleLogin
 import toast from 'react-hot-toast';
 
 const validatePlatformData = (platform) => {
@@ -95,13 +95,22 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-
-  const loginUser = async (email, password) => {
+  const loginUser = async (email, password, googleToken = null) => {
     setError(null);
     setIsLoading(true);
 
     try {
-      const { user, token } = await login(email, password);
+      let response;
+
+      if (googleToken) {
+        // Google OAuth login
+        response = await googleLogin(googleToken);
+      } else {
+        // Traditional email/password login
+        response = await login(email, password);
+      }
+
+      const { user, token } = response;
 
       if (!validateUserData(user)) {
         throw new Error("Received invalid user data from server");
@@ -109,6 +118,7 @@ export const AuthProvider = ({ children }) => {
 
       setAuthUser(user);
       localStorage.setItem("app-user", JSON.stringify(user));
+      localStorage.setItem("app-token", token);
       return user;
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message || "Login failed";

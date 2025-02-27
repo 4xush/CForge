@@ -1,5 +1,10 @@
 import api from "../config/api";
 
+export const googleLogin = async (idToken) => {
+  const response = await api.post(`/auth/google`, { idToken });
+  localStorage.setItem("app-token", response.data.token);
+  return response.data;
+};
 export const login = async (email, password) => {
   try {
     const { data } = await api.post("/auth/login", { email, password });

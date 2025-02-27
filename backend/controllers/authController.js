@@ -1,3 +1,4 @@
+const { OAuth2Client } = require('google-auth-library');
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -7,6 +8,73 @@ const {
   validateFullName,
 } = require("../utils/authHelpers.js");
 const generateUsername = require("../utils/usernameGenerator");
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// Handle Google OAuth
+const googleAuth = async (req, res) => {
+  try {
+    const { idToken } = req.body;
+
+    // Verify the Google token
+    const ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
+
+    const payload = ticket.getPayload();
+
+    // Extract user data from Google profile
+    const { email, name, picture, sub } = payload;
+
+    // Check if user already exists
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // Create new user if doesn't exist
+      user = await User.create({
+        fullName: name,
+        email,
+        username: email.split('@')[0], // Simple username creation
+        googleId: sub,
+        profilePicture: picture,
+        isGoogleAuth: true, // Important! Mark as Google auth user
+        // No password needed - we removed the required constraint
+        platforms: {}
+      });
+    } else if (!user.googleId) {
+      // Link Google ID to existing account
+      user.googleId = sub;
+      if (!user.profilePicture && picture) {
+        user.profilePicture = picture;
+      }
+      await user.save();
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+
+    // Return user data and token
+    res.status(200).json({
+      user: {
+        fullName: user.fullName,
+        username: user.username,
+        email: user.email,
+        profilePicture: user.profilePicture,
+        platforms: user.platforms || {}
+      },
+      token
+    });
+
+  } catch (error) {
+    console.error('Google authentication error:', error);
+    res.status(401).json({ message: 'Google authentication failed' });
+  }
+};
 
 const signupUser = async (req, res) => {
   const { fullName, email, password, gender } = req.body;
@@ -152,5 +220,6 @@ const loginUser = async (req, res) => {
 
 module.exports = {
   signupUser,
-  loginUser
+  loginUser,
+  googleAuth
 };

@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const userSchema = new mongoose.Schema(
   {
     fullName: {
@@ -18,12 +17,21 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
+      required: function () {
+        return !this.isGoogleAuth; // Only required for non-Google auth users
+      },
     },
     gender: {
       type: String,
-      required: true,
-      enum: ["male", "female", "other"],
+      required: function () {
+        return !this.isGoogleAuth; // Only required for non-Google auth users
+      },
+      enum: ["male", "female", "other", "unspecified"],
+      default: "unspecified"
+    },
+    isGoogleAuth: {
+      type: Boolean,
+      default: false
     },
     profilePicture: {
       type: String,
@@ -140,15 +148,11 @@ userSchema.virtual("createdRooms", {
 // Indexes for performance optimization
 userSchema.index({ "platforms.leetcode.totalQuestionsSolved": -1 });
 userSchema.index({ "platforms.leetcode.contestRating": -1 });
-userSchema.index({ "platforms.leetcode.username": 1 }, { sparse: false });
 userSchema.index({ "platforms.leetcode.attendedContestsCount": -1 });
 userSchema.index({ "platforms.codeforces.currentRating": -1 });
 userSchema.index({ "platforms.codeforces.maxRating": -1 });
-userSchema.index({ "platforms.codeforces.username": 1 }, { sparse: false });
 userSchema.index({ "platforms.github.publicRepos": -1 });
 userSchema.index({ "platforms.github.followers": -1 });
-userSchema.index({ "platforms.github.username": 1 }, { sparse: false });
 
 const User = mongoose.model("User", userSchema);
-
 module.exports = User;

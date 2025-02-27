@@ -2,8 +2,12 @@ import React, { useState } from 'react';
 import { useAuthContext } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import AuthLayout from './AuthPage';
+import { GoogleLogin } from '@react-oauth/google';
+import { useNavigate } from 'react-router-dom';
 
+const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const Login = () => {
+    const navigate = useNavigate();
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -20,6 +24,25 @@ const Login = () => {
         try {
             await loginUser(formData.email, formData.password);
             toast.success('Login successful!');
+            // Check for pending invite code in sessionStorage
+            const pendingInviteCode = sessionStorage.getItem('app-pendingInviteCode');
+            if (pendingInviteCode) {
+                sessionStorage.removeItem('app-pendingInviteCode');
+                window.location.replace(`/rooms/join/${pendingInviteCode}`);
+                return;
+            }
+            // Default redirect
+            window.location.replace('/dashboard');
+        } catch (error) {
+            toast.error('Login failed. Please check your credentials.');
+        }
+    };
+
+    const handleGoogleSuccess = async (credentialResponse) => {
+        try {
+            // Send the ID token to your backend to verify and create a session
+            await loginUser(null, null, credentialResponse.credential);
+            toast.success('Google login successful!');
 
             // Check for pending invite code in sessionStorage
             const pendingInviteCode = sessionStorage.getItem('app-pendingInviteCode');
@@ -30,10 +53,15 @@ const Login = () => {
             }
 
             // Default redirect
-            window.location.replace('/dashboard');
+            navigate('/dashboard');
         } catch (error) {
-            toast.error('Login failed. Please check your credentials.');
+            toast.error('Google login failed. Please try again.');
+            console.error('Google login error:', error);
         }
+    };
+
+    const handleGoogleError = () => {
+        toast.error('Google login failed. Please try again or use email/password.');
     };
 
     return (
@@ -68,9 +96,34 @@ const Login = () => {
                     {isLoading ? 'Signing In...' : 'Sign In'}
                 </button>
             </form>
-            <div className="text-center">
+
+            <div className="mt-6">
+                <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-gray-600"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                        <span className="px-2 bg-gray-800 text-gray-300">Or continue with</span>
+                    </div>
+                </div>
+
+                <div className="mt-6 flex justify-center">
+                    <GoogleLogin
+                        clientId={clientId}
+                        onSuccess={handleGoogleSuccess}
+                        onError={handleGoogleError}
+                        useOneTap
+                        theme="filled_black"
+                        shape="pill"
+                        text="signin_with"
+                        size="large"
+                    />
+                </div>
+            </div>
+
+            <div className="mt-6 text-center">
                 <button
-                    onClick={() => window.location.replace('/signup')} // Redirect to signup page
+                    onClick={() => navigate('/signup')}
                     className="font-medium text-purple-400 hover:text-purple-500"
                 >
                     Need an account? Sign Up

@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthContext } from '../context/AuthContext'; // Update path as needed
+import { useAuthContext } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import AuthLayout from './AuthPage';
+import { GoogleLogin } from '@react-oauth/google';
+
+const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 const SignUp = () => {
     const [formData, setFormData] = useState({
@@ -11,10 +14,9 @@ const SignUp = () => {
         password: '',
         confirmPassword: '',
         gender: '',
-        // leetcodeUsername: '',
     });
     const navigate = useNavigate();
-    const { registerUser, isLoading } = useAuthContext();
+    const { registerUser, isLoading, loginUser } = useAuthContext();
 
     const handleInputChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -52,6 +54,34 @@ const SignUp = () => {
         } catch (error) {
             console.error('Registration error:', error);
         }
+    };
+
+    const handleGoogleSuccess = async (credentialResponse) => {
+        try {
+            // Using loginUser with Google token will either:
+            // 1. Log in the user if they already exist
+            // 2. Create a new user if they don't exist (handled on the backend)
+            await loginUser(null, null, credentialResponse.credential);
+            toast.success('Google sign up successful!');
+
+            // Check for pending invite code in sessionStorage
+            const pendingInviteCode = sessionStorage.getItem('app-pendingInviteCode');
+            if (pendingInviteCode) {
+                sessionStorage.removeItem('app-pendingInviteCode');
+                window.location.href = `/rooms/join/${pendingInviteCode}`;
+                return;
+            }
+
+            // Redirect to platforms setup since it's a new account
+            window.location.href = '/settings?tab=platforms';
+        } catch (error) {
+            toast.error('Google sign up failed. Please try again.');
+            console.error('Google sign up error:', error);
+        }
+    };
+
+    const handleGoogleError = () => {
+        toast.error('Google sign up failed. Please try again or use email/password.');
     };
 
     return (
@@ -107,15 +137,6 @@ const SignUp = () => {
                         <option value="female">Female</option>
                         <option value="other">Other</option>
                     </select>
-                    {/* <input
-                        name="leetcodeUsername"
-                        type="text"
-                        required
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        placeholder="LeetCode Username"
-                        value={formData.leetcodeUsername}
-                        onChange={handleInputChange}
-                    /> */}
                 </div>
 
                 <button
@@ -126,9 +147,34 @@ const SignUp = () => {
                     {isLoading ? 'Signing Up...' : 'Sign Up'}
                 </button>
             </form>
-            <div className="text-center">
+
+            <div className="mt-6">
+                <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-gray-600"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                        <span className="px-2 bg-gray-800 text-gray-300">Or sign up with</span>
+                    </div>
+                </div>
+
+                <div className="mt-6 flex justify-center">
+                    <GoogleLogin
+                        clientId={clientId}
+                        onSuccess={handleGoogleSuccess}
+                        onError={handleGoogleError}
+                        useOneTap
+                        theme="filled_black"
+                        shape="pill"
+                        text="signup_with"
+                        size="large"
+                    />
+                </div>
+            </div>
+
+            <div className="mt-6 text-center">
                 <button
-                    onClick={() => window.location.replace('/login')}
+                    onClick={() => navigate('/login')}
                     className="font-medium text-purple-400 hover:text-purple-500"
                 >
                     Already have an account? Sign In
