@@ -6,7 +6,8 @@ const Message = ({
   time,
   message,
   isEdited,
-  onContextMenu
+  onContextMenu,
+  onAvatarClick  // New prop for handling avatar clicks
 }) => {
   const paragraphRef = useRef(null);
 
@@ -25,14 +26,15 @@ const Message = ({
   };
 
   return (
-    <div 
+    <div
       className="flex items-start mb-3 px-2 py-1.5 hover:bg-gray-800/50 rounded-lg transition-colors"
       onContextMenu={handleContextMenu}
     >
       <img
         src={avatar}
         alt={senderName}
-        className="w-8 h-8 rounded-lg mr-2"
+        className="w-8 h-8 rounded-lg mr-2 cursor-pointer hover:opacity-80 transition-opacity"
+        onClick={onAvatarClick} // Add click handler to the avatar image
       />
       <div>
         <div className="flex items-center mb-0.5">

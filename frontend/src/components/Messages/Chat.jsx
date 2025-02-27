@@ -5,6 +5,7 @@ import { useMessageContext } from "../../context/MessageContext"
 import Message from "./ui/Message"
 import MessageInput from "./MessageInput"
 import ContextMenu from "./ChatContextMenu"
+import PublicUserProfileModal from "../../components/PublicUserProfileModal"
 import { format, isToday, isYesterday, isSameYear } from "date-fns"
 
 const Chat = () => {
@@ -15,6 +16,7 @@ const Chat = () => {
     const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, messageId: null })
     const [editingMessage, setEditingMessage] = useState(null)
     const [loadingMore, setLoadingMore] = useState(false)
+    const [profileModal, setProfileModal] = useState({ isOpen: false, username: null })
     const messagesEndRef = useRef(null)
     const contextMenuRef = useRef(null)
 
@@ -24,12 +26,11 @@ const Chat = () => {
         }
     }, [selectedRoom, fetchMessages])
 
-    // Add messages to useEffect dependencies
     useEffect(() => {
         if (!loadingMore) {
             messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
         }
-    }, [loadingMore, messages]); // Add messages here
+    }, [loadingMore, messages]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -109,6 +110,17 @@ const Chat = () => {
         return format(messageDate, "MMMM d, yyyy")
     }
 
+    const handleAvatarClick = (username) => {
+        setProfileModal({
+            isOpen: true,
+            username: username
+        })
+    }
+
+    const closeProfileModal = () => {
+        setProfileModal({ isOpen: false, username: null })
+    }
+
     if (!selectedRoom) return <div className="text-center text-gray-500 mt-4">Select a room to view messages</div>
     if (loading && !loadingMore) return <div className="text-center text-gray-500 mt-4">Loading messages...</div>
 
@@ -161,6 +173,7 @@ const Chat = () => {
                                         message={msg.content}
                                         isEdited={msg.isEdited}
                                         onContextMenu={(e) => handleContextMenu(e, msg._id)}
+                                        onAvatarClick={() => handleAvatarClick(msg.sender.username)}
                                     />
                                 )}
                             </div>
@@ -195,9 +208,15 @@ const Chat = () => {
             <div className="px-4 py-2">
                 <MessageInput onMessageSent={addMessage} />
             </div>
+
+            {/* User Profile Modal */}
+            <PublicUserProfileModal
+                username={profileModal.username}
+                isOpen={profileModal.isOpen}
+                onClose={closeProfileModal}
+            />
         </div>
     )
 }
 
 export default Chat
-

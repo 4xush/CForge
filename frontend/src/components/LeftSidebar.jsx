@@ -4,7 +4,7 @@ import { PanelRightIcon, SettingsIcon, HelpCircleIcon, LayoutDashboardIcon } fro
 import { useAuthContext } from '../context/AuthContext';
 import DashboardButton from './ui/DashboardButtons';
 import RoomList from './Rooms/RoomList';
-import UserProfileModal from './ProfileModal';
+import UserProfileModal from './UserProfileModal';
 import CreateJoinModal from './CreateRoom/CreateJoinRoomModal';
 
 const LeftSidebar = () => {
