@@ -25,6 +25,7 @@ app.use(
 // Preflight request handler for all routes
 app.options('*', cors());  // Allow all preflight OPTIONS requests
 
+
 // Middleware for parsing JSON bodies
 app.use(express.json());
 

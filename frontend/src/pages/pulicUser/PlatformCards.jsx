@@ -2,32 +2,48 @@ import React from 'react';
 import { Trophy, Book, Medal, Layout, Users, User, Award, Star } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
-const PlatformCard = ({ platform, stats, icon: Icon, color }) => (
-    <Card className="w-full">
-        <CardHeader className="flex flex-row items-center space-x-2">
-            <Icon className={`h-6 w-6 ${color}`} />
-            <CardTitle className="text-xl">{platform}</CardTitle>
-        </CardHeader>
-        <CardContent>
-            <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                    <User className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm text-gray-600">@{stats.username || 'Not connected'}</span>
+const PlatformCard = ({ platform, stats, icon: Icon, color }) => {
+    const profileUrl = stats.username
+        ? {
+            LeetCode: `https://leetcode.com/${stats.username}`,
+            Codeforces: `https://codeforces.com/profile/${stats.username}`,
+            GitHub: `https://github.com/${stats.username}`,
+        }[platform] || "#"
+        : "#"; // Default to "#" if no username
+
+    return (
+        <Card
+            className="w-full cursor-pointer transition-shadow hover:shadow-lg"
+            onClick={() => profileUrl !== "#" && window.open(profileUrl, "_blank")}
+        >
+            <CardHeader className="flex flex-row items-center space-x-2">
+                <Icon className={`h-6 w-6 ${color}`} />
+                <CardTitle className="text-xl">{platform}</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                        <User className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm text-gray-600">
+                            @{stats.username || 'Not connected'}
+                        </span>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {stats.metrics.map((metric, index) => (
+                            <div key={index} className="bg-gray-50 p-4 rounded-lg text-center">
+                                {metric.icon}
+                                <div className="text-2xl font-bold mt-2">{metric.value}</div>
+                                <div className="text-sm text-gray-600">{metric.label}</div>
+                            </div>
+                        ))}
+                    </div>
+                    {stats.additionalContent}
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {stats.metrics.map((metric, index) => (
-                        <div key={index} className="bg-gray-50 p-4 rounded-lg text-center">
-                            {metric.icon}
-                            <div className="text-2xl font-bold mt-2">{metric.value}</div>
-                            <div className="text-sm text-gray-600">{metric.label}</div>
-                        </div>
-                    ))}
-                </div>
-                {stats.additionalContent}
-            </div>
-        </CardContent>
-    </Card>
-);
+            </CardContent>
+        </Card>
+    );
+};
+
 
 export const getPlatformStats = (user) => ({
     leetcode: {

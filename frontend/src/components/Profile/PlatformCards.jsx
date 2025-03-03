@@ -1,39 +1,56 @@
 import React from 'react';
 import { Trophy, Book, Medal, Layout, Users, User, Award, Star, Code2, Github, TrendingUp } from 'lucide-react';
 
-export const PlatformCard = ({ platform, stats, icon: Icon, color, className = '' }) => (
-    <div className={`relative p-6 rounded-xl overflow-hidden ${className}`}>
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-600 to-violet-600"></div>
+export const PlatformCard = ({ platform, stats, icon: Icon, color, className = '' }) => {
+    const profileUrl = stats.username
+        ? {
+            LeetCode: `https://leetcode.com/${stats.username}`,
+            Codeforces: `https://codeforces.com/profile/${stats.username}`,
+            GitHub: `https://github.com/${stats.username}`,
+        }[platform] || "#"
+        : "#"; // Default to "#" if no username
 
-        <div className="flex items-center gap-3 mb-4">
-            {Icon && <Icon className={`w-6 h-6 ${color}`} />}
-            <h3 className="text-xl font-bold text-white">{platform}</h3>
-        </div>
+    return (
+        <div
+            className={`relative p-6 rounded-xl overflow-hidden cursor-pointer transition-shadow hover:shadow-lg ${className}`}
+            onClick={() => profileUrl !== "#" && window.open(profileUrl, "_blank")}
+        >
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-600 to-violet-600"></div>
 
-        <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-                <User className="h-4 w-4 text-gray-400" />
-                <span className="text-sm text-gray-300">@{stats.username || 'Not connected'}</span>
+            <div className="flex items-center gap-3 mb-4">
+                {Icon && <Icon className={`w-6 h-6 ${color}`} />}
+                <h3 className="text-xl font-bold text-white">{platform}</h3>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
-                {stats.metrics.map((metric, index) => (
-                    <div key={index} className="bg-gray-800 p-4 rounded-lg text-center border border-gray-700 hover:border-indigo-500 transition-all">
-                        {metric.icon}
-                        <div className="text-xl font-bold mt-2 text-white">{metric.value}</div>
-                        <div className="text-xs text-gray-400">{metric.label}</div>
-                    </div>
-                ))}
+            <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                    <User className="h-4 w-4 text-gray-400" />
+                    <span className="text-sm text-gray-300">@{stats.username || 'Not connected'}</span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                    {stats.metrics.map((metric, index) => (
+                        <div
+                            key={index}
+                            className="bg-gray-800 p-4 rounded-lg text-center border border-gray-700 hover:border-indigo-500 transition-all"
+                        >
+                            {metric.icon}
+                            <div className="text-xl font-bold mt-2 text-white">{metric.value}</div>
+                            <div className="text-xs text-gray-400">{metric.label}</div>
+                        </div>
+                    ))}
+                </div>
+
+                {stats.additionalContent}
             </div>
 
-            {stats.additionalContent}
+            <div className="absolute bottom-0 right-0 opacity-10">
+                {Icon && <Icon className="w-24 h-24 text-white" />}
+            </div>
         </div>
+    );
+};
 
-        <div className="absolute bottom-0 right-0 opacity-10">
-            {Icon && <Icon className="w-24 h-24 text-white" />}
-        </div>
-    </div>
-);
 
 export const getPlatformStats = (user) => ({
     leetcode: {
