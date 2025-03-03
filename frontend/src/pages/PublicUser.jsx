@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Code2, Github } from 'lucide-react';
 import ApiService from '../services/ApiService';
-import { ProfileHeader } from '../components/Profile/ProfileHeader';
-import { PlatformCard, getPlatformStats } from '../components/Profile/PlatformCards';
+import { ProfileHeader } from './pulicUser/ProfileHeader';
+import { PlatformCard, getPlatformStats } from './pulicUser/PlatformCards';
 import ActivityHeatmap from '../components/Profile/ActivityHeatmap';
 import { useHeatmapData } from '../hooks/useHeatmapData';
 

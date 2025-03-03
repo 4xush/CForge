@@ -44,12 +44,12 @@ const RoomComponent = () => {
             </div>
 
             {rooms.length === 0 ? (
-                <div className="text-center py-16 bg-gray-800 rounded-lg">
+                <div className="text-center py-16 bg-gray-800 rounded-lg w-1/2">
                     <h2 className="text-2xl font-semibold text-white mb-4">No Rooms Yet</h2>
                     <p className="text-gray-400 mb-6">Start collaborating by creating or joining a room</p>
-                    <button className="bg-purple-600 text-white px-6 py-3 rounded-md hover:bg-purple-700 transition">
+                    {/* <button className="bg-purple-600 text-white px-6 py-3 rounded-md hover:bg-purple-700 transition">
                         Create Room
-                    </button>
+                    </button> */}
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

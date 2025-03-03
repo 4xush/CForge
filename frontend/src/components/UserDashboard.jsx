@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Code2, Github, RotateCw, User, Trophy, ChevronDown,
-    BarChart2, RefreshCw, Calendar, Star
+    Code2, Github, RotateCw, Trophy, ChevronDown,
+    BarChart2, RefreshCw, Calendar, Star, Zap, Award, TrendingUp
 } from 'lucide-react';
 import ApiService from '../services/ApiService';
 import { ProfileHeader } from './Profile/ProfileHeader';
@@ -15,15 +15,15 @@ const TabButton = ({ active, onClick, icon: Icon, children }) => (
     <button
         onClick={onClick}
         className={`
-            flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl 
+            flex items-center gap-2 px-6 py-3 text-sm font-bold rounded-xl 
             transition-all duration-300 ease-in-out transform hover:scale-105
             ${active
-                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
-                : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg'
+                : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white border border-gray-700'
             }
         `}
     >
-        {Icon && <Icon className="w-4 h-4" />}
+        {Icon && <Icon className="w-5 h-5" />}
         {children}
     </button>
 );
@@ -33,15 +33,15 @@ const RefreshButton = ({ onClick, refreshing }) => (
         onClick={onClick}
         disabled={refreshing}
         className={`
-            flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold
+            flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold
             transition-all duration-300 ease-in-out transform hover:scale-105
             ${refreshing
-                ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:shadow-lg'
+                ? 'bg-gray-800 text-gray-500 cursor-not-allowed border border-gray-700'
+                : 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md hover:shadow-lg'
             }
         `}
     >
-        <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+        <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
         {refreshing ? 'Refreshing...' : 'Refresh Data'}
     </button>
 );
@@ -91,109 +91,168 @@ const UserProfile = () => {
 
     if (combinedLoading) {
         return (
-            <div className="flex justify-center items-center min-h-screen bg-gray-900">
-                <div className="animate-pulse">
-                    <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full"></div>
+            <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-gray-900 to-purple">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-16 h-16 relative">
+                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-full animate-ping opacity-75"></div>
+                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-full"></div>
+                    </div>
+                    <p className="text-gray-300 font-medium">Loading profile data...</p>
                 </div>
             </div>
         );
     }
 
-    if (error) return <div className="text-center p-8 text-red-500">{error}</div>;
-    if (!user) return <div className="text-center p-8 text-gray-400">User not found</div>;
-    if (heatmapError) return <div className="text-center p-8 text-red-500">Failed to load activity data</div>;
+    if (error) return (
+        <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-gray-900 to-purple">
+            <div className="bg-gray-800 border border-red-500 rounded-xl p-8 max-w-lg text-center">
+                <div className="text-red-500 text-xl font-bold mb-4">Error Loading Profile</div>
+                <p className="text-gray-300">{error}</p>
+                <button
+                    onClick={() => window.location.reload()}
+                    className="mt-6 px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-xl text-white font-bold transition-all"
+                >
+                    Try Again
+                </button>
+            </div>
+        </div>
+    );
+
+    if (!user) return (
+        <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-gray-900 to-purple">
+            <div className="bg-gray-800 border border-gray-700 rounded-xl p-8 max-w-lg text-center">
+                <div className="text-gray-300 text-xl font-bold mb-4">User Not Found</div>
+                <p className="text-gray-400">The requested profile could not be located.</p>
+                <button
+                    onClick={() => navigate('/')}
+                    className="mt-6 px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-xl text-white font-bold transition-all"
+                >
+                    Return Home
+                </button>
+            </div>
+        </div>
+    );
+
+    if (heatmapError) return (
+        <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-gray-900 to-purple">
+            <div className="bg-gray-800 border border-yellow-500 rounded-xl p-8 max-w-lg text-center">
+                <div className="text-yellow-500 text-xl font-bold mb-4">Activity Data Unavailable</div>
+                <p className="text-gray-300">Failed to load activity history. Your profile information is still available.</p>
+                <button
+                    onClick={() => window.location.reload()}
+                    className="mt-6 px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-xl text-white font-bold transition-all"
+                >
+                    Try Again
+                </button>
+            </div>
+        </div>
+    );
 
     const leetcodeData = user.platforms.leetcode;
     const platformStats = getPlatformStats(user);
 
     return (
-        <div className="min-h-screen bg-gray-900">
-            <div className="max-w-7xl mx-auto bg-gray-800 overflow-hidden">
-                <div className="p-4">
+        <div className="min-h-screen bg-gradient-to-b from-gray-900 to-purple">
+            <div className="max-w-7xl mx-auto p-4 md:p-8">
+                <div className="mb-8">
                     <ProfileHeader user={user} />
-
-                    <div className="mt-8 mb-6 flex justify-between items-center">
-                        <div className="flex space-x-4">
-                            <TabButton
-                                active={activeTab === 'overview'}
-                                onClick={() => setActiveTab('overview')}
-                                icon={BarChart2}
-                            >
-                                Overview
-                            </TabButton>
-                            <TabButton
-                                active={activeTab === 'leetcode'}
-                                onClick={() => setActiveTab('leetcode')}
-                                icon={Code2}
-                            >
-                                LeetCode Stats
-                            </TabButton>
-                        </div>
-
-                        <RefreshButton
-                            onClick={handleRefresh}
-                            refreshing={refreshing}
-                        />
+                </div>
+                <div className="mt-8 mb-6">
+                    <h1 className="text-3xl font-bold text-white">Welcome, {user.fullName}!</h1>
+                    <p className="text-gray-400 mt-2">Here are your coding details and activity stats:</p>
+                </div>
+                <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div className="flex flex-wrap gap-4">
+                        <TabButton
+                            active={activeTab === 'overview'}
+                            onClick={() => setActiveTab('overview')}
+                            icon={BarChart2}
+                        >
+                            Overview
+                        </TabButton>
+                        <TabButton
+                            active={activeTab === 'leetcode'}
+                            onClick={() => setActiveTab('leetcode')}
+                            icon={Code2}
+                        >
+                            LeetCode Stats
+                        </TabButton>
                     </div>
 
-                    {activeTab === 'overview' ? (
-                        <div className="space-y-8">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <PlatformCard
-                                    platform="LeetCode"
-                                    stats={platformStats.leetcode}
-                                    icon={Code2}
-                                    color="text-yellow-500"
-                                    className="bg-gray-800 border border-gray-700 transform transition-all duration-300 hover:scale-105 hover:shadow-xl"
-                                />
-                                <PlatformCard
-                                    platform="Codeforces"
-                                    stats={platformStats.codeforces}
-                                    icon={Code2}
-                                    color="text-red-500"
-                                    className="bg-gray-800 border border-gray-700 transform transition-all duration-300 hover:scale-105 hover:shadow-xl"
-                                />
-                                <PlatformCard
-                                    platform="GitHub"
-                                    stats={platformStats.github}
-                                    icon={Github}
-                                    color="text-blue-400"
-                                    className="bg-gray-800 border border-gray-700 transform transition-all duration-300 hover:scale-105 hover:shadow-xl"
-                                />
-                            </div>
+                    <RefreshButton
+                        onClick={handleRefresh}
+                        refreshing={refreshing}
+                    />
+                </div>
 
-                            <div className="grid grid-cols-1 gap-6">
-                                {[
-                                    { platform: 'leetcode', data: heatmapData?.leetcode },
-                                    { platform: 'github', data: heatmapData?.github },
-                                    { platform: 'codeforces', data: heatmapData?.codeforces }
-                                ].map(({ platform, data }) =>
-                                    data && Object.keys(data).length > 0 && (
-                                        <div
-                                            key={platform}
-                                            className="bg-gray-800 border border-gray-700 rounded-xl shadow-md p-6 transform transition-all duration-300 hover:shadow-xl"
-                                        >
-                                            <h3 className="text-lg font-semibold mb-4 text-gray-200 capitalize">
-                                                {platform} Activity
-                                            </h3>
-                                            <ActivityHeatmap
-                                                data={data}
-                                                platform={platform}
-                                            />
-                                        </div>
-                                    )
-                                )}
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="bg-gray-800 border border-gray-700 rounded-2xl shadow-lg overflow-hidden">
-                            <LeetCodeDashboard
-                                leetcodeData={leetcodeData}
-                                nestedUsername={user?.username}
+                {activeTab === 'overview' ? (
+                    <div className="space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <PlatformCard
+                                platform="LeetCode"
+                                stats={platformStats.leetcode}
+                                icon={Trophy}
+                                color="text-yellow-400"
+                                className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-indigo-500"
+                            />
+                            <PlatformCard
+                                platform="Codeforces"
+                                stats={platformStats.codeforces}
+                                icon={Award}
+                                color="text-red-500"
+                                className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-indigo-500"
+                            />
+                            <PlatformCard
+                                platform="GitHub"
+                                stats={platformStats.github}
+                                icon={Github}
+                                color="text-blue-400"
+                                className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-indigo-500"
                             />
                         </div>
-                    )}
-                </div>
+
+                        <div className="grid grid-cols-1 gap-8">
+                            {[
+                                { platform: 'leetcode', data: heatmapData?.leetcode, icon: Code2, color: 'text-yellow-400' },
+                                { platform: 'github', data: heatmapData?.github, icon: Github, color: 'text-blue-400' },
+                                { platform: 'codeforces', data: heatmapData?.codeforces, icon: TrendingUp, color: 'text-red-500' }
+                            ].map(({ platform, data, icon: Icon, color }) =>
+                                data && Object.keys(data).length > 0 && (
+                                    <div
+                                        key={platform}
+                                        className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl shadow-lg p-6 transform transition-all duration-300 hover:shadow-xl hover:border-indigo-500"
+                                    >
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <Icon className={`w-6 h-6 ${color}`} />
+                                            <h3 className="text-xl font-bold text-white capitalize">
+                                                {platform} Activity
+                                            </h3>
+                                        </div>
+                                        <ActivityHeatmap
+                                            data={data}
+                                            platform={platform}
+                                        />
+                                    </div>
+                                )
+                            )}
+                        </div>
+                    </div>
+                ) : (
+                    <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl shadow-lg overflow-hidden transform transition-all duration-300 hover:shadow-xl hover:border-indigo-500">
+                        <div className="p-6 border-b border-gray-700">
+                            <div className="flex items-center gap-3">
+                                <Trophy className="w-6 h-6 text-yellow-400" />
+                                <h3 className="text-xl font-bold text-white">
+                                    LeetCode Dashboard
+                                </h3>
+                            </div>
+                        </div>
+                        <LeetCodeDashboard
+                            leetcodeData={leetcodeData}
+                            nestedUsername={user?.username}
+                        />
+                    </div>
+                )}
             </div>
         </div>
     );

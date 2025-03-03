@@ -21,10 +21,10 @@ const UserProfileModal = ({ onLogout }) => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const handleViewFullProfile = (e) => {
-        e.stopPropagation();
-        navigate(`/u/${authUser.username}`);
-    };
+    // const handleViewFullProfile = (e) => {
+    //     e.stopPropagation();
+    //     navigate('/dashboard');
+    // };
 
     const handleLogoutClick = (e) => {
         e.stopPropagation();
@@ -80,7 +80,7 @@ const UserProfileModal = ({ onLogout }) => {
                 <CardContent className="p-4">
                     {/* Action Buttons */}
                     <div className="space-y-2">
-                        <button
+                        {/* <button
                             onClick={handleViewFullProfile}
                             className="
                                 w-full bg-gray-800 hover:bg-gray-700 
@@ -96,7 +96,7 @@ const UserProfileModal = ({ onLogout }) => {
                                 size={20}
                                 className="transition-transform group-hover:translate-x-1"
                             />
-                        </button>
+                        </button> */}
                         <button
                             onClick={handleLogoutClick}
                             className="

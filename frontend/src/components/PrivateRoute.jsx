@@ -16,8 +16,8 @@ const PrivateRoute = ({ children }) => {
         );
     }
 
-    // Redirect to login if the user is not authenticated
-    if (!authUser) {
+    // Only redirect if the user is not authenticated AND not already on the login or signup page
+    if (!authUser && location.pathname !== '/login' && location.pathname !== '/signup') {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
