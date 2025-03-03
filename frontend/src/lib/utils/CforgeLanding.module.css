@@ -1,0 +1,67 @@
+/* CforgeLanding.module.css */
+
+/* 3D Hover Title */
+.futuristicTitleWrapper {
+  perspective: 1000px;
+}
+
+.futuristicTitle {
+  display: flex;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.futuristicTitle span {
+  display: inline-block;
+  color: rgba(255, 255, 255, 0.125);
+  text-shadow: 0 0 5px #00f0ff;
+  transition: all 0.3s ease;
+  transform: rotateX(0deg) rotateY(0deg);
+}
+
+.futuristicTitleWrapper:hover .futuristicTitle span {
+  color: #cc00ff;
+  text-shadow: 0 0 10px #cc00ff, 0 0 20px #00f0ff, 0 0 40px #00f0ff;
+  transform: rotateX(20deg) rotateY(20deg) translateZ(50px);
+}
+
+.futuristicTitle span:nth-child(1) {
+  transition-delay: 0.05s;
+}
+.futuristicTitle span:nth-child(2) {
+  transition-delay: 0.1s;
+}
+.futuristicTitle span:nth-child(3) {
+  transition-delay: 0.15s;
+}
+.futuristicTitle span:nth-child(4) {
+  transition-delay: 0.2s;
+}
+.futuristicTitle span:nth-child(5) {
+  transition-delay: 0.25s;
+}
+.futuristicTitle span:nth-child(6) {
+  transition-delay: 0.3s;
+}
+
+/* Custom Neon Glow */
+.neonGlow {
+  box-shadow: 0 0 15px #cc00ff, 0 0 30px #00f0ff;
+}
+
+/* Pulse Animation */
+@keyframes pulse {
+  0% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.7;
+  }
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}

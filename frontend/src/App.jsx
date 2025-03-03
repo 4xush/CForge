@@ -13,7 +13,7 @@ import RoomPage from './pages/RoomPage.jsx';
 // Lazy loaded components
 const LoginPage = React.lazy(() => import('./pages/Login'));
 const SignupPage = React.lazy(() => import('./pages/Signup'));
-const WelcomePage = React.lazy(() => import('./pages/LandingPage'));
+const WelcomePage = React.lazy(() => import('./pages/LandingPage.jsx'));
 const DashboardPage = React.lazy(() => import('./components/UserDashboard.jsx'));
 const PublicUserProfile = React.lazy(() => import('./pages/PublicUser.jsx'));
 const RoomInviteHandler = React.lazy(() => import('./pages/RoomInviteHandler'));

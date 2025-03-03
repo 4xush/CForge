@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronRight, Trophy, Star, LogOut } from 'lucide-react';
 import { CardContent } from '@/components/ui/card';
-import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../context/AuthContext';
 
 const UserProfileModal = ({ onLogout }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const modalRef = useRef(null);
-    const navigate = useNavigate();
     const { authUser } = useAuthContext();
 
     useEffect(() => {
@@ -20,12 +18,6 @@ const UserProfileModal = ({ onLogout }) => {
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
-
-    // const handleViewFullProfile = (e) => {
-    //     e.stopPropagation();
-    //     navigate('/dashboard');
-    // };
-
     const handleLogoutClick = (e) => {
         e.stopPropagation();
         onLogout();
@@ -80,23 +72,6 @@ const UserProfileModal = ({ onLogout }) => {
                 <CardContent className="p-4">
                     {/* Action Buttons */}
                     <div className="space-y-2">
-                        {/* <button
-                            onClick={handleViewFullProfile}
-                            className="
-                                w-full bg-gray-800 hover:bg-gray-700 
-                                text-white py-2 px-4 rounded-lg 
-                                flex items-center justify-between 
-                                transition-colors group
-                            "
-                        >
-                            <span className="transition-colors group-hover:text-gray-300">
-                                View Full Profile
-                            </span>
-                            <ChevronRight
-                                size={20}
-                                className="transition-transform group-hover:translate-x-1"
-                            />
-                        </button> */}
                         <button
                             onClick={handleLogoutClick}
                             className="
