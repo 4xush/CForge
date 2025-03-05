@@ -1,5 +1,5 @@
 import React from 'react';
-import { Camera, Mail, GitBranch, User, Zap } from 'lucide-react';
+import { Mail, GitBranch, User, Zap } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import SocialLinks from './SocialLinks.jsx';
 
@@ -38,18 +38,13 @@ export const ProfileHeader = ({ user }) => {
                     <div className="relative group">
                         <div className="w-36 h-36 rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 p-1 shadow-lg shadow-blue-500/30 transition-transform duration-300 hover:scale-105">
                             <div className="w-full h-full rounded-full bg-gray-900 flex items-center justify-center overflow-hidden border-2 border-white/20">
-                                {user?.profilePicture ? (
+                                {user?.profilePicture && (
                                     <img
                                         src={user.profilePicture}
                                         alt="Profile"
                                         className="w-full h-full object-cover"
                                     />
-                                ) : (
-                                    <Camera className="h-14 w-14 text-gray-400" />
                                 )}
-                            </div>
-                            <div className="absolute -bottom-1 -right-1 bg-cyan-400 text-gray-900 rounded-full p-1.5 shadow-lg border-2 border-gray-900 transition-all duration-300 opacity-0 group-hover:opacity-100">
-                                <Camera className="h-5 w-5" />
                             </div>
                         </div>
                     </div>

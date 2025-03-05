@@ -48,7 +48,7 @@ exports.createRoom = async (req, res) => {
     res
       .status(201)
       .json({ message: "Room created successfully", room: newRoom });
-    console.log("Room created with ID:", newRoomId);
+    // console.log("Room created with ID:", newRoomId);
   } catch (error) {
     res
       .status(500)

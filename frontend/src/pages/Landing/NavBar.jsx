@@ -1,8 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Code, Github, Twitter } from 'lucide-react';
-import { Target, Layers } from "lucide-react";
-import FeatureCard from './FeatureCard';
+
 // Reusable Components
 const Header = () => (
     <header className={`fixed top-0 w-full z-50 transition-all duration-500 bg-[#0A0F23]/90 backdrop-blur-md shadow-2xl shadow-purple-900/20 px-6 py-4`}>
@@ -20,36 +19,6 @@ const Header = () => (
             </nav>
         </div>
     </header>
-);
-
-const FeatureSection = () => (
-    <section id="feature" className="py-24 px-6 bg-gradient-to-b from-[#0A0F23] to-[#141B3F]">
-        <div className="container mx-auto">
-            <h2 className="text-4xl md:text-5xl font-extrabold text-center mb-16 tracking-tight bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-                Why Choose CForge?
-            </h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <FeatureCard
-                    title="LeetCode Integration"
-                    date="Feature Highlight"
-                    description="Compete with real-time LeetCode rankings and track your progress against peers."
-                    icon={Code}
-                />
-                <FeatureCard
-                    title="Focused Learning"
-                    date="Feature Highlight"
-                    description="Challenge yourself with topic-specific competitions to improve targeted skills."
-                    icon={Target}
-                />
-                <FeatureCard
-                    title="Comprehensive Platform"
-                    date="Feature Highlight"
-                    description="Access challenges from multiple platforms including Codeforces integration."
-                    icon={Layers}
-                />
-            </div>
-        </div>
-    </section>
 );
 
 const PreviewCard = ({ item, onHover, onLeave }) => (
@@ -111,7 +80,6 @@ const Footer = () => (
 
 export {
     Header,
-    FeatureSection,
     PreviewCard,
     DeveloperResources,
     Footer

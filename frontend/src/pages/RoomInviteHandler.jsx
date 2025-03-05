@@ -9,9 +9,7 @@ const RoomInviteHandler = () => {
     const { authUser, isLoading } = useAuthContext();
 
     useEffect(() => {
-        console.log('RoomInviteHandler - authUser:', authUser);
-        console.log('RoomInviteHandler - isLoading:', isLoading);
-        console.log('RoomInviteHandler - inviteCode:', inviteCode);
+   
 
         if (!isLoading) {
             handleInviteLink();
@@ -21,8 +19,6 @@ const RoomInviteHandler = () => {
     const handleInviteLink = async () => {
         // Get the current invite code or check for a pending one
         const currentInviteCode = inviteCode || sessionStorage.getItem('app-pendingInviteCode');
-
-        console.log('Current Invite Code:', currentInviteCode);
 
         // Validate invite code
         if (!currentInviteCode) {

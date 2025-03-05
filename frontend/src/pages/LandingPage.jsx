@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import ParticleBackground from './element/ParticleBackground';
 import Hero from './Landing/Hero';
-import { Header, FeatureSection, Footer, DeveloperResources } from './Landing/NavBar';
-
+import { Header, Footer, DeveloperResources } from './Landing/NavBar';
+import FeaturesSection from './Landing/FeaturesSection';
 const CforgeLanding = () => {
 
     const [selectedPreview, setSelectedPreview] = useState(null); // State to track the selected preview item
@@ -26,7 +26,7 @@ const CforgeLanding = () => {
             <div className="relative z-10">
                 <Header />
                 <Hero />
-                <FeatureSection />
+                <FeaturesSection />
                 {/* 4. Preview Section */}
                 <section id="preview" className="py-24 px-6 bg-[#0A0F23] relative overflow-hidden">
                     <motion.div

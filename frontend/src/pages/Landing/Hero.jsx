@@ -86,7 +86,7 @@ const Hero = () => {
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.95 }}
                         className="px-8 py-3 text-lg font-medium rounded-full bg-transparent border-2 border-purple-500 text-purple-400 hover:bg-purple-500/20 transition-all duration-300"
-                        onClick={() => window.location.replace('dashboard')}
+                        onClick={() => window.open('/dashboard', '_blank', 'noopener,noreferrer')}
                     >
                         Try Now
                     </motion.button>
