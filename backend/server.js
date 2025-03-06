@@ -4,7 +4,7 @@ const connectDB = require("./config/db");
 const path = require("path");
 const http = require("http");
 const cors = require("cors");
-const helmet = require("helmet"); 
+const helmet = require("helmet");
 
 // Import routes
 const authRoutes = require("./routes/authRoutes");
@@ -45,12 +45,10 @@ app.use("/api", publicRoutes);
 
 // Serve static assets in production
 if (isProduction) {
-  // Set static folder
-  app.use(express.static(path.join(__dirname, "client/dist")));
-
-  // Any route that doesn't match API routes will serve the React app
+  // Use this (adjusting for your actual directory structure)
+  app.use(express.static(path.join(__dirname, "../frontend/dist")));
   app.get("*", (req, res) => {
-    res.sendFile(path.resolve(__dirname, "client", "dist", "index.html"));
+    res.sendFile(path.resolve(__dirname, "../frontend/dist/index.html"));
   });
 }
 

@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "test": "jest",
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon backend/server.js",
+    "build": "npm install && npm install --prefix frontend && npm run build --prefix frontend",
+    "start": "node backend/server.js"
   },
   "keywords": [],
   "author": "",
@@ -29,7 +29,7 @@
   },
   "devDependencies": {
     "jest": "^29.7.0",
-    "nodemon": "^3.1.4",
+    "nodemon": "^3.1.9",
     "supertest": "^7.0.0"
   }
 }
