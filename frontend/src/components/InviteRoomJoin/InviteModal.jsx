@@ -65,7 +65,7 @@ const InviteModal = () => {
 
         try {
             setLoading(true);
-            const response = await fetch(`https://cforge.onrender.com/api/rooms/invite/${currentInviteCode}/join`, {
+            const response = await fetch(`{API_URI}/rooms/invite/${currentInviteCode}/join`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('app-token')}`
