@@ -46,7 +46,7 @@ const DeveloperResources = () => (
                 Developer Resources
             </h2>
             <p className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto font-light tracking-wide">
-                Explore our API and documentation to build with CForge AI.
+                Explore our API and documentation to build with CForge.
             </p>
             <div className="flex justify-center gap-6">
                 <motion.button
