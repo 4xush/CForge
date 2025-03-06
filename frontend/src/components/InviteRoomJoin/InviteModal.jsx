@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from '../ui/Alert';
 import { Loader2, Users, Lock, Unlock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useRoomContext } from '../../context/RoomContext';
+const API_URI = import.meta.env.VITE_API_URI;
 
 const InviteModal = () => {
     const location = useLocation();
@@ -42,7 +43,7 @@ const InviteModal = () => {
         try {
             setLoading(true);
             setIsOpen(true);
-            const response = await fetch(`http://localhost:5000/api/rooms/invite/${inviteCode}/verify`);
+            const response = await fetch(`{API_URI}/rooms/invite/${inviteCode}/verify`);
             const data = await response.json();
 
             if (data.success) {
@@ -64,7 +65,7 @@ const InviteModal = () => {
 
         try {
             setLoading(true);
-            const response = await fetch(`http://localhost:5000/api/rooms/invite/${currentInviteCode}/join`, {
+            const response = await fetch(`https://cforge.onrender.com/api/rooms/invite/${currentInviteCode}/join`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('app-token')}`

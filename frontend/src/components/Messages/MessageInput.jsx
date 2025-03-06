@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRoomContext } from '../../context/RoomContext';
 import axios from 'axios';
 import { Send, X } from 'lucide-react';
-
+const API_URI = import.meta.env.VITE_API_URI;
 const MessageInput = ({ onMessageSent, initialMessage = '', onCancel }) => {
     const { selectedRoom } = useRoomContext();
     const [message, setMessage] = useState(initialMessage);
@@ -22,7 +22,7 @@ const MessageInput = ({ onMessageSent, initialMessage = '', onCancel }) => {
             } else {
                 const token = localStorage.getItem('app-token');
                 const response = await axios.post(
-                    `http://localhost:5000/api/rooms/${selectedRoom._id}/messages`,
+                    `{API_URI}/rooms/${selectedRoom._id}/messages`,
                     { content: message },
                     {
                         headers: {
