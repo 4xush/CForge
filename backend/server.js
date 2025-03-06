@@ -23,9 +23,14 @@ app.use(
   })
 );
 // CORS configuration - more restrictive for production
+
+const allowedOrigins = isProduction
+  ? ["https://cforge.live", "https://cforge-bbuxjfid8-ayushkumarkvg99-gmailcoms-projects.vercel.app", "https://cforge-three.vercel.app/"]
+  : "*";
+
 app.use(
   cors({
-    origin: isProduction ? "https://cforge.live" : "*",
+    origin: allowedOrigins,
     methods: ['DELETE', 'GET', 'POST', 'PUT'],
     credentials: true,
   })
