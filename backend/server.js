@@ -30,7 +30,7 @@ const allowedOrigins = isProduction
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: "*",
     methods: ['DELETE', 'GET', 'POST', 'PUT'],
     credentials: true,
   })
