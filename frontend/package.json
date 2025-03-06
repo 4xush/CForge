@@ -3,12 +3,12 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
-  },
+ "scripts": {
+  "dev": "vite",
+  "build": "npx vite build",  
+  "lint": "eslint .",
+  "preview": "vite preview"
+},
   "dependencies": {
     "@chakra-ui/react": "^3.2.3",
     "@emotion/react": "^11.14.0",
