@@ -22,7 +22,7 @@ const MessageInput = ({ onMessageSent, initialMessage = '', onCancel }) => {
             } else {
                 const token = localStorage.getItem('app-token');
                 const response = await axios.post(
-                    `{API_URI}/rooms/${selectedRoom._id}/messages`,
+                    `${API_URI}/rooms/${selectedRoom._id}/messages`,
                     { content: message },
                     {
                         headers: {

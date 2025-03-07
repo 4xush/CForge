@@ -17,15 +17,11 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: function () {
-        return !this.isGoogleAuth; // Only required for non-Google auth users
-      },
+      required: true,
     },
     gender: {
       type: String,
-      required: function () {
-        return !this.isGoogleAuth; // Only required for non-Google auth users
-      },
+      required: true,
       enum: ["male", "female", "other", "unspecified"],
       default: "unspecified"
     },

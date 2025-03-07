@@ -25,12 +25,12 @@ app.use(
 // CORS configuration - more restrictive for production
 
 const allowedOrigins = isProduction
-  ? ["https://cforge.live", "https://cforge-bbuxjfid8-ayushkumarkvg99-gmailcoms-projects.vercel.app", "https://cforge-three.vercel.app/"]
+  ? ["https://www.cforge.live", "https://cforge-bbuxjfid8-ayushkumarkvg99-gmailcoms-projects.vercel.app", "https://cforge-three.vercel.app/"]
   : "*";
 
 app.use(
   cors({
-    origin: "*",
+    origin: isProduction ? allowedOrigins : "*",
     methods: ['DELETE', 'GET', 'POST', 'PUT'],
     credentials: true,
   })

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, Users, Shield, Ban, Bell, Settings, UserPlus, Trash2, UserMinus, UserCheck, AlertTriangle } from 'lucide-react';
+import { Save, Users, Shield, AlertTriangle, Settings, UserMinus } from 'lucide-react';
 import ApiService from '../../services/ApiService';
 import toast from 'react-hot-toast';
 
@@ -36,6 +36,7 @@ const ConfirmationDialog = ({ isOpen, onClose, onConfirm, title, message, confir
     );
 };
 
+
 const RoomSettings = ({ room, onClose, onUpdate }) => {
     const [activeTab, setActiveTab] = useState('general');
     const [formData, setFormData] = useState({
@@ -61,31 +62,18 @@ const RoomSettings = ({ room, onClose, onUpdate }) => {
         }));
     };
 
-    const showConfirmation = (title, message, onConfirm, confirmText) => {
-        setConfirmation({
-            isOpen: true,
-            title,
-            message,
-            onConfirm,
-            confirmText,
-        });
-    };
-
-    const closeConfirmation = () => {
-        setConfirmation((prev) => ({ ...prev, isOpen: false }));
-    };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             const response = await ApiService.put(`/rooms/admin/${room.roomId}`, formData);
+            const updatedRoom = response.data.room;
             toast.success('Room settings updated successfully');
-            onUpdate?.(response.data.room);
+            onUpdate?.(updatedRoom);
+            onClose(); // Close settings after successful update
         } catch (error) {
             toast.error(error.response?.data?.message || 'Failed to update room settings');
         }
     };
-
     const handleKickUser = async (userId, username) => {
         showConfirmation(
             "Remove Member",
@@ -211,7 +199,6 @@ const RoomSettings = ({ room, onClose, onUpdate }) => {
                                 className="mt-1 block w-full rounded-md bg-gray-700 border border-gray-600 text-gray-300 p-2.5 focus:ring-blue-500 focus:border-blue-500"
                             />
                         </div>
-
                         <div>
                             <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
                             <textarea
@@ -224,19 +211,6 @@ const RoomSettings = ({ room, onClose, onUpdate }) => {
                             />
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-1">Room ID</label>
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="text"
-                                    name="roomId"
-                                    value={formData.roomId}
-                                    onChange={handleInputChange}
-                                    placeholder="Enter a new room ID"
-                                    className="mt-1 block w-full rounded-md bg-gray-700 border border-gray-600 text-gray-300 p-2.5 focus:ring-blue-500 focus:border-blue-500"
-                                />
-                            </div>
-                        </div>
 
                         <div className="flex items-center">
                             <input
@@ -349,7 +323,7 @@ const RoomSettings = ({ room, onClose, onUpdate }) => {
 
             <ConfirmationDialog
                 isOpen={confirmation.isOpen}
-                onClose={closeConfirmation}
+                onClose={() => setConfirmation((prev) => ({ ...prev, isOpen: false }))}
                 onConfirm={confirmation.onConfirm}
                 title={confirmation.title}
                 message={confirmation.message}

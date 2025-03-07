@@ -11,7 +11,6 @@ const generateUsername = require("../utils/usernameGenerator");
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// Handle Google OAuth
 const googleAuth = async (req, res) => {
   try {
     const { idToken } = req.body;
@@ -19,34 +18,46 @@ const googleAuth = async (req, res) => {
     // Verify the Google token
     const ticket = await googleClient.verifyIdToken({
       idToken,
-      audience: process.env.GOOGLE_CLIENT_ID
+      audience: process.env.GOOGLE_CLIENT_ID,
     });
 
     const payload = ticket.getPayload();
-
-    // Extract user data from Google profile
     const { email, name, picture, sub } = payload;
 
     // Check if user already exists
     let user = await User.findOne({ email });
 
     if (!user) {
-      // Create new user if doesn't exist
+      // Hash the email as the password
+      const hashedPassword = await bcrypt.hash(email, 12);
+
+      // Create new user
       user = await User.create({
         fullName: name,
         email,
         username: email.split('@')[0], // Simple username creation
         googleId: sub,
         profilePicture: picture,
-        isGoogleAuth: true, // Important! Mark as Google auth user
-        // No password needed - we removed the required constraint
-        platforms: {}
+        isGoogleAuth: true,
+        password: hashedPassword, // Set password as email
+        platforms: {
+          leetcode: { username: null },
+          github: { username: null },
+          codeforces: { username: null },
+        },
+        isProfileComplete: false, // Align with signupUser
       });
     } else if (!user.googleId) {
       // Link Google ID to existing account
       user.googleId = sub;
       if (!user.profilePicture && picture) {
         user.profilePicture = picture;
+      }
+      if (!user.password) {
+        user.password = await bcrypt.hash(email, 12); // Set password if not present
+      }
+      if (!user.gender) {
+        user.gender = "other"; // Set default gender if missing
       }
       await user.save();
     }
@@ -58,25 +69,30 @@ const googleAuth = async (req, res) => {
       { expiresIn: '30d' }
     );
 
-    // Return user data and token
+    // Return user data and token aligned with signupUser and loginUser
     res.status(200).json({
+      message: "Google authentication successful",
       user: {
+        _id: user._id.toString(), // Include _id
         fullName: user.fullName,
         username: user.username,
         email: user.email,
         profilePicture: user.profilePicture,
-        platforms: user.platforms || {}
+        platforms: user.platforms || {
+          leetcode: { username: null },
+          github: { username: null },
+          codeforces: { username: null },
+        },
+        isProfileComplete: user.isProfileComplete || false,
       },
-      token
+      token,
     });
-
   } catch (error) {
     console.error('Google authentication error:', error);
     res.status(401).json({ message: 'Google authentication failed' });
   }
 };
-
-const signupUser = async (req, res) => {
+ signupUser = async (req, res) => {
   const { fullName, email, password, gender } = req.body;
 
   try {
