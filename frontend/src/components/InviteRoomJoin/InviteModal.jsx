@@ -43,7 +43,7 @@ const InviteModal = () => {
         try {
             setLoading(true);
             setIsOpen(true);
-            const response = await fetch(`{API_URI}/rooms/invite/${inviteCode}/verify`);
+            const response = await fetch(`${API_URI}/rooms/invite/${inviteCode}/verify`);
             const data = await response.json();
 
             if (data.success) {
@@ -65,7 +65,7 @@ const InviteModal = () => {
 
         try {
             setLoading(true);
-            const response = await fetch(`{API_URI}/rooms/invite/${currentInviteCode}/join`, {
+            const response = await fetch(`${API_URI}/rooms/invite/${currentInviteCode}/join`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('app-token')}`

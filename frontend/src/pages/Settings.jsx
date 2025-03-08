@@ -6,7 +6,7 @@ import SocialNetworks from '../components/Settings/SocialNetworksSettings';
 import BasicInfo from '../components/Settings/BasicInfoSettings';
 import AccountSettings from '../components/Settings/AccountSettings';
 import { useAuthContext } from '../context/AuthContext';
-import { CheckCircle } from 'lucide-react'; // Add for isProfileComplete indicator
+import { CheckCircle } from 'lucide-react'; 
 
 const Settings = () => {
     const { authUser, updateUser, logout } = useAuthContext();

@@ -52,8 +52,7 @@ const Login = () => {
                 return;
             }
 
-            // Default redirect
-            navigate('/dashboard');
+            window.location.replace('/dashboard');
         } catch (error) {
             toast.error('Google login failed. Please try again.');
             console.error('Google login error:', error);

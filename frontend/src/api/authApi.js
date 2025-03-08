@@ -36,6 +36,9 @@ export const register = async (userData) => {
       token
     };
   } catch (error) {
+    if (error.response?.data?.errors) {
+      throw { message: error.response.data.errors.join(", ") };
+    }
     throw error.response?.data || { message: "Registration failed" };
   }
 };
