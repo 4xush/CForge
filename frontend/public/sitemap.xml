@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+  <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    
+      <url>
+        <loc>https://www.cforge.live/</loc>
+        <title>CForge - Competitive Coding Platform</title>
+        <changefreq>daily</changefreq>
+        <priority>1.0</priority>
+      </url>
+      <url>
+        <loc>https://www.cforge.live/login</loc>
+        <title>Login - CForge</title>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+      </url>
+      <url>
+        <loc>https://www.cforge.live/signup</loc>
+        <title>Sign Up - CForge</title>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+      </url>
+      <url>
+        <loc>https://www.cforge.live/dashboard</loc>
+        <title>Dashboard - Track Your Coding Progress</title>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+      </url>
+      <url>
+        <loc>https://www.cforge.live/rooms</loc>
+        <title>Rooms - Join Coding Groups</title>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+      </url>
+      <url>
+        <loc>https://www.cforge.live/profile</loc>
+        <title>User Profile - CForge</title>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+      </url>
+      <url>
+        <loc>https://www.cforge.live/settings</loc>
+        <title>Settings - Manage Account</title>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+      </url>
+      <url>
+        <loc>https://www.cforge.live/u/username</loc>
+        <title>User Profile - Competitive Coder</title>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+      </url>
+      <url>
+        <loc>https://www.cforge.live/rooms/roomId/leaderboard</loc>
+        <title>Leaderboard - CForge Room</title>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+      </url>
+      <url>
+        <loc>https://www.cforge.live/rooms/roomId/chat</loc>
+        <title>Room Chat - CForge</title>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+      </url>
+      <url>
+        <loc>https://www.cforge.live/rooms/join/inviteCode</loc>
+        <title>Join Room - CForge</title>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+      </url>
+      <url>
+        <loc>https://www.cforge.live/help</loc>
+        <title>Help & FAQ - CForge</title>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+      </url>
+      <url>
+        <loc>https://www.cforge.live/404</loc>
+        <title>Page Not Found - CForge</title>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+      </url>
+  </urlset>
