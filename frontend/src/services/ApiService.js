@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 
-const API_URI = import.meta.env.VITE_API_URI;
+const API_URI = import.meta.env.VITE_API_URI2;
 
 
 const isTokenExpired = (token) => {

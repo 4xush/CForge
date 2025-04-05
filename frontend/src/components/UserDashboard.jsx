@@ -10,6 +10,8 @@ import { PlatformCard, getPlatformStats } from './Profile/PlatformCards';
 import ActivityHeatmap from './Profile/ActivityHeatmap';
 import { useHeatmapData } from '../hooks/useHeatmapData';
 import LeetCodeDashboard from './Profile/LeetCodeDashboard';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Button } from './ui/Button';
 
 const TabButton = ({ active, onClick, icon: Icon, children }) => (
     <button
@@ -132,6 +134,15 @@ const UserProfile = () => {
             </div>
         </div>
     );
+    if (!user.isProfileComplete) {
+        return (<Dialog>
+            <DialogContent>
+                <DialogTitle>Complete Your Profile</DialogTitle>
+                <p>Please complete your profile by adding your LeetCode profile in the settings.</p>
+                <Button onClick={navigate('/settings?tab=platforms')}>Complete Profile</Button>
+            </DialogContent>
+        </Dialog>);
+    }
 
     if (heatmapError) return (
         <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-gray-900 to-purple">

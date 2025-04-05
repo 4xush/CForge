@@ -16,8 +16,8 @@ const JoinRoomForm = ({ onClose, onRoomJoined }) => {
             setValidationError('Room code is required');
             return false;
         }
-        if (code.length < 2 || code.length > 8) {
-            setValidationError('Room code must be between 2 and 8 characters');
+        if (code.length < 2 || code.length > 12) {
+            setValidationError('Room code must be between 2 and 12 characters');
             return false;
         }
         if (!/^[A-Za-z0-9]+$/.test(code)) {
@@ -95,7 +95,7 @@ const JoinRoomForm = ({ onClose, onRoomJoined }) => {
                     onChange={handleInputChange}
                     placeholder="Enter Room ID"
                     className="pl-10 bg-[#2a2b36] border-gray-600 text-white placeholder-gray-400 focus:border-purple-500 transition-colors duration-200"
-                    maxLength={8}
+                    maxLength={12}
                 />
             </div>
 

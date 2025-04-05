@@ -1,5 +1,18 @@
 import api from "../config/api";
 
+export const refreshLeaderboard = async (roomId, sortBy, limit, page) => {
+  try {
+    const response = await api.get(`/rooms/${roomId}/leaderboard`, {
+      params: { sortBy, limit, page }
+    });
+    console.log(response.data);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || new Error("Failed to refresh leaderboard");
+  }
+} 
+
+
 export const googleLogin = async (idToken) => {
   const response = await api.post(`/auth/google`, { idToken });
   localStorage.setItem("app-token", response.data.token);

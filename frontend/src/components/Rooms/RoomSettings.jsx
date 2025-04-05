@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, Users, Shield, AlertTriangle, Settings, UserMinus } from 'lucide-react';
+import { Save, Users, Shield, AlertTriangle, Settings, UserMinus, UserCheck } from 'lucide-react';
 import ApiService from '../../services/ApiService';
 import toast from 'react-hot-toast';
 

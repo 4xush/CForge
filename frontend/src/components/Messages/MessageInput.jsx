@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRoomContext } from '../../context/RoomContext';
 import axios from 'axios';
 import { Send, X } from 'lucide-react';
-const API_URI = import.meta.env.VITE_API_URI;
+const API_URI = import.meta.env.VITE_API_URI2;
 const MessageInput = ({ onMessageSent, initialMessage = '', onCancel }) => {
     const { selectedRoom } = useRoomContext();
     const [message, setMessage] = useState(initialMessage);

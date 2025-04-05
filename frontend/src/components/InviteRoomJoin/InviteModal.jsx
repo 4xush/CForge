@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/Button';
@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from '../ui/Alert';
 import { Loader2, Users, Lock, Unlock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useRoomContext } from '../../context/RoomContext';
-const API_URI = import.meta.env.VITE_API_URI;
+const API_URI = import.meta.env.VITE_API_URI2;
 
 const InviteModal = () => {
     const location = useLocation();

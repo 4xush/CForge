@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
+import { Search, RefreshCw } from 'lucide-react'; // Added RefreshCw icon
 import { useAuthContext } from '../../context/AuthContext';
 import { TopUserCard } from './TopUserCard';
 import SortButton from './SortButton';
@@ -7,7 +7,7 @@ import Pagination from './Pagination';
 import { LeaderboardTable } from './LeaderboardTable';
 import PublicUserProfileModal from '../PublicUserProfileModal';
 import toast from 'react-hot-toast';
-import { getLeaderboard } from '../../api/authApi';
+import { getLeaderboard, refreshLeaderboard } from '../../api/authApi'; // Added refreshLeaderboard
 
 const CodingLeaderboard = ({ selectedRoom }) => {
     const { authUser } = useAuthContext();
@@ -23,8 +23,18 @@ const CodingLeaderboard = ({ selectedRoom }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [showSearchInput, setShowSearchInput] = useState(false);
     const [profileModal, setProfileModal] = useState({ isOpen: false, username: null });
+    const [lastUpdated, setLastUpdated] = useState(null); // New state for last update time
 
     const limitOptions = [10, 20, 50, 100];
+
+    // Function to check if 12 hours have passed since last update
+    const isRefreshNeeded = () => {
+        if (!lastUpdated) return false;
+        const now = new Date();
+        const lastUpdateTime = new Date(lastUpdated);
+        const hoursDiff = (now - lastUpdateTime) / (1000 * 60 * 60);
+        return hoursDiff >= 12;
+    };
 
     const fetchLeaderboard = async (pageNum = page) => {
         if (!selectedRoom) return;
@@ -33,10 +43,13 @@ const CodingLeaderboard = ({ selectedRoom }) => {
         setError(null);
         try {
             const data = await getLeaderboard(selectedRoom.id, sortBy, limit, pageNum);
+            console.log(data);
 
             if (pageNum === 1) {
                 setUsers(data.members);
                 setTopUsers(data.members.slice(0, 3));
+                // Assuming the most recent updatedAt comes from the first user
+                setLastUpdated(data.members[0]?.updatedAt || new Date().toISOString());
             } else {
                 setUsers(prevUsers => [...prevUsers, ...data.members]);
             }
@@ -45,6 +58,22 @@ const CodingLeaderboard = ({ selectedRoom }) => {
         } catch (err) {
             setError(err.message || "An error occurred while fetching the leaderboard");
             toast.error(err.message || "Failed to load leaderboard");
+        }
+        setLoading(false);
+    };
+
+    // New function to handle refresh
+    const handleRefresh = async () => {
+        if (!selectedRoom) return;
+
+        setLoading(true);
+        try {
+            // Assuming refreshLeaderboard is an API function that refreshes all users' LeetCode data
+            await refreshLeaderboard(selectedRoom.id);
+            toast.success("Leaderboard refreshed successfully");
+            await fetchLeaderboard(1); // Refresh the leaderboard data after updating
+        } catch (err) {
+            toast.error(err.message || "Failed to refresh leaderboard");
         }
         setLoading(false);
     };
@@ -165,6 +194,7 @@ const CodingLeaderboard = ({ selectedRoom }) => {
         <div className="bg-gray-900 text-white">
             <div className="flex justify-between items-center mb-4">
                 <div className="flex space-x-2">
+                    {/* Existing sort buttons */}
                     <SortButton
                         sortBy={sortBy}
                         current="platforms.leetcode.totalQuestionsSolved"
@@ -184,7 +214,19 @@ const CodingLeaderboard = ({ selectedRoom }) => {
                         label="Attended Contests"
                     />
                 </div>
+
                 <div className="flex space-x-2 items-center">
+                    {/* Existing controls */}
+                    {(
+                        <button
+                            onClick={handleRefresh}
+                            disabled={loading}
+                            className="bg-gray-800 px-3 py-1 rounded flex items-center text-sm hover:bg-gray-700 transition-colors disabled:opacity-50"
+                        >
+                            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+                            <span className="ml-1">Refresh</span>
+                        </button>
+                    )}
                     <select
                         value={limit}
                         onChange={(e) => {
@@ -215,6 +257,8 @@ const CodingLeaderboard = ({ selectedRoom }) => {
                             Clear highlight
                         </button>
                     )}
+
+                    {/* Existing search controls */}
                     {showSearchInput ? (
                         <form onSubmit={handleSearch} className="flex items-center">
                             <input
@@ -243,6 +287,7 @@ const CodingLeaderboard = ({ selectedRoom }) => {
                     )}
                 </div>
             </div>
+            {/* Rest of your existing JSX */}
             {!loading && (
                 <>
                     {topUsers.length > 0 && (

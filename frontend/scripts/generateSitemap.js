@@ -15,7 +15,7 @@ const generateSitemap = () => {
     { path: '/rooms/:roomId/leaderboard', title: 'Leaderboard - CForge Room' },
     { path: '/rooms/:roomId/chat', title: 'Room Chat - CForge' },
     { path: '/rooms/join/:inviteCode', title: 'Join Room - CForge' },
-    { path: '/help', title: 'Help & FAQ - CForge' },
+    { path: '/help', title: 'Help and FAQ - CForge' },
     { path: '/404', title: 'Page Not Found - CForge' }
   ];
 
