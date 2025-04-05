@@ -5,7 +5,8 @@ const {
   searchPublicRooms,
   getRoomDetails,
   sendJoinRequest,
-  leaveRoom
+  leaveRoom,
+  updateRoomMembersLeetCodeStats
 } = require("../controllers/roomController");
 const { protect } = require("../middleware/authMiddleware");
 const {
@@ -45,5 +46,7 @@ router.delete('/:roomId/leave', protect, leaveRoom);
 
 router.get('/invite/:inviteCode/verify', verifyRoomInvite);
 router.post('/invite/:inviteCode/join', protect, joinRoomByInvite);
+
+router.post('/:roomId/update-leetcode-stats', protect, updateRoomMembersLeetCodeStats);
 
 module.exports = router;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Github, Terminal, Code2 } from 'lucide-react';
 import ApiService from '../services/ApiService';
 import { toast } from 'react-hot-toast';
@@ -9,6 +9,13 @@ const AddPlatform = ({ onPlatformsUpdate, platforms }) => {
     githubUsername: platforms?.github?.username || '',
     codeforcesUsername: platforms?.codeforces?.username || ''
   });
+  const [isNewUser, setIsNewUser] = useState(false);
+
+  useEffect(() => {
+    // Check if this is a new user by looking at the URL params
+    const params = new URLSearchParams(window.location.search);
+    setIsNewUser(params.get('newUser') === 'true');
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -44,9 +51,9 @@ const AddPlatform = ({ onPlatformsUpdate, platforms }) => {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-4">
           {/* LeetCode Input */}
-          <div className="relative">
+          <div className={`relative ${isNewUser && !formData.leetcodeUsername ? 'animate-pulse ring-2 ring-blue-500 rounded-lg' : ''}`}>
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Terminal className="h-5 w-5 text-gray-400" />
+              <Terminal className={`h-5 w-5 ${isNewUser && !formData.leetcodeUsername ? 'text-blue-400' : 'text-gray-400'}`} />
             </div>
             <input
               type="text"
@@ -54,7 +61,8 @@ const AddPlatform = ({ onPlatformsUpdate, platforms }) => {
               value={formData.leetcodeUsername}
               onChange={handleChange}
               placeholder="LeetCode Username"
-              className="w-full pl-10 pr-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white"
+              className={`w-full pl-10 pr-3 py-2 ${isNewUser && !formData.leetcodeUsername ? 'bg-blue-900/20' : 'bg-gray-800/50'} rounded-lg border ${isNewUser && !formData.leetcodeUsername ? 'border-blue-500' : 'border-gray-700'} focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white`}
+              autoFocus={isNewUser}
             />
           </div>
 

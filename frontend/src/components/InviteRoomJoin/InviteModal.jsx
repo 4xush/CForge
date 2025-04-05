@@ -37,7 +37,7 @@ const InviteModal = () => {
             // Clear the location state
             navigate(location.pathname, { replace: true });
         }
-    }, [location]);
+    }, [location, navigate]);
 
     const verifyInvite = async (inviteCode) => {
         try {
@@ -53,7 +53,7 @@ const InviteModal = () => {
                 toast.error(data.message);
             }
         } catch (error) {
-            setError('Failed to verify invite link');
+            setError(error.response?.data?.message || 'Failed to verify invite link');
             toast.error('Failed to verify invite link');
         } finally {
             setLoading(false);
@@ -82,6 +82,7 @@ const InviteModal = () => {
                 toast.error(data.message);
             }
         } catch (error) {
+            setError(error.response?.data?.message || 'Failed to join room');
             toast.error('Failed to join room');
         } finally {
             setLoading(false);

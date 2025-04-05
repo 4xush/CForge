@@ -44,13 +44,11 @@ const Chat = () => {
             isInitialLoadRef.current = true;
             fetchMessages();
         }
-    }, [selectedRoom?._id, fetchMessages]);
+    }, [selectedRoom, selectedRoom?._id, fetchMessages]);
 
     // Join room when selected room changes - more stable implementation
     useEffect(() => {
         if (!selectedRoom?._id) return;
-
-        console.log(`Attempting to join room ${selectedRoom._id}`);
         
         // Track if we've already joined to prevent duplicate joins
         let hasJoined = false;
@@ -79,7 +77,6 @@ const Chat = () => {
         }, RETRY_INTERVAL);
         
         return () => {
-            console.log(`Cleanup: leaving room ${selectedRoom._id}`);
             clearInterval(intervalId);
             if (hasJoined) {
                 leaveRoom(selectedRoom._id);
@@ -92,7 +89,6 @@ const Chat = () => {
         if (!socket) return;
 
         const handleNewMessage = (message) => {
-            console.log('Received WebSocket message:', message);
             
             // Check if this message is replacing a temporary one
             const isReplacingTemp = messages.some(msg => 
@@ -102,7 +98,6 @@ const Chat = () => {
             );
 
             if (isReplacingTemp) {
-                console.log('Replacing temporary message with server message');
                 
                 // Replace temporary message with the real one from server
                 setMessages(prevMessages => prevMessages.map(msg => 
@@ -113,7 +108,6 @@ const Chat = () => {
                         : msg
                 ));
             } else {
-                console.log('Adding new message from another user');
                 // Add new message from another user
                 addMessage(message);
             }
@@ -172,6 +166,13 @@ const Chat = () => {
         }
     };
 
+    // Check if user can modify message
+    const canModifyMessage = useCallback((message) => {
+        if (!authUser || !message) return false;
+        if (message.sender._id === authUser._id) return true;
+        return selectedRoom?.admins?.some((admin) => admin.toString() === authUser._id.toString());
+    }, [authUser, selectedRoom]);
+    
     // Handle context menu
     const handleContextMenu = useCallback((e, messageId) => {
         e.preventDefault();
@@ -184,19 +185,13 @@ const Chat = () => {
                 messageId,
             });
         }
-    }, [messages]);
+    }, [messages, canModifyMessage]);
 
     // Close context menu
     const closeContextMenu = () => {
         setContextMenu({ visible: false, x: 0, y: 0, messageId: null });
     };
 
-    // Check if user can modify message
-    const canModifyMessage = useCallback((message) => {
-        if (!authUser || !message) return false;
-        if (message.sender._id === authUser._id) return true;
-        return selectedRoom?.admins?.some((admin) => admin.toString() === authUser._id.toString());
-    }, [authUser, selectedRoom]);
 
     // Handle message deletion
     const handleDeleteMessage = async (messageId) => {

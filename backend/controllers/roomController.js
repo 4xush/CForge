@@ -1,6 +1,7 @@
 const Room = require("../models/Room");
 const User = require("../models/User");
 const shortid = require('shortid');
+const { getLeetCodeStats } = require("../services/leetcode/leetcodeService");
 
 const isMember = (room, userId) => {
   return room.members.some((member) => member.toString() === userId.toString());
@@ -247,5 +248,89 @@ exports.sendJoinRequest = async (req, res) => {
     return res.json({ message: "Join request sent successfully" });
   } catch (error) {
     return res.status(500).json({ message: "Error sending join request", error: error.message });
+  }
+};
+
+exports.updateRoomMembersLeetCodeStats = async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const userId = req.user._id;
+
+    // Find the room and check if it exists
+    const room = await Room.findOne({ roomId });
+    if (!room) {
+      return res.status(404).json({ message: "Room not found" });
+    }
+
+    // Check if user is a member or admin of the room
+    if (!isMember(room, userId) && !room.admins.includes(userId)) {
+      return res.status(403).json({ message: "You don't have permission to update this room's stats" });
+    }
+
+    // Get all members in the room
+    const members = await User.find({ _id: { $in: room.members } });
+    
+    const updateResults = {
+      success: [],
+      failed: []
+    };
+
+    // Update stats for each member
+    for (const member of members) {
+      try {
+        // Skip users without a LeetCode username
+        if (!member.platforms?.leetcode?.username) {
+          updateResults.failed.push({
+            username: member.username,
+            reason: "LeetCode username not set"
+          });
+          continue;
+        }
+
+        const leetcodeUsername = member.platforms.leetcode.username;
+        const apiResponse = await getLeetCodeStats(leetcodeUsername);
+        
+        if (!apiResponse || !apiResponse.totalQuestionsSolved) {
+          updateResults.failed.push({
+            username: member.username,
+            reason: "Invalid LeetCode stats response"
+          });
+          continue;
+        }
+
+        const { totalQuestionsSolved, questionsSolvedByDifficulty, attendedContestsCount, contestRating } = apiResponse;
+
+        const statsToUpdate = {
+          "platforms.leetcode.totalQuestionsSolved": totalQuestionsSolved,
+          "platforms.leetcode.questionsSolvedByDifficulty.easy": questionsSolvedByDifficulty.easy,
+          "platforms.leetcode.questionsSolvedByDifficulty.medium": questionsSolvedByDifficulty.medium,
+          "platforms.leetcode.questionsSolvedByDifficulty.hard": questionsSolvedByDifficulty.hard,
+          "platforms.leetcode.attendedContestsCount": attendedContestsCount,
+          "platforms.leetcode.contestRating": contestRating,
+        };
+
+        await User.findOneAndUpdate(
+          { _id: member._id },
+          { $set: statsToUpdate },
+          { runValidators: true }
+        );
+
+        updateResults.success.push(member.username);
+      } catch (error) {
+        console.error(`Error updating LeetCode stats for user ${member.username}:`, error);
+        updateResults.failed.push({
+          username: member.username,
+          reason: error.message
+        });
+      }
+    }
+
+    res.status(200).json({
+      message: "LeetCode stats update completed",
+      results: updateResults
+    });
+  } catch (error) {
+    console.error("Error updating room members' LeetCode stats:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };

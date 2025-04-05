@@ -53,12 +53,10 @@ const SignUp = () => {
 
             const pendingInviteCode = sessionStorage.getItem('app-pendingInviteCode');
             if (pendingInviteCode) {
-                sessionStorage.removeItem('app-pendingInviteCode');
-                navigate(`/rooms/join/${pendingInviteCode}`);
-                return;
+                sessionStorage.setItem('app-pendingInviteCode', pendingInviteCode);
             }
 
-            navigate('/settings?tab=platforms');
+            navigate('/settings?tab=platforms&newUser=true');
         } catch (error) {
             console.error('Registration error:', error);
             toast.error(error.message || 'Registration failed. Please try again.');
@@ -73,16 +71,13 @@ const SignUp = () => {
             await loginUser(null, null, credentialResponse.credential);
             toast.success('Google sign up successful!');
 
-            // Check for pending invite code in sessionStorage
             const pendingInviteCode = sessionStorage.getItem('app-pendingInviteCode');
             if (pendingInviteCode) {
-                sessionStorage.removeItem('app-pendingInviteCode');
-                navigate(`/rooms/join/${pendingInviteCode}`);
-                return;
+                sessionStorage.setItem('app-pendingInviteCode', pendingInviteCode);
             }
 
             // Redirect to platforms setup since it's a new account
-            navigate('/settings?tab=platforms');
+            navigate('/settings?tab=platforms&newUser=true');
         } catch (error) {
             toast.error(error.message || 'Google sign up failed. Please try again.');
             console.error('Google sign up error:', error);

@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import MainContent from '../components/MainContent';
-import Chat from '../components/Messages/Chat';
+import ChatWithWebSocket from '../components/Messages/ChatWithWebSocket';
 import { useRoomContext } from '../context/RoomContext';
 
 const RoomChat = () => {
@@ -24,7 +24,7 @@ const RoomChat = () => {
 
     return (
         <MainContent>
-            <Chat />
+            <ChatWithWebSocket />
         </MainContent>
     );
 };

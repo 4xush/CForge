@@ -67,12 +67,24 @@ const CodingLeaderboard = ({ selectedRoom }) => {
 
         setLoading(true);
         try {
-            // Assuming refreshLeaderboard is an API function that refreshes all users' LeetCode data
-            await refreshLeaderboard(selectedRoom.id);
-            toast.success("Leaderboard refreshed successfully");
-            await fetchLeaderboard(1); // Refresh the leaderboard data after updating
+            // Call our new API to update LeetCode stats for all members
+            const result = await refreshLeaderboard(selectedRoom.id);
+            toast.success("LeetCode stats update completed successfully");
+            
+            // Show details about the update if available
+            if (result.results) {
+                if (result.results.success.length > 0) {
+                    toast.success(`Updated stats for ${result.results.success.length} members`);
+                }
+                if (result.results.failed.length > 0) {
+                    toast.error(`Failed to update ${result.results.failed.length} members`);
+                }
+            }
+            
+            // Refresh the leaderboard data after updating
+            await fetchLeaderboard(1);
         } catch (err) {
-            toast.error(err.message || "Failed to refresh leaderboard");
+            toast.error(err.message || "Failed to update LeetCode stats");
         }
         setLoading(false);
     };
@@ -223,7 +235,7 @@ const CodingLeaderboard = ({ selectedRoom }) => {
                             className="bg-gray-800 px-3 py-1 rounded flex items-center text-sm hover:bg-gray-700 transition-colors disabled:opacity-50"
                         >
                             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-                            <span className="ml-1">Refresh</span>
+                            <span className="ml-1">Update LeetCode Stats</span>
                         </button>
                     )}
                     <select

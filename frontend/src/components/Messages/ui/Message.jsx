@@ -7,13 +7,13 @@ const Message = ({
   senderName,
   time,
   message,
-  isEdited,
-  isCurrentUser,
-  canModify,
-  onContextMenu,
-  onAvatarClick,
-  onEdit,
-  onDelete
+  isEdited = false,
+  isCurrentUser = false,
+  canModify = false,
+  onContextMenu = () => {},
+  onAvatarClick = () => {},
+  onEdit = () => {},
+  onDelete = () => {}
 }) => {
   const [showActions, setShowActions] = useState(false);
   
@@ -145,16 +145,6 @@ Message.propTypes = {
   onAvatarClick: PropTypes.func,
   onEdit: PropTypes.func,
   onDelete: PropTypes.func
-};
-
-Message.defaultProps = {
-  isEdited: false,
-  isCurrentUser: false,
-  canModify: false,
-  onContextMenu: () => {},
-  onAvatarClick: () => {},
-  onEdit: () => {},
-  onDelete: () => {}
 };
 
 export default Message;

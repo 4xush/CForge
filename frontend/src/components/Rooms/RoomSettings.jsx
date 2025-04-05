@@ -68,13 +68,22 @@ const RoomSettings = ({ room, onClose, onUpdate }) => {
         try {
             const response = await ApiService.put(`/rooms/admin/${room.roomId}`, formData);
             const updatedRoom = response.data.room;
-            toast.success('Room settings updated successfully');
             onUpdate?.(updatedRoom);
             onClose(); // Close settings after successful update
         } catch (error) {
             toast.error(error.response?.data?.message || 'Failed to update room settings');
         }
     };
+    const showConfirmation = (title, message, onConfirm, confirmText) => {
+        setConfirmation({
+            isOpen: true,
+            title,
+            message,
+            onConfirm,
+            confirmText,
+        });
+    };
+
     const handleKickUser = async (userId, username) => {
         showConfirmation(
             "Remove Member",

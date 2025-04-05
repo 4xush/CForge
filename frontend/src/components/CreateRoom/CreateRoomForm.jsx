@@ -107,8 +107,8 @@ const CreateRoomForm = ({ onClose, onRoomCreated }) => {
             <Input
                 value={roomSettings.roomId}
                 onChange={(e) => setRoomSettings(prev => ({ ...prev, roomId: e.target.value }))}
-                placeholder="Custom Room ID (optional)"
-                className="bg-[#2a2b36] border-gray-600 text-white placeholder-gray-400 focus:border-purple-500 transition-colors duration-200"
+                placeholder="Room ID (Cannot be changed)"
+                className="bg-[#2a2b36] border-gray-600 text-white placeholder-gray-400 focus:border-purple-500 transition-colors duration-200 opacity-70"
             />
             <div className="flex items-center justify-between space-x-4">
                 <div className="flex-grow">

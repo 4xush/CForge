@@ -59,12 +59,22 @@ export const createRoom = async (formData) => {
     }
 };
 
+export const updateRoomMembersLeetCodeStats = async (roomId) => {
+    try {
+        const response = await api.post(`${BASE_URL}/${roomId}/update-leetcode-stats`);
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || new Error("Failed to update LeetCode stats");
+    }
+};
+
 export default {
     getRoomDetails,
     generateInviteLink,
     verifyRoomInvite,
     joinRoom,
     getLeaderboard,
-    createRoom
+    createRoom,
+    updateRoomMembersLeetCodeStats
 };
 
