@@ -12,6 +12,9 @@ const roomRoutes = require("./routes/roomRoutes");
 const adminRoomRoutes = require("./routes/adminRoomRoutes");
 const publicRoutes = require("./routes/publicRoutes");
 
+const { checkPlatformStatus, includeMetaData } = require('./middleware/platformStatusMiddleware');
+const { initSchedulers } = require('./schedulers');
+
 const app = express();
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -39,7 +42,14 @@ app.use(
 // Middleware for parsing JSON bodies
 app.use(express.json());
 
-connectDB();
+// Add these after basic middleware but before routes
+app.use(includeMetaData);
+app.use(checkPlatformStatus);
+
+connectDB().then(() => {
+  // Initialize schedulers
+  initSchedulers();
+});
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);

@@ -1,42 +1,65 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import ApiService from '../services/ApiService';
 
 export const useHeatmapData = (username) => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [retryCount, setRetryCount] = useState(0);
+    const MAX_RETRIES = 2;
 
-    useEffect(() => {
-        const fetchHeatmapData = async () => {
-            try {
-                // Check session storage first
-                const storedData = sessionStorage.getItem(`heatmap-data-${username}`);
+    const fetchData = useCallback(async () => {
+        try {
+            setLoading(true);
+            // Check session storage first
+            const storedData = sessionStorage.getItem(`heatmap-data-${username}`);
 
-                if (storedData) {
-                    // If data exists in session storage, parse and use it
-                    const parsedData = JSON.parse(storedData);
+            if (storedData) {
+                const parsedData = JSON.parse(storedData);
+                // Validate the stored data format
+                if (parsedData && parsedData.heatmaps) {
                     setData(parsedData.heatmaps);
                     setLoading(false);
                     return;
                 }
-                // If no data in session storage, fetch from API
-                const response = await ApiService.get(`/u/hmap/${username}`);
-                // Store the entire response in session storage
-                sessionStorage.setItem(`heatmap-data-${username}`, JSON.stringify(response.data));
-                // Set only the heatmaps data in state
-                setData(response.data.heatmaps);
-            } catch (err) {
-                setError(err.message);
-                console.error('Error fetching heatmap data:', err);
-            } finally {
-                setLoading(false);
             }
-        };
-
-        if (username) {
-            fetchHeatmapData();
+            
+            const response = await ApiService.get(`/u/hmap/${username}`);
+            
+            // Validate response format
+            if (!response.data || !response.data.heatmaps) {
+                throw new Error("Invalid data format received from API");
+            }
+            
+            sessionStorage.setItem(`heatmap-data-${username}`, JSON.stringify(response.data));
+            setData(response.data.heatmaps);
+            setError(null);
+        } catch (err) {
+            setError(err.message || "Failed to load heatmap data");
+            console.error('Error fetching heatmap data:', err);
+            
+            // Implement retry logic for network errors
+            if (retryCount < MAX_RETRIES && (err.message.includes('network') || err.code === 'ERR_NETWORK')) {
+                setRetryCount(prev => prev + 1);
+                setTimeout(fetchData, 1000 * (retryCount + 1)); // Exponential backoff
+            }
+        } finally {
+            setLoading(false);
         }
-    }, [username]);
+    }, [username, retryCount]);
 
-    return { data, loading, error };
+    useEffect(() => {
+        if (username) {
+            fetchData();
+        }
+    }, [username, fetchData]);
+
+    // Provide a retry function for the consumer
+    const refetch = () => {
+        setRetryCount(0);
+        setError(null);
+        fetchData();
+    };
+
+    return { data, loading, error, refetch };
 };

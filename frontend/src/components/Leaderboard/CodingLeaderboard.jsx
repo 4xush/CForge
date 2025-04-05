@@ -43,7 +43,6 @@ const CodingLeaderboard = ({ selectedRoom }) => {
         setError(null);
         try {
             const data = await getLeaderboard(selectedRoom.id, sortBy, limit, pageNum);
-            console.log(data);
 
             if (pageNum === 1) {
                 setUsers(data.members);

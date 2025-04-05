@@ -69,7 +69,7 @@ const googleAuth = async (req, res) => {
       { expiresIn: '30d' }
     );
 
-    // Return user data and token aligned with signupUser and loginUser
+    // Return user data and token aligned with signupUser and login
     res.status(200).json({
       message: "Google authentication successful",
       user: {
@@ -178,7 +178,7 @@ const googleAuth = async (req, res) => {
   }
 };
 
-const loginUser = async (req, res) => {
+const login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
@@ -236,6 +236,6 @@ const loginUser = async (req, res) => {
 
 module.exports = {
   signupUser,
-  loginUser,
+  login,
   googleAuth
 };

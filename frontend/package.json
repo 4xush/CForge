@@ -3,15 +3,13 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
- "scripts": {
-  "dev": "vite",
-  "build": "npx vite build",
-  "lint": "eslint .",
-  "preview": "vite preview"
-},
+  "scripts": {
+    "dev": "vite",
+    "build": "npx vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
   "dependencies": {
-    "vite": "^6.2.0",
-    "@vitejs/plugin-react": "^4.3.4",
     "@chakra-ui/react": "^3.2.3",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
@@ -19,6 +17,7 @@
     "@radix-ui/react-dialog": "^1.1.2",
     "@react-oauth/google": "^0.12.1",
     "@tanstack/react-query": "^5.51.24",
+    "@vitejs/plugin-react": "^4.3.4",
     "axios": "^1.7.9",
     "class-variance-authority": "^0.7.0",
     "date-fns": "^4.1.0",
@@ -26,6 +25,7 @@
     "framer-motion": "^11.15.0",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.428.0",
+    "prop-types": "^15.8.1",
     "radix-ui": "^1.1.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -34,7 +34,8 @@
     "react-router-dom": "^6.26.1",
     "recharts": "^2.15.0",
     "socket.io-client": "^4.8.1",
-    "tailwind-merge": "^3.0.1"
+    "tailwind-merge": "^3.0.1",
+    "vite": "^6.2.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",

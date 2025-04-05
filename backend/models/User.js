@@ -53,6 +53,13 @@ const userSchema = new mongoose.Schema(
           type: String,
           sparse: true,
         },
+        isValid: {
+          type: Boolean,
+          default: true
+        },
+        lastValidationCheck: {
+          type: Date
+        },
         currentRating: {
           type: Number,
           default: 0,
@@ -83,6 +90,13 @@ const userSchema = new mongoose.Schema(
           type: String,
           sparse: true,
         },
+        isValid: {
+          type: Boolean,
+          default: true
+        },
+        lastValidationCheck: {
+          type: Date
+        },
         publicRepos: {
           type: Number,
           default: 0,
@@ -100,6 +114,13 @@ const userSchema = new mongoose.Schema(
         username: {
           type: String,
           sparse: true,
+        },
+        isValid: {
+          type: Boolean,
+          default: true
+        },
+        lastValidationCheck: {
+          type: Date
         },
         totalQuestionsSolved: {
           type: Number,

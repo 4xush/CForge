@@ -2,12 +2,12 @@
   "name": "backend",
   "version": "1.0.0",
   "main": "server.js",
-"scripts": {
-  "dev": "nodemon backend/server.js",
-  "build": "npm install && npm install --prefix frontend && npm run build --prefix frontend",
-  "start": "node backend/server.js",
-  "postinstall": "cd frontend && npm install"
-},
+  "scripts": {
+    "dev": "nodemon backend/server.js",
+    "build": "npm install && npm install --prefix frontend && npm run build --prefix frontend",
+    "start": "node backend/server.js",
+    "postinstall": "cd frontend && npm install"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -24,6 +24,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.8.0",
     "mongoose": "^8.5.2",
+    "node-cron": "^3.0.3",
     "sanitize-html": "^2.13.1",
     "shortid": "^2.2.16",
     "socket.io": "^4.7.5"

@@ -1,7 +1,30 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Alert, AlertDescription } from '../ui/Alert';
+import { RefreshCw } from 'lucide-react';
 
 const ActivityHeatmap = ({ data, platform }) => {
+    const [error, setError] = useState(null);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    
+    // Handle the case where data is invalid or missing
+    if (!data || (Array.isArray(data) && data.length === 0) || 
+        (typeof data === 'object' && Object.keys(data).length === 0)) {
+        return (
+            <Alert variant="warning" className="w-full max-w-4xl bg-gray-800 text-gray-100 border-yellow-600">
+                <AlertDescription className="flex justify-between items-center">
+                    <span>No activity data available for {platform}.</span>
+                    <button 
+                        onClick={() => window.location.href = "/settings?tab=platforms"} 
+                        className="text-blue-400 hover:text-blue-300 text-sm underline"
+                    >
+                        Update platform info
+                    </button>
+                </AlertDescription>
+            </Alert>
+        );
+    }
+    
     const today = new Date();
     const oneYearAgo = new Date();
     oneYearAgo.setFullYear(today.getFullYear() - 1);
