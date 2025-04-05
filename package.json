@@ -27,7 +27,7 @@
     "node-cron": "^3.0.3",
     "sanitize-html": "^2.13.1",
     "shortid": "^2.2.16",
-    "socket.io": "^4.7.5"
+    "socket.io": "^4.8.1"
   },
   "devDependencies": {
     "jest": "^29.7.0",

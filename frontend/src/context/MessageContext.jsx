@@ -9,6 +9,7 @@ export const MessageProvider = ({ children }) => {
     const [messages, setMessages] = useState([])
     const [loading, setLoading] = useState(false)
     const [hasMore, setHasMore] = useState(true)
+    const [error, setError] = useState(null)
     const { authUser } = useAuthContext()
     const { selectedRoom } = useRoomContext()
     const fetchIdRef = useRef(0)
@@ -17,6 +18,7 @@ export const MessageProvider = ({ children }) => {
         async (lastMessageId = null) => {
             if (!selectedRoom) return
             setLoading(true)
+            setError(null)
 
             const currentFetchId = ++fetchIdRef.current
 
@@ -47,6 +49,7 @@ export const MessageProvider = ({ children }) => {
                 }
             } catch (error) {
                 console.error("Error fetching messages:", error)
+                setError(error.response?.data?.message || "Failed to load messages")
             } finally {
                 if (currentFetchId === fetchIdRef.current) {
                     setLoading(false)
@@ -58,6 +61,15 @@ export const MessageProvider = ({ children }) => {
 
     const addMessage = useCallback(
         (newMessage) => {
+            console.log("Adding message to context:", newMessage);
+            
+            // If the message already has sender info, use it directly
+            if (newMessage.sender && typeof newMessage.sender === 'object') {
+                setMessages((prevMessages) => [...prevMessages, newMessage]);
+                return;
+            }
+            
+            // Otherwise, construct a full message object
             setMessages((prevMessages) => [
                 ...prevMessages,
                 {
@@ -67,12 +79,18 @@ export const MessageProvider = ({ children }) => {
                         username: authUser.username,
                         profilePicture: authUser.profilePicture,
                     },
-                    createdAt: new Date().toISOString(),
+                    createdAt: newMessage.createdAt || new Date().toISOString(),
                 },
             ])
         },
         [authUser],
     )
+
+    const updateMessage = useCallback((messageId, updatedMessage) => {
+        setMessages(prevMessages => 
+            prevMessages.map(msg => msg._id === messageId ? updatedMessage : msg)
+        );
+    }, []);
 
     const deleteMessage = useCallback(async (messageId) => {
         try {
@@ -101,10 +119,13 @@ export const MessageProvider = ({ children }) => {
                 messages,
                 loading,
                 hasMore,
+                error,
                 fetchMessages,
                 addMessage,
+                updateMessage,
                 deleteMessage,
                 editMessage,
+                setMessages
             }}
         >
             {children}

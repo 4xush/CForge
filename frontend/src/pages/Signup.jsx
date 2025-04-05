@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthContext } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import AuthLayout from './AuthPage';
@@ -16,7 +16,15 @@ const SignUp = () => {
         gender: '',
     });
     const navigate = useNavigate();
-    const { registerUser, isLoading, loginUser } = useAuthContext();
+    const location = useLocation();
+    const { registerUser, isLoading, loginUser, authUser } = useAuthContext();
+    
+    // Check if user is already logged in
+    useEffect(() => {
+        if (authUser) {
+            navigate('/dashboard');
+        }
+    }, [authUser, navigate]);
 
     const handleInputChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -46,13 +54,14 @@ const SignUp = () => {
             const pendingInviteCode = sessionStorage.getItem('app-pendingInviteCode');
             if (pendingInviteCode) {
                 sessionStorage.removeItem('app-pendingInviteCode');
-                window.location.href = `/rooms/join/${pendingInviteCode}`;
+                navigate(`/rooms/join/${pendingInviteCode}`);
                 return;
             }
 
-            window.location.href = '/settings?tab=platforms';
+            navigate('/settings?tab=platforms');
         } catch (error) {
             console.error('Registration error:', error);
+            toast.error(error.message || 'Registration failed. Please try again.');
         }
     };
 
@@ -68,14 +77,14 @@ const SignUp = () => {
             const pendingInviteCode = sessionStorage.getItem('app-pendingInviteCode');
             if (pendingInviteCode) {
                 sessionStorage.removeItem('app-pendingInviteCode');
-                window.location.href = `/rooms/join/${pendingInviteCode}`;
+                navigate(`/rooms/join/${pendingInviteCode}`);
                 return;
             }
 
             // Redirect to platforms setup since it's a new account
-            window.location.href = '/settings?tab=platforms';
+            navigate('/settings?tab=platforms');
         } catch (error) {
-            toast.error('Google sign up failed. Please try again.');
+            toast.error(error.message || 'Google sign up failed. Please try again.');
             console.error('Google sign up error:', error);
         }
     };

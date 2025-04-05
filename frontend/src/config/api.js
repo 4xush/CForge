@@ -30,10 +30,10 @@ api.interceptors.request.use(
         if (token) {
             // Check if token is expired
             if (isTokenExpired(token)) {
-                // Clear token and redirect to login if expired
+                // Just remove the token, but let the request fail naturally
                 localStorage.removeItem('app-token');
-                window.location.href = '/login';
-                throw new Error('Token expired');
+                // Throw an error that will be caught by the calling component
+                throw new Error('Authentication token expired');
             }
 
             // Add valid token to headers
@@ -52,9 +52,14 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            // Clear token and redirect to login on authentication errors
+            // Clear token but DON'T redirect - let component handle it
             localStorage.removeItem('app-token');
-            window.location.href = '/login';
+            
+            // Enhance the error with a more specific message
+            error.authError = true;
+            if (!error.message) {
+                error.message = 'Authentication failed. Please log in again.';
+            }
         }
         return Promise.reject(error);
     }

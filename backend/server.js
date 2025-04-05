@@ -5,6 +5,12 @@ const path = require("path");
 const http = require("http");
 const cors = require("cors");
 const helmet = require("helmet");
+const websocketService = require("./services/websocketService");
+
+// Enable Socket.IO debugging if not in production
+if (process.env.NODE_ENV !== 'production') {
+  process.env.DEBUG = 'socket.io:*';
+}
 
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
@@ -25,17 +31,18 @@ app.use(
     contentSecurityPolicy: false,
   })
 );
-// CORS configuration - more restrictive for production
 
+// CORS configuration - more permissive for development to allow WebSocket connections
 const allowedOrigins = isProduction
   ? ["https://www.cforge.live", "https://cforge-bbuxjfid8-ayushkumarkvg99-gmailcoms-projects.vercel.app", "https://cforge-three.vercel.app/"]
-  : "*";
+  : ["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"];
 
 app.use(
   cors({
     origin: isProduction ? allowedOrigins : "*",
-    methods: ['DELETE', 'GET', 'POST', 'PUT'],
+    methods: ['DELETE', 'GET', 'POST', 'PUT', 'OPTIONS'],
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization']
   })
 );
 
@@ -49,6 +56,8 @@ app.use(checkPlatformStatus);
 connectDB().then(() => {
   // Initialize schedulers
   initSchedulers();
+}).catch(err => {
+  console.error('Failed to connect to MongoDB:', err.message);
 });
 
 app.use("/api/auth", authRoutes);
@@ -74,8 +83,14 @@ const PORT = process.env.PORT || 5000;
 
 const server = http.createServer(app);
 
+// Initialize WebSocket service
+console.log('Initializing WebSocket service...');
+websocketService.initialize(server);
+console.log('WebSocket service initialized successfully');
+
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+  console.log(`WebSocket server available at ws://localhost:${PORT}`);
 });
 
-module.exports = app;
+module.exports = { app, server };

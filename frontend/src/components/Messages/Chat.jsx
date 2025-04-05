@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useRoomContext } from "../../context/RoomContext";
 import { useAuthContext } from "../../context/AuthContext";
 import { useMessageContext } from "../../context/MessageContext";
+import { useWebSocket } from "../../context/WebSocketContext";
 import Message from "./ui/Message";
 import MessageInput from "./MessageInput";
 import ContextMenu from "./ChatContextMenu";
@@ -13,6 +14,7 @@ import { Spinner } from "../ui/Spinner";
 const Chat = () => {
     const { selectedRoom } = useRoomContext();
     const { authUser } = useAuthContext();
+    const { socket, joinRoom, leaveRoom } = useWebSocket();
     const { 
         messages, 
         loading, 
@@ -21,7 +23,8 @@ const Chat = () => {
         fetchMessages, 
         addMessage, 
         deleteMessage, 
-        editMessage 
+        editMessage,
+        setMessages
     } = useMessageContext();
 
     const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, messageId: null });
@@ -42,6 +45,86 @@ const Chat = () => {
             fetchMessages();
         }
     }, [selectedRoom?._id, fetchMessages]);
+
+    // Join room when selected room changes - more stable implementation
+    useEffect(() => {
+        if (!selectedRoom?._id) return;
+
+        console.log(`Attempting to join room ${selectedRoom._id}`);
+        
+        // Track if we've already joined to prevent duplicate joins
+        let hasJoined = false;
+        
+        // Join immediately if possible
+        if (socket?.connected) {
+            joinRoom(selectedRoom._id);
+            hasJoined = true;
+        }
+        
+        // Create a more stable interval with controlled execution
+        let attempts = 0;
+        const MAX_ATTEMPTS = 5;
+        const RETRY_INTERVAL = 5000; // 5 seconds
+        
+        const intervalId = setInterval(() => {
+            if (socket?.connected && !hasJoined && attempts < MAX_ATTEMPTS) {
+                console.log(`Retry ${attempts + 1}/${MAX_ATTEMPTS}: Joining room ${selectedRoom._id}`);
+                joinRoom(selectedRoom._id);
+                hasJoined = true;
+            } else if (attempts >= MAX_ATTEMPTS && !hasJoined) {
+                console.warn(`Failed to join room ${selectedRoom._id} after ${MAX_ATTEMPTS} attempts`);
+                clearInterval(intervalId);
+            }
+            attempts++;
+        }, RETRY_INTERVAL);
+        
+        return () => {
+            console.log(`Cleanup: leaving room ${selectedRoom._id}`);
+            clearInterval(intervalId);
+            if (hasJoined) {
+                leaveRoom(selectedRoom._id);
+            }
+        };
+    }, [selectedRoom?._id, joinRoom, leaveRoom, socket]);
+
+    // Listen for real-time messages
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleNewMessage = (message) => {
+            console.log('Received WebSocket message:', message);
+            
+            // Check if this message is replacing a temporary one
+            const isReplacingTemp = messages.some(msg => 
+                msg.isTemporary && 
+                msg.content === message.content && 
+                msg.sender._id.toString() === message.sender._id.toString()
+            );
+
+            if (isReplacingTemp) {
+                console.log('Replacing temporary message with server message');
+                
+                // Replace temporary message with the real one from server
+                setMessages(prevMessages => prevMessages.map(msg => 
+                    (msg.isTemporary && 
+                     msg.content === message.content && 
+                     msg.sender._id.toString() === message.sender._id.toString()) 
+                        ? message 
+                        : msg
+                ));
+            } else {
+                console.log('Adding new message from another user');
+                // Add new message from another user
+                addMessage(message);
+            }
+        };
+
+        socket.on('receive_message', handleNewMessage);
+
+        return () => {
+            socket.off('receive_message', handleNewMessage);
+        };
+    }, [socket, addMessage, messages, setMessages]);
 
     // Smart scroll management
     useEffect(() => {

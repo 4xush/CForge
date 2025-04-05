@@ -1,19 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuthContext } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import AuthLayout from './AuthPage';
 import { GoogleLogin } from '@react-oauth/google';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
 const Login = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [formData, setFormData] = useState({
         email: '',
         password: '',
     });
 
-    const { loginUser, isLoading } = useAuthContext();
+    const { loginUser, isLoading, authUser } = useAuthContext();
+    
+    // Check if user is already logged in
+    useEffect(() => {
+        if (authUser) {
+            navigate('/dashboard');
+        }
+    }, [authUser, navigate]);
+
+    // Check for redirected messages in location state (from logout)
+    useEffect(() => {
+        if (location.state?.message) {
+            toast(location.state.message, { 
+                type: location.state.type || 'default' 
+            });
+            
+            // Clear the message after displaying
+            navigate(location.pathname, { replace: true, state: {} });
+        }
+    }, [location, navigate]);
 
     const handleInputChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -24,17 +45,20 @@ const Login = () => {
         try {
             await loginUser(formData.email, formData.password);
             toast.success('Login successful!');
+            
             // Check for pending invite code in sessionStorage
             const pendingInviteCode = sessionStorage.getItem('app-pendingInviteCode');
             if (pendingInviteCode) {
                 sessionStorage.removeItem('app-pendingInviteCode');
-                window.location.replace(`/rooms/join/${pendingInviteCode}`);
+                navigate(`/rooms/join/${pendingInviteCode}`);
                 return;
             }
+            
             // Default redirect
-            window.location.replace('/dashboard');
+            navigate('/dashboard');
         } catch (error) {
-            toast.error('Login failed. Please check your credentials.');
+            toast.error(error.message || 'Login failed. Please check your credentials.');
+            console.error('Login error:', error);
         }
     };
 
@@ -48,13 +72,13 @@ const Login = () => {
             const pendingInviteCode = sessionStorage.getItem('app-pendingInviteCode');
             if (pendingInviteCode) {
                 sessionStorage.removeItem('app-pendingInviteCode');
-                window.location.replace(`/rooms/join/${pendingInviteCode}`);
+                navigate(`/rooms/join/${pendingInviteCode}`);
                 return;
             }
 
-            window.location.replace('/dashboard');
+            navigate('/dashboard');
         } catch (error) {
-            toast.error('Google login failed. Please try again.');
+            toast.error(error.message || 'Google login failed. Please try again.');
             console.error('Google login error:', error);
         }
     };

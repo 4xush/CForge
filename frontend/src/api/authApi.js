@@ -12,12 +12,17 @@ export const refreshLeaderboard = async (roomId, sortBy, limit, page) => {
   }
 } 
 
-
 export const googleLogin = async (idToken) => {
-  const response = await api.post(`/auth/google`, { idToken });
-  localStorage.setItem("app-token", response.data.token);
-  return response.data;
+  try {
+    const response = await api.post(`/auth/google`, { idToken });
+    // Let AuthContext handle token storage
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || error.message || "Google login failed";
+    throw { message: errorMessage };
+  }
 };
+
 export const login = async (email, password) => {
   try {
     const { data } = await api.post("/auth/login", { email, password });
@@ -26,9 +31,10 @@ export const login = async (email, password) => {
       console.error("Missing token or user in response:", data);
       throw new Error("Invalid server response");
     }
-    localStorage.setItem("app-token", token);
+    // Let AuthContext handle token storage
     return { user, token };
   } catch (error) {
+    console.error("Login API error:", error);
     throw error.response?.data || { message: "Login failed" };
   }
 };
@@ -37,7 +43,7 @@ export const register = async (userData) => {
   try {
     const { data } = await api.post("/auth/signup", userData);
     const { token, user } = data;
-    localStorage.setItem("app-token", token);
+    // Let AuthContext handle token storage
     return {
       user: {
         fullName: user.fullName,
@@ -49,13 +55,13 @@ export const register = async (userData) => {
       token
     };
   } catch (error) {
+    console.error("Registration API error:", error);
     if (error.response?.data?.errors) {
       throw { message: error.response.data.errors.join(", ") };
     }
     throw error.response?.data || { message: "Registration failed" };
   }
 };
-
 
 export const getLeaderboard = async (roomId, sortBy, limit, page) => {
   try {

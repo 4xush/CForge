@@ -34,13 +34,25 @@ export const AuthProvider = ({ children }) => {
       if (storedUser && token) {
         const userData = JSON.parse(storedUser);
         if (!validateUserData(userData)) throw new Error("Stored user data is invalid");
-        const tokenData = JSON.parse(atob(token.split('.')[1]));
-        if (tokenData.exp * 1000 < Date.now()) throw new Error("Token expired");
-        setAuthUser(userData);
+        
+        try {
+          const tokenData = JSON.parse(atob(token.split('.')[1]));
+          if (tokenData.exp * 1000 < Date.now()) {
+            console.warn("Token expired on page load");
+            throw new Error("Token expired");
+          }
+          setAuthUser(userData);
+        } catch (tokenError) {
+          console.error("Token validation error:", tokenError);
+          throw new Error("Invalid token format");
+        }
       }
     } catch (error) {
       console.error("Error restoring auth state:", error);
-      logout();
+      // Clear auth data but don't redirect
+      setAuthUser(null);
+      localStorage.removeItem("app-user");
+      localStorage.removeItem("app-token");
     } finally {
       setIsLoading(false);
     }
@@ -52,16 +64,32 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = googleToken ? await googleLogin(googleToken) : await login(email, password);
       const { user, token } = response;
-      if (!setValidatedUser(user)) throw new Error("Received invalid user data from server");
+      
+      if (!user || !token) {
+        throw new Error("Invalid response from server - missing user or token");
+      }
+      
+      if (!setValidatedUser(user)) {
+        throw new Error("Received invalid user data from server");
+      }
+      
       localStorage.setItem("app-token", token);
       return user;
     } catch (error) {
+      console.error("Login error in AuthContext:", error);
+      
+      // Clean up any partially set data
       localStorage.removeItem("app-user");
       localStorage.removeItem("app-token");
-      const errorMessage = error.response?.data?.message || error.message || "Login failed";
+      
+      // Format error message for display
+      const errorMessage = 
+        error.response?.data?.message || 
+        error.message || 
+        "Login failed. Please check your credentials and try again.";
+      
       setError(errorMessage);
-      toast.error(errorMessage);
-      throw error;
+      throw error; // Re-throw to allow component to handle it
     } finally {
       setIsLoading(false);
     }
@@ -72,27 +100,44 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     try {
       const { user, token } = await register(userData);
-      if (!setValidatedUser(user)) throw new Error("Received invalid user data from server");
+      
+      if (!user || !token) {
+        throw new Error("Invalid response from server - missing user or token");
+      }
+      
+      if (!setValidatedUser(user)) {
+        throw new Error("Received invalid user data from server");
+      }
+      
       localStorage.setItem("app-token", token);
       return user;
     } catch (error) {
+      console.error("Registration error in AuthContext:", error);
+      
+      // Clean up any partially set data
       localStorage.removeItem("app-user");
       localStorage.removeItem("app-token");
-      const errorMessage = error.response?.data?.message || error.message || "Registration failed";
+      
+      // Format error message for display
+      const errorMessage = 
+        error.response?.data?.message || 
+        error.message || 
+        "Registration failed. Please try again.";
+      
       setError(errorMessage);
-      toast.error(errorMessage);
-      throw error;
+      throw error; // Re-throw to allow component to handle it
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Changed to not redirect automatically
   const logout = () => {
     setAuthUser(null);
     setError(null);
     localStorage.removeItem("app-user");
     localStorage.removeItem("app-token");
-    window.location.href = '/login';
+    // No automatic redirect - let component handle navigation
   };
 
   const value = {

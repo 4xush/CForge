@@ -6,13 +6,25 @@ import DashboardButton from './ui/DashboardButtons';
 import RoomList from './Rooms/RoomList';
 import UserProfileModal from './UserProfileModal';
 import CreateJoinModal from './CreateRoom/CreateJoinRoomModal';
-
+import toast from 'react-hot-toast';
 const LeftSidebar = () => {
     const { logout } = useAuthContext();
     const settingsButtonRef = useRef(null);
     const [isRoomFormVisible, setRoomFormVisible] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
+
+    const handleLogout = () => {
+        logout();
+        toast.success('You have been logged out successfully');
+        navigate('/login', { 
+            replace: true,
+            state: { 
+                message: 'You have been logged out successfully', 
+                type: 'success' 
+            }
+        });
+    };
 
     const handleRoomCreatedOrJoined = () => {
         setRoomFormVisible(false);
@@ -66,7 +78,7 @@ const LeftSidebar = () => {
                         />
                     </div>
                     <div className="mt-auto pt-4 border-t border-gray-700">
-                        <UserProfileModal onLogout={logout} />
+                        <UserProfileModal onLogout={handleLogout} />
                     </div>
                 </div>
             </div>

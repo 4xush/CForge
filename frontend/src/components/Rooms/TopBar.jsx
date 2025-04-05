@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MoreVertical, LogOut, X, Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import RoomDetails from './RoomDetails';
 import RoomSettings from './RoomSettings';
 import ConfirmDialog from '../ui/ConfirmDialog';
@@ -8,6 +9,7 @@ import toast from 'react-hot-toast';
 import { useAuthContext } from '../../context/AuthContext';
 
 const TopBar = ({ roomId }) => {
+    const navigate = useNavigate();
     const [activeComponent, setActiveComponent] = useState(null); // 'menu', 'details', 'settings'
     const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
     const [roomDetails, setRoomDetails] = useState(null);
@@ -104,7 +106,7 @@ const TopBar = ({ roomId }) => {
             const response = await ApiService.delete(`/rooms/${roomId}/leave`);
             setShowLeaveConfirmation(false);
             toast.success(response.data.message || 'Successfully left the room');
-            window.location.href = '/rooms';
+            navigate('/rooms', { replace: true });
         } catch (err) {
             toast.error(err.response?.data?.message || 'Failed to leave room.');
         }

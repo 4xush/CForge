@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Save, Users, Shield, AlertTriangle, Settings, UserMinus, UserCheck } from 'lucide-react';
 import ApiService from '../../services/ApiService';
 import toast from 'react-hot-toast';
+import { WebSocketProvider } from '../../context/WebSocketContext';
 
 const ConfirmationDialog = ({ isOpen, onClose, onConfirm, title, message, confirmText, cancelText }) => {
     if (!isOpen) return null;
@@ -168,168 +169,170 @@ const RoomSettings = ({ room, onClose, onUpdate }) => {
     ];
 
     return (
-        <div className="h-full flex flex-col bg-gray-800 rounded-lg shadow-xl">
-            <div className="flex border-b border-gray-700">
-                {tabs.map((tab) => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center px-6 py-3 transition-colors duration-200 ${activeTab === tab.id
-                            ? 'text-blue-500 border-b-2 border-blue-500 font-medium'
-                            : 'text-gray-400 hover:text-gray-300 hover:bg-gray-750'
-                            }`}
-                    >
-                        <tab.icon className="w-5 h-5 mr-2" />
-                        {tab.label}
-                    </button>
-                ))}
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-6">
-                {activeTab === 'general' && (
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-1">Room Name</label>
-                            <input
-                                type="text"
-                                name="name"
-                                value={formData.name}
-                                onChange={handleInputChange}
-                                placeholder="Enter a unique room name"
-                                className="mt-1 block w-full rounded-md bg-gray-700 border border-gray-600 text-gray-300 p-2.5 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
-                            <textarea
-                                name="description"
-                                value={formData.description}
-                                onChange={handleInputChange}
-                                rows={3}
-                                placeholder="Describe the purpose of this room"
-                                className="mt-1 block w-full rounded-md bg-gray-700 border border-gray-600 text-gray-300 p-2.5 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                        </div>
-
-
-                        <div className="flex items-center">
-                            <input
-                                type="checkbox"
-                                name="isPublic"
-                                id="isPublic"
-                                checked={formData.isPublic}
-                                onChange={handleInputChange}
-                                className="rounded bg-gray-700 border-gray-600 text-blue-500 focus:ring-blue-500 focus:ring-offset-gray-800"
-                            />
-                            <label htmlFor="isPublic" className="ml-2 text-sm text-gray-300">Public Room</label>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-1">Max Members</label>
-                            <input
-                                type="number"
-                                name="maxMembers"
-                                value={formData.maxMembers}
-                                onChange={handleInputChange}
-                                min={1}
-                                placeholder="Set the maximum number of members"
-                                className="mt-1 block w-full rounded-md bg-gray-700 border border-gray-600 text-gray-300 p-2.5 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                        </div>
-
+        <WebSocketProvider>
+            <div className="h-full flex flex-col bg-gray-800 rounded-lg shadow-xl">
+                <div className="flex border-b border-gray-700">
+                    {tabs.map((tab) => (
                         <button
-                            type="submit"
-                            className="flex items-center px-4 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 font-medium"
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`flex items-center px-6 py-3 transition-colors duration-200 ${activeTab === tab.id
+                                ? 'text-blue-500 border-b-2 border-blue-500 font-medium'
+                                : 'text-gray-400 hover:text-gray-300 hover:bg-gray-750'
+                                }`}
                         >
-                            <Save className="w-5 h-5 mr-2" />
-                            Save Changes
+                            <tab.icon className="w-5 h-5 mr-2" />
+                            {tab.label}
                         </button>
-                    </form>
-                )}
+                    ))}
+                </div>
 
-                {activeTab === 'members' && (
-                    <div className="space-y-4">
-                        {room?.members?.map((member) => (
-                            <div
-                                key={member._id}
-                                className="flex items-center justify-between p-3 bg-gray-700 rounded-md hover:bg-gray-650 transition-colors duration-200"
+                <div className="flex-1 overflow-y-auto p-6">
+                    {activeTab === 'general' && (
+                        <form onSubmit={handleSubmit} className="space-y-5">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">Room Name</label>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    value={formData.name}
+                                    onChange={handleInputChange}
+                                    placeholder="Enter a unique room name"
+                                    className="mt-1 block w-full rounded-md bg-gray-700 border border-gray-600 text-gray-300 p-2.5 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
+                                <textarea
+                                    name="description"
+                                    value={formData.description}
+                                    onChange={handleInputChange}
+                                    rows={3}
+                                    placeholder="Describe the purpose of this room"
+                                    className="mt-1 block w-full rounded-md bg-gray-700 border border-gray-600 text-gray-300 p-2.5 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                            </div>
+
+
+                            <div className="flex items-center">
+                                <input
+                                    type="checkbox"
+                                    name="isPublic"
+                                    id="isPublic"
+                                    checked={formData.isPublic}
+                                    onChange={handleInputChange}
+                                    className="rounded bg-gray-700 border-gray-600 text-blue-500 focus:ring-blue-500 focus:ring-offset-gray-800"
+                                />
+                                <label htmlFor="isPublic" className="ml-2 text-sm text-gray-300">Public Room</label>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">Max Members</label>
+                                <input
+                                    type="number"
+                                    name="maxMembers"
+                                    value={formData.maxMembers}
+                                    onChange={handleInputChange}
+                                    min={1}
+                                    placeholder="Set the maximum number of members"
+                                    className="mt-1 block w-full rounded-md bg-gray-700 border border-gray-600 text-gray-300 p-2.5 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                            </div>
+
+                            <button
+                                type="submit"
+                                className="flex items-center px-4 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 font-medium"
                             >
-                                <div className="flex items-center">
-                                    <img
-                                        src={member.profilePicture || '/placeholder.svg'}
-                                        alt={member.username}
-                                        className="w-10 h-10 rounded-full mr-3 border border-gray-600"
-                                    />
-                                    <div>
-                                        <span className="text-gray-200 font-medium">{member.username}</span>
-                                        {room.admins.some((admin) => admin._id === member._id) && (
-                                            <span className="ml-2 text-xs bg-blue-500 text-white px-1.5 py-0.5 rounded-full">Admin</span>
+                                <Save className="w-5 h-5 mr-2" />
+                                Save Changes
+                            </button>
+                        </form>
+                    )}
+
+                    {activeTab === 'members' && (
+                        <div className="space-y-4">
+                            {room?.members?.map((member) => (
+                                <div
+                                    key={member._id}
+                                    className="flex items-center justify-between p-3 bg-gray-700 rounded-md hover:bg-gray-650 transition-colors duration-200"
+                                >
+                                    <div className="flex items-center">
+                                        <img
+                                            src={member.profilePicture || '/placeholder.svg'}
+                                            alt={member.username}
+                                            className="w-10 h-10 rounded-full mr-3 border border-gray-600"
+                                        />
+                                        <div>
+                                            <span className="text-gray-200 font-medium">{member.username}</span>
+                                            {room.admins.some((admin) => admin._id === member._id) && (
+                                                <span className="ml-2 text-xs bg-blue-500 text-white px-1.5 py-0.5 rounded-full">Admin</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="flex space-x-2">
+                                        {!room.admins.some((admin) => admin._id === member._id) && (
+                                            <button
+                                                onClick={() => handleAddAdmin(member._id, member.username)}
+                                                className="flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
+                                                title="Promote to Admin"
+                                            >
+                                                <UserCheck className="w-4 h-4 mr-1" />
+                                                <span className="text-xs">Promote</span>
+                                            </button>
                                         )}
+                                        <button
+                                            onClick={() => handleKickUser(member._id, member.username)}
+                                            className="flex items-center px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200"
+                                            title="Remove from Room"
+                                        >
+                                            <UserMinus className="w-4 h-4 mr-1" />
+                                            <span className="text-xs">Remove</span>
+                                        </button>
                                     </div>
                                 </div>
-                                <div className="flex space-x-2">
-                                    {!room.admins.some((admin) => admin._id === member._id) && (
-                                        <button
-                                            onClick={() => handleAddAdmin(member._id, member.username)}
-                                            className="flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
-                                            title="Promote to Admin"
-                                        >
-                                            <UserCheck className="w-4 h-4 mr-1" />
-                                            <span className="text-xs">Promote</span>
-                                        </button>
-                                    )}
+                            ))}
+                        </div>
+                    )}
+
+                    {activeTab === 'admins' && (
+                        <div className="space-y-4">
+                            {room?.admins?.map((admin) => (
+                                <div
+                                    key={admin._id}
+                                    className="flex items-center justify-between p-3 bg-gray-700 rounded-md hover:bg-gray-650 transition-colors duration-200"
+                                >
+                                    <div className="flex items-center">
+                                        <img
+                                            src={admin.profilePicture || '/placeholder.svg'}
+                                            alt={admin.username}
+                                            className="w-10 h-10 rounded-full mr-3 border border-gray-600"
+                                        />
+                                        <span className="text-gray-200 font-medium">{admin.username}</span>
+                                    </div>
                                     <button
-                                        onClick={() => handleKickUser(member._id, member.username)}
+                                        onClick={() => handleRemoveAdmin(admin._id, admin.username)}
                                         className="flex items-center px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200"
-                                        title="Remove from Room"
+                                        title="Remove Admin Role"
                                     >
-                                        <UserMinus className="w-4 h-4 mr-1" />
-                                        <span className="text-xs">Remove</span>
+                                        <Shield className="w-4 h-4 mr-1" />
+                                        <span className="text-xs">Revoke Admin</span>
                                     </button>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                            ))}
+                        </div>
+                    )}
+                </div>
 
-                {activeTab === 'admins' && (
-                    <div className="space-y-4">
-                        {room?.admins?.map((admin) => (
-                            <div
-                                key={admin._id}
-                                className="flex items-center justify-between p-3 bg-gray-700 rounded-md hover:bg-gray-650 transition-colors duration-200"
-                            >
-                                <div className="flex items-center">
-                                    <img
-                                        src={admin.profilePicture || '/placeholder.svg'}
-                                        alt={admin.username}
-                                        className="w-10 h-10 rounded-full mr-3 border border-gray-600"
-                                    />
-                                    <span className="text-gray-200 font-medium">{admin.username}</span>
-                                </div>
-                                <button
-                                    onClick={() => handleRemoveAdmin(admin._id, admin.username)}
-                                    className="flex items-center px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200"
-                                    title="Remove Admin Role"
-                                >
-                                    <Shield className="w-4 h-4 mr-1" />
-                                    <span className="text-xs">Revoke Admin</span>
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                <ConfirmationDialog
+                    isOpen={confirmation.isOpen}
+                    onClose={() => setConfirmation((prev) => ({ ...prev, isOpen: false }))}
+                    onConfirm={confirmation.onConfirm}
+                    title={confirmation.title}
+                    message={confirmation.message}
+                    confirmText={confirmation.confirmText}
+                />
             </div>
-
-            <ConfirmationDialog
-                isOpen={confirmation.isOpen}
-                onClose={() => setConfirmation((prev) => ({ ...prev, isOpen: false }))}
-                onConfirm={confirmation.onConfirm}
-                title={confirmation.title}
-                message={confirmation.message}
-                confirmText={confirmation.confirmText}
-            />
-        </div>
+        </WebSocketProvider>
     );
 };
 export default RoomSettings;
