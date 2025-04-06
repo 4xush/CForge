@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuthContext } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import AuthLayout from './AuthPage';
@@ -16,7 +16,7 @@ const Login = () => {
     });
 
     const { loginUser, isLoading, authUser } = useAuthContext();
-    
+
     // Check if user is already logged in
     useEffect(() => {
         if (authUser) {
@@ -27,10 +27,10 @@ const Login = () => {
     // Check for redirected messages in location state (from logout)
     useEffect(() => {
         if (location.state?.message) {
-            toast(location.state.message, { 
-                type: location.state.type || 'default' 
+            toast(location.state.message, {
+                type: location.state.type || 'default'
             });
-            
+
             // Clear the message after displaying
             navigate(location.pathname, { replace: true, state: {} });
         }
@@ -45,7 +45,7 @@ const Login = () => {
         try {
             await loginUser(formData.email, formData.password);
             toast.success('Login successful!');
-            
+
             // Check for pending invite code in sessionStorage
             const pendingInviteCode = sessionStorage.getItem('app-pendingInviteCode');
             if (pendingInviteCode) {
@@ -53,7 +53,7 @@ const Login = () => {
                 navigate(`/rooms/join/${pendingInviteCode}`);
                 return;
             }
-            
+
             // Default redirect
             navigate('/dashboard');
         } catch (error) {

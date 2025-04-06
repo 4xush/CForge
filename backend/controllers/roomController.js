@@ -290,7 +290,7 @@ exports.updateRoomMembersLeetCodeStats = async (req, res) => {
         const leetcodeUsername = member.platforms.leetcode.username;
         const apiResponse = await getLeetCodeStats(leetcodeUsername);
         
-        if (!apiResponse || !apiResponse.totalQuestionsSolved) {
+        if (!apiResponse || apiResponse.error) {
           updateResults.failed.push({
             username: member.username,
             reason: "Invalid LeetCode stats response"

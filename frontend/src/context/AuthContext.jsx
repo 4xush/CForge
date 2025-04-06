@@ -28,34 +28,38 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem("app-user");
-      const token = localStorage.getItem("app-token");
-      if (storedUser && token) {
-        const userData = JSON.parse(storedUser);
-        if (!validateUserData(userData)) throw new Error("Stored user data is invalid");
+    const initializeAuth = async () => {
+      try {
+        const storedUser = localStorage.getItem("app-user");
+        const token = localStorage.getItem("app-token");
         
-        try {
-          const tokenData = JSON.parse(atob(token.split('.')[1]));
-          if (tokenData.exp * 1000 < Date.now()) {
-            console.warn("Token expired on page load");
-            throw new Error("Token expired");
+        if (storedUser && token) {
+          const userData = JSON.parse(storedUser);
+          if (!validateUserData(userData)) {
+            throw new Error("Stored user data is invalid");
           }
-          setAuthUser(userData);
-        } catch (tokenError) {
-          console.error("Token validation error:", tokenError);
-          throw new Error("Invalid token format");
+          
+          try {
+            const tokenData = JSON.parse(atob(token.split('.')[1]));
+            if (tokenData.exp * 1000 < Date.now()) {
+              throw new Error("Token expired");
+            }
+            setAuthUser(userData);
+          } catch (tokenError) {
+            throw new Error("Invalid token format");
+          }
         }
+      } catch (error) {
+        console.error("Error restoring auth state:", error);
+        setAuthUser(null);
+        localStorage.removeItem("app-user");
+        localStorage.removeItem("app-token");
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error restoring auth state:", error);
-      // Clear auth data but don't redirect
-      setAuthUser(null);
-      localStorage.removeItem("app-user");
-      localStorage.removeItem("app-token");
-    } finally {
-      setIsLoading(false);
-    }
+    };
+
+    initializeAuth();
   }, []);
 
   const loginUser = async (email, password, googleToken = null) => {
@@ -69,11 +73,15 @@ export const AuthProvider = ({ children }) => {
         throw new Error("Invalid response from server - missing user or token");
       }
       
+      // Set token first
+      localStorage.setItem("app-token", token);
+      
+      // Then set user data
       if (!setValidatedUser(user)) {
+        localStorage.removeItem("app-token");
         throw new Error("Received invalid user data from server");
       }
       
-      localStorage.setItem("app-token", token);
       return user;
     } catch (error) {
       console.error("Login error in AuthContext:", error);

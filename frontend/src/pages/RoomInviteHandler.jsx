@@ -9,61 +9,47 @@ const RoomInviteHandler = () => {
     const { authUser, isLoading } = useAuthContext();
 
     useEffect(() => {
-   
-
         if (!isLoading) {
             handleInviteLink();
         }
     }, [isLoading, authUser, inviteCode]);
 
-    const handleInviteLink = async () => {
-        // Get the current invite code or check for a pending one
-        const currentInviteCode = inviteCode || sessionStorage.getItem('app-pendingInviteCode');
-
-        // Validate invite code
-        if (!currentInviteCode) {
+    const handleInviteLink = () => {
+        if (!inviteCode) {
             toast.error('Invalid invite link');
             navigate('/rooms');
             return;
         }
 
         if (!authUser) {
-            // Store invite code for after login
-            sessionStorage.setItem('app-pendingInviteCode', currentInviteCode);
+            // Store invite code for post-login use
+            sessionStorage.setItem('app-pendingInviteCode', inviteCode);
             toast.error('Please login to join the room');
             navigate('/login', {
                 state: {
-                    redirectUrl: `/rooms/join/${currentInviteCode}`,
-                    inviteCode: currentInviteCode // Store in state as backup
-                }
+                    fromInvite: true,
+                    inviteCode: inviteCode,
+                },
             });
             return;
         }
 
-        try {
-            // Clear any pending invite code
-            sessionStorage.removeItem('app-pendingInviteCode');
-
-            // If user is logged in, redirect to rooms with invite code
-            navigate('/rooms', {
-                state: {
-                    inviteCode: currentInviteCode,
-                    showInviteModal: true
-                },
-                replace: true // Use replace to prevent back navigation to invite link
-            });
-        } catch (error) {
-            console.error('Error handling invite link:', error);
-            toast.error('Failed to process invite link');
-            navigate('/rooms');
-        }
+        // For authenticated users, go directly to /rooms with modal state
+        sessionStorage.removeItem('app-pendingInviteCode'); // Clean up
+        navigate('/rooms', {
+            state: {
+                inviteCode: inviteCode,
+                showInviteModal: true,
+            },
+            replace: true, // Prevent back navigation to invite link
+        });
     };
 
     if (isLoading) {
-        return null;
+        return null; // Avoid rendering during loading
     }
 
-    return null;
+    return null; // This component only handles redirects
 };
 
 export default RoomInviteHandler;

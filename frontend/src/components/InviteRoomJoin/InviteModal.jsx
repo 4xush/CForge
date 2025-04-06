@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/Button';
@@ -16,38 +16,56 @@ const InviteModal = () => {
     const [inviteDetails, setInviteDetails] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const processedRef = useRef(false);
 
     const { refreshRoomList } = useRoomContext();
 
-    const handleRoomJoinedViaInvite = () => {
-        refreshRoomList();
-    };
-
-    const resetState = () => {
-        setInviteDetails(null);
-        setError(null);
-        setIsOpen(false);
-    };
-
     useEffect(() => {
-        // Check if we have an invite code in the location state
-        if (location.state?.inviteCode && location.state?.showInviteModal) {
-            setCurrentInviteCode(location.state.inviteCode); // Store the code
-            verifyInvite(location.state.inviteCode);
-            // Clear the location state
-            navigate(location.pathname, { replace: true });
-        }
+        const checkForInviteCode = async () => {
+            // Prevent double processing
+            if (processedRef.current) return;
+
+            // First check location state
+            if (location.state?.inviteCode && location.state?.showInviteModal) {
+                processedRef.current = true;
+                setCurrentInviteCode(location.state.inviteCode);
+                await verifyInvite(location.state.inviteCode);
+
+                // Clear location state after processing, but maintain modal state
+                navigate(location.pathname, {
+                    replace: true,
+                    state: {}
+                });
+                return;
+            }
+
+            // Then check sessionStorage
+            const storedInviteCode = sessionStorage.getItem('app-pendingInviteCode');
+            if (storedInviteCode) {
+                console.log('Processing invite code from sessionStorage:', storedInviteCode);
+                processedRef.current = true;
+                setCurrentInviteCode(storedInviteCode);
+                await verifyInvite(storedInviteCode);
+                sessionStorage.removeItem('app-pendingInviteCode');
+            }
+        };
+
+        checkForInviteCode();
     }, [location, navigate]);
 
     const verifyInvite = async (inviteCode) => {
+        if (!inviteCode) return;
+
         try {
             setLoading(true);
             setIsOpen(true);
+
             const response = await fetch(`${API_URI}/rooms/invite/${inviteCode}/verify`);
             const data = await response.json();
 
             if (data.success) {
                 setInviteDetails(data.data);
+                setIsOpen(true); // Ensure modal is open after successful verification
             } else {
                 setError(data.message);
                 toast.error(data.message);
@@ -60,9 +78,27 @@ const InviteModal = () => {
         }
     };
 
-    const handleJoinRoom = async () => {
-        if (!inviteDetails || !currentInviteCode) return;
+    const handleClose = () => {
+        setIsOpen(false);
+        setCurrentInviteCode(null);
+        setInviteDetails(null);
+        setError(null);
+        processedRef.current = false; // Reset the processed state
+    };
 
+    // Reset processed ref when component unmounts
+    useEffect(() => {
+        return () => {
+            processedRef.current = false;
+        };
+    }, []);
+
+    const handleJoinRoom = async () => {
+        if (!inviteDetails || !currentInviteCode) {
+            toast.error('Invalid invite details');
+            return;
+        }
+        console.log('Joining room with invite code:', currentInviteCode);
         try {
             setLoading(true);
             const response = await fetch(`${API_URI}/rooms/invite/${currentInviteCode}/join`, {
@@ -75,8 +111,7 @@ const InviteModal = () => {
 
             if (data.success) {
                 toast.success('Successfully joined room!');
-                resetState();
-                setCurrentInviteCode(null);
+                handleClose();
                 handleRoomJoinedViaInvite();
             } else {
                 toast.error(data.message);
@@ -89,8 +124,19 @@ const InviteModal = () => {
         }
     };
 
+    const handleRoomJoinedViaInvite = () => {
+        refreshRoomList();
+    };
+
     return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <Dialog
+            open={isOpen}
+            onOpenChange={(open) => {
+                console.log('Dialog onOpenChange:', open);
+                if (!open) handleClose();
+                else setIsOpen(true);
+            }}
+        >
             <DialogContent aria-describedby="dialog-description">
                 <DialogHeader>
                     <DialogTitle>Join Room</DialogTitle>

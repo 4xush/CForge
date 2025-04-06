@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, RefreshCw } from 'lucide-react'; // Added RefreshCw icon
 import { useAuthContext } from '../../context/AuthContext';
 import { TopUserCard } from './TopUserCard';
@@ -7,6 +7,7 @@ import Pagination from './Pagination';
 import { LeaderboardTable } from './LeaderboardTable';
 import PublicUserProfileModal from '../PublicUserProfileModal';
 import toast from 'react-hot-toast';
+import PropTypes from 'prop-types';
 import { getLeaderboard, refreshLeaderboard } from '../../api/authApi'; // Added refreshLeaderboard
 
 const CodingLeaderboard = ({ selectedRoom }) => {
@@ -70,7 +71,7 @@ const CodingLeaderboard = ({ selectedRoom }) => {
             // Call our new API to update LeetCode stats for all members
             const result = await refreshLeaderboard(selectedRoom.id);
             toast.success("LeetCode stats update completed successfully");
-            
+
             // Show details about the update if available
             if (result.results) {
                 if (result.results.success.length > 0) {
@@ -80,7 +81,7 @@ const CodingLeaderboard = ({ selectedRoom }) => {
                     toast.error(`Failed to update ${result.results.failed.length} members`);
                 }
             }
-            
+
             // Refresh the leaderboard data after updating
             await fetchLeaderboard(1);
         } catch (err) {
@@ -340,6 +341,11 @@ const CodingLeaderboard = ({ selectedRoom }) => {
             />
         </div>
     );
+};
+CodingLeaderboard.propTypes = {
+    selectedRoom: PropTypes.shape({
+        id: PropTypes.string.isRequired,
+    }).isRequired,
 };
 
 export default CodingLeaderboard;

@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import api from '../config/api';
+import { useAuthContext } from './AuthContext';
 
 export const RoomContext = createContext();
 
@@ -17,13 +18,13 @@ export const RoomProvider = ({ children }) => {
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-
-    const location = useLocation(); // Hook to track current location
+    const location = useLocation();
+    const { authUser, isLoading: authLoading } = useAuthContext();
 
     const refreshRoomList = useCallback(async () => {
         const token = localStorage.getItem('app-token');
 
-        if (!token) {
+        if (!token || !authUser) {
             return;
         }
 
@@ -43,8 +44,8 @@ export const RoomProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    }, []);
-    // console.log(rooms);
+    }, [authUser]);
+
     const selectRoom = useCallback(
         async (roomId) => {
             const token = localStorage.getItem('app-token');
@@ -80,9 +81,20 @@ export const RoomProvider = ({ children }) => {
         }
     }, [location]);
 
+    // Reset rooms when user logs out
     useEffect(() => {
-        refreshRoomList();
-    }, [refreshRoomList]);
+        if (!authUser) {
+            setRooms([]);
+            setSelectedRoom(null);
+        }
+    }, [authUser]);
+
+    // Fetch rooms when auth state is ready and user is logged in
+    useEffect(() => {
+        if (!authLoading && authUser) {
+            refreshRoomList();
+        }
+    }, [authLoading, authUser, refreshRoomList]);
 
     return (
         <RoomContext.Provider
