@@ -78,22 +78,19 @@ exports.getUserQuestionStats = async (req, res) => {
 };
 
 exports.refreshUserPlatforms = async (req, res) => {
-    const userId = req.user.id; // From auth middleware
+    const userId = req.user.id;
 
     try {
-        // Find user
         const user = await User.findById(userId);
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        // Check if user has any platform linked
         const { leetcode, github, codeforces } = user.platforms;
         if (!leetcode?.username && !github?.username && !codeforces?.username) {
             return res.status(400).json({ message: "No linked platform to refresh" });
         }
 
-        // Refresh platform stats
         const results = {
             leetcode: null,
             github: null,
@@ -101,32 +98,67 @@ exports.refreshUserPlatforms = async (req, res) => {
             warnings: []
         };
 
-        // Refresh LeetCode stats if username exists
+        // Refresh LeetCode stats
         if (leetcode?.username) {
             const leetcodeResult = await updateUserLeetCodeStats(user, false);
             results.leetcode = leetcodeResult.user.platforms.leetcode;
-            
+
             if (leetcodeResult.error) {
                 results.warnings.push({
                     platform: 'leetcode',
                     message: leetcodeResult.error.message,
                     code: leetcodeResult.error.code
                 });
-                
-                // If username is invalid, update user object
-                if (leetcodeResult.error.code === 'INVALID_USERNAME' || 
+
+                if (leetcodeResult.error.code === 'INVALID_USERNAME' ||
                     leetcodeResult.error.code === 'USERNAME_NOT_FOUND') {
                     user.platforms.leetcode.isValid = false;
                 }
             }
         }
 
-        // Similar updates for GitHub and Codeforces...
-        // (implement similar error handling as above for these platforms)
+        // Refresh GitHub stats
+        if (github?.username) {
+            const githubResult = await updateUserGitHubStats(user, false);
+            results.github = githubResult.user.platforms.github;
 
-        // Save updated validation status
+            if (githubResult.error) {
+                results.warnings.push({
+                    platform: 'github',
+                    message: githubResult.error.message,
+                    code: githubResult.error.code
+                });
+
+                if (githubResult.error.code === 'INVALID_USERNAME' ||
+                    githubResult.error.code === 'USERNAME_NOT_FOUND') {
+                    user.platforms.github.isValid = false;
+                }
+            }
+        }
+
+        // Refresh Codeforces stats
+        if (codeforces?.username) {
+            const codeforcesResult = await updateUserCodeforcesStats(user, false);
+            results.codeforces = codeforcesResult.user.platforms.codeforces;
+
+            if (codeforcesResult.error) {
+                results.warnings.push({
+                    platform: 'codeforces',
+                    message: codeforcesResult.error.message,
+                    code: codeforcesResult.error.code
+                });
+
+                if (codeforcesResult.error.code === 'INVALID_USERNAME' ||
+                    codeforcesResult.error.code === 'USERNAME_NOT_FOUND') {
+                    user.platforms.codeforces.isValid = false;
+                }
+            }
+        }
+
+        // Save any validation status changes
         await user.save();
 
+        // Return the results
         res.status(200).json({
             message: "Platform data refreshed",
             platforms: {
@@ -136,6 +168,7 @@ exports.refreshUserPlatforms = async (req, res) => {
             },
             warnings: results.warnings.length > 0 ? results.warnings : undefined
         });
+
     } catch (error) {
         console.error("Platform refresh error:", error);
         res.status(500).json({

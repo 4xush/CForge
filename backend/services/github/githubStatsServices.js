@@ -52,7 +52,7 @@ const updateUserGitHubStats = async (user, throwError = false, force = false) =>
             throw error;
         }
 
-        return updatedUser;
+        return { user: updatedUser };
     } catch (error) {
         console.error(`GitHub stats update failed for user ${user?._id}:`, {
             error: error.message,
@@ -63,7 +63,14 @@ const updateUserGitHubStats = async (user, throwError = false, force = false) =>
         if (throwError) {
             throw error;
         }
-        return user;
+        
+        return { 
+            user,
+            error: {
+                code: error.code || "UNKNOWN_ERROR",
+                message: error.message || "An unknown error occurred"
+            }
+        };
     }
 };
 

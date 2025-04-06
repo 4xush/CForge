@@ -21,7 +21,7 @@ const updateUserCodeforcesStats = async (user, throwError = false, force = false
         }
 
         const codeforcesUsername = user.platforms.codeforces.username;
-
+        console.log(`Fetching Codeforces stats for user ${user._id} (${codeforcesUsername})`);
         // Fetch Codeforces stats
         const stats = await getCodeforcesStats(codeforcesUsername);
 
@@ -56,7 +56,7 @@ const updateUserCodeforcesStats = async (user, throwError = false, force = false
             throw error;
         }
 
-        return updatedUser;
+        return { user: updatedUser };
     } catch (error) {
         console.error(`Codeforces stats update failed for user ${user?._id}:`, {
             error: error.message,
@@ -68,7 +68,13 @@ const updateUserCodeforcesStats = async (user, throwError = false, force = false
             throw error;
         }
 
-        return user;
+        return {
+            user,
+            error: {
+                code: error.code || "UNKNOWN_ERROR",
+                message: error.message || "An unknown error occurred"
+            }
+        };
     }
 };
 

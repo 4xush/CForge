@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import ApiService from '../services/ApiService';
-import AddPlatform from '../components/AddPlatform';
+import AddPlatform from '../components/Settings/AddPlatform';
 import SocialNetworks from '../components/Settings/SocialNetworksSettings';
 import BasicInfo from '../components/Settings/BasicInfoSettings';
 import AccountSettings from '../components/Settings/AccountSettings';
 import { useAuthContext } from '../context/AuthContext';
-import { CheckCircle, ArrowRight, Info } from 'lucide-react'; 
+import { CheckCircle, ArrowRight, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Settings = () => {
@@ -23,7 +23,7 @@ const Settings = () => {
         const tabParam = params.get('tab');
         if (tabParam) {
             setActiveTab(tabParam);
-            
+
             // Check if user was redirected from signup
             const fromSignup = params.get('newUser');
             if (fromSignup === 'true' && tabParam === 'platforms') {
@@ -42,9 +42,9 @@ const Settings = () => {
             const response = await ApiService.get('users/profile');
             setProfileData(response.data);
             updateUser(response.data);
-            
+
             // Show LeetCode prompt if on platforms tab and LeetCode is not connected
-            if (activeTab === 'platforms' && 
+            if (activeTab === 'platforms' &&
                 (!response.data.platforms || !response.data.platforms.leetcode)) {
                 setShowLeetCodePrompt(true);
             }
@@ -65,7 +65,7 @@ const Settings = () => {
         const updatedData = { ...profileData, platforms };
         setProfileData(updatedData);
         updateUser(updatedData);
-        
+
         // Hide the prompt if LeetCode is now connected
         if (platforms && platforms.leetcode) {
             setShowLeetCodePrompt(false);
@@ -129,8 +129,8 @@ const Settings = () => {
                                     {isNewUser ? 'Welcome to CodeForge! 🎉' : 'Connect your LeetCode account'}
                                 </h3>
                                 <p className="text-gray-300 text-sm mt-1">
-                                    {isNewUser 
-                                        ? 'Start by connecting your LeetCode account to track your progress and participate in coding rooms.' 
+                                    {isNewUser
+                                        ? 'Start by connecting your LeetCode account to track your progress and participate in coding rooms.'
                                         : 'Connecting your LeetCode account helps you track your progress and collaborate with others.'}
                                 </p>
                                 <div className="mt-2 flex items-center text-blue-400 text-sm">

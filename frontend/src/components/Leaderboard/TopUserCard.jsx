@@ -1,6 +1,6 @@
-import React from 'react';
 import { UserStats } from './UserStats';
-
+import PropTypes from 'prop-types';
+import { ArrowUpRight } from 'lucide-react';
 export const TopUserCard = ({ user, index, isHighlighted, onProfileClick }) => {
     return (
         <div className={`bg-gray-800 p-4 rounded-lg flex flex-col items-center transition-colors duration-300
@@ -8,12 +8,17 @@ export const TopUserCard = ({ user, index, isHighlighted, onProfileClick }) => {
         >
             <div className="flex items-center justify-between w-full mb-2">
                 <div className="flex items-center">
-                    <img
-                        src={user.profilePicture || "/default-avatar.png"}
-                        alt={user.fullName}
-                        className="w-8 h-8 bg-gray-600 rounded-full mr-2 object-cover cursor-pointer"
-                        onClick={() => onProfileClick(user.username)}
-                    />
+                    <div className="relative group" >
+                        <img
+                            src={user.profilePicture || "/default-avatar.png"}
+                            alt={user.fullName}
+                            className="w-8 h-8 bg-gray-700 rounded-full mr-3 object-cover cursor-pointer border border-gray-600 group-hover:border-blue-500 transition-all"
+                            onClick={() => onProfileClick(user.username)}
+                        />
+                        <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <ArrowUpRight className="h-3 w-3 text-blue-400" />
+                        </div>
+                    </div>
                     <div>
                         <h3 className="font-bold text-sm">
                             {user.fullName}
@@ -26,4 +31,20 @@ export const TopUserCard = ({ user, index, isHighlighted, onProfileClick }) => {
             <UserStats user={user} />
         </div>
     );
+};
+
+TopUserCard.propTypes = {
+    user: PropTypes.shape({
+        profilePicture: PropTypes.string,
+        fullName: PropTypes.string.isRequired,
+        username: PropTypes.string,
+        platforms: PropTypes.shape({
+            leetcode: PropTypes.shape({
+                username: PropTypes.string.isRequired,
+            }).isRequired,
+        }).isRequired,
+    }).isRequired,
+    index: PropTypes.number.isRequired,
+    isHighlighted: PropTypes.bool,
+    onProfileClick: PropTypes.func.isRequired,
 };

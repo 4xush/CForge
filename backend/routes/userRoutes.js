@@ -7,7 +7,11 @@ const { updateLeetCodeStats } = require("../jobs/leetCodeUpdater");
 const { refreshUserPlatforms } = require('../controllers/platformDataController');
 const {
   getUserDetails,
-  searchUser, setupPlatforms,
+  searchUser,
+  setupPlatforms,
+  setupLeetCode,
+  setupGitHub,
+  setupCodeforces
 } = require("../controllers/userController");
 
 
@@ -44,5 +48,10 @@ router.put("/update/leetcode", protect, updateLeetCodeStats);
 router.put("/platform/refresh/", protect, refreshUserPlatforms);
 
 router.put("/update/social-networks", protect, updateSocialNetworks);
+
+// Platform setup routes
+router.put("/platform/leetcode", protect, setupLeetCode);
+router.put("/platform/github", protect, setupGitHub);
+router.put("/platform/codeforces", protect, setupCodeforces);
 
 module.exports = router;

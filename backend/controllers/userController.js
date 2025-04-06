@@ -4,9 +4,9 @@ const {
   checkGitHubUsername,
   checkCodeforcesUsername
 } = require("../utils/authHelpers.js");
-const updateUserLeetCodeStats = require("../services/leetcode/leetcodeStatsService.js");
-const updateUserGitHubStats = require("../services/github/githubStatsServices.js");
-const updateUserCodeforcesStats = require("../services/codeforces/codeforcesStatsService.js");
+const { updateUserLeetCodeStats } = require("../services/leetcode/leetcodeStatsService.js");
+const { updateUserGitHubStats } = require("../services/github/githubStatsServices.js");
+const { updateUserCodeforcesStats } = require("../services/codeforces/codeforcesStatsService.js");
 
 exports.getUserDetails = async (req, res) => {
   try {
@@ -66,24 +66,43 @@ exports.setupPlatforms = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Validate provided usernames in parallel
     const validations = [];
+    const invalidUsernames = [];
+
     if (leetcodeUsername) {
-      validations.push(checkLeetCodeUsername(leetcodeUsername));
+      validations.push(
+        checkLeetCodeUsername(leetcodeUsername).catch(() => {
+          invalidUsernames.push("LeetCode");
+          return false;
+        })
+      );
     }
     if (githubUsername) {
-      validations.push(checkGitHubUsername(githubUsername));
+      validations.push(
+        checkGitHubUsername(githubUsername).catch(() => {
+          invalidUsernames.push("GitHub");
+          return false;
+        })
+      );
     }
     if (codeforcesUsername) {
-      validations.push(checkCodeforcesUsername(codeforcesUsername));
+      validations.push(
+        checkCodeforcesUsername(codeforcesUsername).catch(() => {
+          invalidUsernames.push("Codeforces");
+          return false;
+        })
+      );
     }
 
-    const results = await Promise.all(validations.map(p => p.catch(e => false)));
+    const results = await Promise.all(validations);
     const allValid = results.every(result => result === true);
 
     if (!allValid) {
+      const invalidMessage = invalidUsernames
+        .map((platform) => `${platform}'s username is invalid`)
+        .join(", ");
       return res.status(400).json({
-        message: "One or more platform usernames are invalid"
+        message: invalidMessage,
       });
     }
 
@@ -154,10 +173,189 @@ exports.setupPlatforms = async (req, res) => {
       }
     });
 
+    await user.save();
   } catch (error) {
     console.error("Platform setup error:", error);
     res.status(500).json({
       message: "Failed to setup platform usernames. Please try again later."
     });
   }
+};
+
+exports.setupLeetCode = async (req, res) => {
+    const { username: leetcodeUsername } = req.body;
+    const userId = req.user.id;
+
+    try {
+        if (!leetcodeUsername) {
+            return res.status(400).json({
+                message: "LeetCode username is required"
+            });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Validate username
+        try {
+            await checkLeetCodeUsername(leetcodeUsername);
+        } catch (error) {
+            return res.status(400).json({
+                message: "Invalid LeetCode username"
+            });
+        }
+
+        // Update user's LeetCode information
+        user.platforms.leetcode = {
+            username: leetcodeUsername.trim(),
+            totalQuestionsSolved: 0,
+            questionsSolvedByDifficulty: { easy: 0, medium: 0, hard: 0 },
+            attendedContestsCount: 0,
+            contestRating: 0
+        };
+
+        user.isProfileComplete = true;
+        await user.save();
+
+        // Update LeetCode stats
+        let updatedUser = user;
+        try {
+            const result = await updateUserLeetCodeStats(user, false);
+            updatedUser = result.user;
+        } catch (error) {
+            console.error("LeetCode stats update failed:", error);
+        }
+
+        res.status(200).json({
+            message: "LeetCode username updated successfully",
+            platform: updatedUser.platforms.leetcode
+        });
+
+    } catch (error) {
+        console.error("LeetCode setup error:", error);
+        res.status(500).json({
+            message: "Failed to setup LeetCode username"
+        });
+    }
+};
+
+exports.setupGitHub = async (req, res) => {
+    const { username: githubUsername } = req.body;
+    const userId = req.user.id;
+
+    try {
+        if (!githubUsername) {
+            return res.status(400).json({
+                message: "GitHub username is required"
+            });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Validate username
+        try {
+            await checkGitHubUsername(githubUsername);
+        } catch (error) {
+            return res.status(400).json({
+                message: "Invalid GitHub username"
+            });
+        }
+
+        // Update user's GitHub information
+        user.platforms.github = {
+            username: githubUsername.trim(),
+            publicRepos: 0,
+            followers: 0,
+            following: 0
+        };
+
+        user.isProfileComplete = true;
+        await user.save();
+
+        // Update GitHub stats
+        let updatedUser = user;
+        try {
+            const result = await updateUserGitHubStats(user, false);
+            updatedUser = result.user;
+        } catch (error) {
+            console.error("GitHub stats update failed:", error);
+        }
+
+        res.status(200).json({
+            message: "GitHub username updated successfully",
+            platform: updatedUser.platforms.github
+        });
+
+    } catch (error) {
+        console.error("GitHub setup error:", error);
+        res.status(500).json({
+            message: "Failed to setup GitHub username"
+        });
+    }
+};
+
+exports.setupCodeforces = async (req, res) => {
+    const { username: codeforcesUsername } = req.body;
+    const userId = req.user.id;
+
+    try {
+        if (!codeforcesUsername) {
+            return res.status(400).json({
+                message: "Codeforces username is required"
+            });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Validate username
+        try {
+            await checkCodeforcesUsername(codeforcesUsername);
+        } catch (error) {
+            return res.status(400).json({
+                message: "Invalid Codeforces username"
+            });
+        }
+
+        // Update user's Codeforces information
+        user.platforms.codeforces = {
+            username: codeforcesUsername.trim(),
+            currentRating: 0,
+            maxRating: 0,
+            rank: "",
+            maxRank: "",
+            contribution: 0,
+            friendOfCount: 0
+        };
+
+        user.isProfileComplete = true;
+        await user.save();
+
+        // Update Codeforces stats
+        let updatedUser = user;
+        try {
+            const result = await updateUserCodeforcesStats(user, false);
+            updatedUser = result.user;
+        } catch (error) {
+            console.error("Codeforces stats update failed:", error);
+        }
+
+        res.status(200).json({
+            message: "Codeforces username updated successfully",
+            platform: updatedUser.platforms.codeforces
+        });
+
+    } catch (error) {
+        console.error("Codeforces setup error:", error);
+        res.status(500).json({
+            message: "Failed to setup Codeforces username"
+        });
+    }
 };

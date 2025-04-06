@@ -205,7 +205,7 @@ const CodingLeaderboard = ({ selectedRoom }) => {
     return (
         <div className="bg-gray-900 text-white">
             <div className="flex justify-between items-center mb-4">
-                <div className="flex space-x-2">
+                <div className="flex space-x-2 ">
                     {/* Existing sort buttons */}
                     <SortButton
                         sortBy={sortBy}
@@ -245,7 +245,7 @@ const CodingLeaderboard = ({ selectedRoom }) => {
                             setLimit(Number(e.target.value));
                             setPage(1);
                         }}
-                        className="bg-gray-800 px-2 py-1 rounded text-sm"
+                        className="bg-gray-800 px-2 py-1 rounded flex items-center text-sm hover:bg-gray-700 transition-colors disabled:opacity-50"
                     >
                         {limitOptions.map(option => (
                             <option key={option} value={option}>
