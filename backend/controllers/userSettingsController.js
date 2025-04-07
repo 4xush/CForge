@@ -21,6 +21,28 @@ exports.updateFullName = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+exports.updateGender = async (req, res) => {
+  const { gender } = req.body;
+
+  try {
+    if (!['male', 'female', 'other'].includes(gender)) {
+      return res.status(400).json({ message: "Invalid gender value" });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { gender },
+      { new: true }
+    );
+
+    res.status(200).json({ message: "Gender updated successfully" });
+  } catch (error) {
+    console.error("Error updating gender:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 exports.updatePassword = async (req, res) => {
   const { oldPassword, newPassword } = req.body;
 
@@ -62,8 +84,6 @@ exports.updatePassword = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
-
 
 exports.updateUsername = async (req, res) => {
   const { username } = req.body;
@@ -118,58 +138,6 @@ exports.updateEmail = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
-exports.updateLeetCodeUsername = async (req, res) => {
-  const { leetcodeUsername } = req.body;
-
-  // Validate input
-  if (!leetcodeUsername || typeof leetcodeUsername !== "string") {
-    console.log(leetcodeUsername);
-    return res.status(400).json({ message: "Invalid LeetCode username format" });
-  }
-
-  try {
-    // Check if the LeetCode username exists
-    const isLeetCodeUsernameValid = await authHelper.checkLeetCodeUsername(
-      leetcodeUsername
-    );
-    if (!isLeetCodeUsernameValid) {
-      return res
-        .status(400)
-        .json({ message: "LeetCode username does not exist" });
-    }
-
-    // Find the user by ID
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Initialize platforms and LeetCode object if not present
-    user.platforms ||= {};
-    user.platforms.leetcode ||= {};
-    user.platforms.leetcode.username = leetcodeUsername;
-
-    // Save the updated user
-    await user.save();
-
-    // // Exclude sensitive fields from the response
-    // const sanitizedUser = user.toObject();
-    // delete sanitizedUser.password;
-
-    res
-      .status(200)
-      .json({ message: "LeetCode username updated successfully" });
-  } catch (error) {
-    console.error(
-      `Error updating LeetCode username for user ${req.user.id}:`,
-      error
-    );
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-
-
 
 exports.updateProfilePicture = async (req, res) => {
   const { profilePicture } = req.body;

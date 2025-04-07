@@ -61,7 +61,7 @@ export const MessageProvider = ({ children }) => {
 
     const addMessage = useCallback(
         (newMessage) => {
-            console.log("Adding message to context:", newMessage);
+            // console.log("Adding message to context:", newMessage);
             
             // If the message already has sender info, use it directly
             if (newMessage.sender && typeof newMessage.sender === 'object') {

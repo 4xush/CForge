@@ -4,31 +4,48 @@ import { ChevronDown, ChevronUp, ArrowUpRight } from 'lucide-react';
 import { Spinner } from '../ui/Spinner';
 
 export const LeaderboardTable = ({ 
-  users = [], 
-  page, 
-  limit, 
-  highlightedUserId, 
-  onProfileClick,
-  isLoading = false,
-  error = null,
-  sortBy = 'platforms.leetcode.totalQuestionsSolved',
-  onSort = () => {}
+    users = [], 
+    page, 
+    limit, 
+    highlightedUserId, 
+    onProfileClick,
+    isLoading = false,
+    error = null,
+    sortBy = 'platforms.leetcode.totalQuestionsSolved',
+    onSort = () => {},
+    platform
 }) => {
     const [sortConfig, setSortConfig] = useState({
         key: sortBy,
         direction: 'desc'
     });
 
+    // Platform-specific column configurations
+    const columnConfig = {
+        leetcode: [
+            { key: 'platforms.leetcode.totalQuestionsSolved', label: 'Total Solved' },
+            { key: 'platforms.leetcode.questionsSolvedByDifficulty.easy', label: 'Easy', className: 'text-green-400' },
+            { key: 'platforms.leetcode.questionsSolvedByDifficulty.medium', label: 'Medium', className: 'text-yellow-400' },
+            { key: 'platforms.leetcode.questionsSolvedByDifficulty.hard', label: 'Hard', className: 'text-red-400' },
+            { key: 'platforms.leetcode.attendedContestsCount', label: 'Contests' },
+            { key: 'platforms.leetcode.contestRating', label: 'Rating' }
+        ],
+        codeforces: [
+            { key: 'platforms.codeforces.currentRating', label: 'Current Rating' },
+            { key: 'platforms.codeforces.maxRating', label: 'Max Rating' },
+            { key: 'platforms.codeforces.rank', label: 'Rank' },
+            { key: 'platforms.codeforces.maxRank', label: 'Max Rank' },
+            { key: 'platforms.codeforces.contribution', label: 'Contribution' }
+        ]
+    };
+
     // Handle sort toggle
     const handleSort = (key) => {
         let direction = 'desc';
-        
         if (sortConfig.key === key && sortConfig.direction === 'desc') {
             direction = 'asc';
         }
-        
         setSortConfig({ key, direction });
-        
         if (onSort) {
             onSort(key, direction);
         }
@@ -36,13 +53,21 @@ export const LeaderboardTable = ({
 
     // Get sort indicator
     const getSortIcon = (key) => {
-        if (sortConfig.key !== key) {
-            return null;
-        }
-        
+        if (sortConfig.key !== key) return null;
         return sortConfig.direction === 'asc' 
             ? <ChevronUp className="h-4 w-4 ml-1" /> 
             : <ChevronDown className="h-4 w-4 ml-1" />;
+    };
+
+    // Get cell value safely
+    const getCellValue = (user, key) => {
+        const keys = key.split('.');
+        let value = user;
+        for (const k of keys) {
+            value = value?.[k];
+            if (value === undefined) return 0;
+        }
+        return value;
     };
 
     // Handle error display
@@ -84,87 +109,69 @@ export const LeaderboardTable = ({
                     <tr className="bg-gray-800 text-left">
                         <th className="p-2 w-16">Place</th>
                         <th className="p-2">Person</th>
-                        <th 
-                            className="p-2 cursor-pointer hover:bg-gray-700"
-                            onClick={() => handleSort('platforms.leetcode.totalQuestionsSolved')}
-                        >
-                            <div className="flex items-center">
-                                Total Solved
-                                {getSortIcon('platforms.leetcode.totalQuestionsSolved')}
-                            </div>
-                        </th>
-                        <th className="p-2">EASY</th>
-                        <th className="p-2">MEDIUM</th>
-                        <th className="p-2">HARD</th>
-                        <th 
-                            className="p-2 cursor-pointer hover:bg-gray-700"
-                            onClick={() => handleSort('platforms.leetcode.attendedContestsCount')}
-                        >
-                            <div className="flex items-center">
-                                Attended Contests
-                                {getSortIcon('platforms.leetcode.attendedContestsCount')}
-                            </div>
-                        </th>
-                        <th 
-                            className="p-2 cursor-pointer hover:bg-gray-700"
-                            onClick={() => handleSort('platforms.leetcode.contestRating')}
-                        >
-                            <div className="flex items-center">
-                                Contest Rating
-                                {getSortIcon('platforms.leetcode.contestRating')}
-                            </div>
-                        </th>
+                        {columnConfig[platform].map(column => (
+                            <th 
+                                key={column.key}
+                                className="p-2 cursor-pointer hover:bg-gray-700"
+                                onClick={() => handleSort(column.key)}
+                            >
+                                <div className="flex items-center">
+                                    {column.label}
+                                    {getSortIcon(column.key)}
+                                </div>
+                            </th>
+                        ))}
                     </tr>
                 </thead>
                 <tbody>
-                    {displayUsers.map((user, index) => (
-                        <tr
-                            key={user._id}
-                            id={`user-row-${user._id}`}
-                            className={`border-b border-gray-700 transition-colors duration-300 hover:bg-gray-800/50
-                                ${user._id === highlightedUserId ? 'bg-blue-900/20 hover:bg-blue-900/30' : ''}`}
-                        >
-                            <td className="p-2 text-center">
-                                {page === 1 ? (index + 4) : ((page - 1) * limit + index + 1)}
-                            </td>
-                            <td className="p-2">
-                                <div className="flex items-center">
-                                    <div className="relative group">
-                                        <img
-                                            src={user.profilePicture || "/default-avatar.png"}
-                                            alt={user.fullName}
-                                            className="w-8 h-8 bg-gray-700 rounded-full mr-3 object-cover cursor-pointer border border-gray-600 group-hover:border-blue-500 transition-all"
-                                            onClick={() => onProfileClick(user.username)}
-                                        />
-                                        <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <ArrowUpRight className="h-3 w-3 text-blue-400" />
+                    {displayUsers.map((user, index) => {
+                        const platformUsername = user.platforms?.[platform]?.username || 'Not Connected';
+                        const rank = (page - 1) * limit + index + (page === 1 ? 4 : 1);
+                        
+                        return (
+                            <tr
+                                key={user._id}
+                                id={`user-row-${user._id}`}
+                                className={`border-b border-gray-700 transition-colors duration-300 hover:bg-gray-800/50
+                                    ${user._id === highlightedUserId ? 'bg-blue-900/20 hover:bg-blue-900/30' : ''}`}
+                            >
+                                <td className="p-2 text-center">{rank}</td>
+                                <td className="p-2">
+                                    <div className="flex items-center">
+                                        <div className="relative group">
+                                            <img
+                                                src={user.profilePicture || "/default-avatar.png"}
+                                                alt={user.fullName}
+                                                className="w-8 h-8 bg-gray-700 rounded-full mr-3 object-cover cursor-pointer border border-gray-600 group-hover:border-blue-500 transition-all"
+                                                onClick={() => platformUsername !== 'Not Connected' && onProfileClick(user.username)}
+                                            />
+                                            {platformUsername !== 'Not Connected' && (
+                                                <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <ArrowUpRight className="h-3 w-3 text-blue-400" />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <div className="font-medium text-gray-200">
+                                                {user.fullName}
+                                            </div>
+                                            <div className={`text-xs ${platformUsername === 'Not Connected' ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                {platformUsername}
+                                            </div>
                                         </div>
                                     </div>
-                                    <div>
-                                        <div className="font-medium text-gray-200 hover:text-blue-400 cursor-pointer" onClick={() => onProfileClick(user.username)}>
-                                            {user.fullName}
-                                        </div>
-                                        <div className="text-xs text-gray-500">@{user.username}</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td className="p-2 font-medium">{user.platforms.leetcode.totalQuestionsSolved || 0}</td>
-                            <td className="p-2">
-                                <span className="text-green-400">{user.platforms.leetcode.questionsSolvedByDifficulty?.easy || 0}</span>
-                            </td>
-                            <td className="p-2">
-                                <span className="text-yellow-400">{user.platforms.leetcode.questionsSolvedByDifficulty?.medium || 0}</span>
-                            </td>
-                            <td className="p-2">
-                                <span className="text-red-400">{user.platforms.leetcode.questionsSolvedByDifficulty?.hard || 0}</span>
-                            </td>
-                            <td className="p-2">{user.platforms.leetcode.attendedContestsCount || 0}</td>
-                            <td className="p-2">{user.platforms.leetcode.contestRating || 0}</td>
-                        </tr>
-                    ))}
+                                </td>
+                                {columnConfig[platform].map(column => (
+                                    <td key={column.key} className={`p-2 ${column.className || 'text-white'}`}>
+                                        {getCellValue(user, column.key)}
+                                    </td>
+                                ))}
+                            </tr>
+                        );
+                    })}
                     {isLoading && (
                         <tr>
-                            <td colSpan="8" className="p-4 text-center">
+                            <td colSpan={columnConfig[platform].length + 2} className="p-4 text-center">
                                 <div className="flex justify-center items-center">
                                     <Spinner size="small" className="mr-2" />
                                     <span className="text-gray-400">Loading more data...</span>
@@ -181,20 +188,11 @@ export const LeaderboardTable = ({
 LeaderboardTable.propTypes = {
     users: PropTypes.arrayOf(PropTypes.shape({
         _id: PropTypes.string.isRequired,
-        username: PropTypes.string.isRequired,
         fullName: PropTypes.string.isRequired,
         profilePicture: PropTypes.string,
         platforms: PropTypes.shape({
-            leetcode: PropTypes.shape({
-                totalQuestionsSolved: PropTypes.number,
-                questionsSolvedByDifficulty: PropTypes.shape({
-                    easy: PropTypes.number,
-                    medium: PropTypes.number,
-                    hard: PropTypes.number
-                }),
-                attendedContestsCount: PropTypes.number,
-                contestRating: PropTypes.number
-            })
+            leetcode: PropTypes.object,
+            codeforces: PropTypes.object
         })
     })),
     page: PropTypes.number.isRequired,
@@ -204,5 +202,6 @@ LeaderboardTable.propTypes = {
     isLoading: PropTypes.bool,
     error: PropTypes.string,
     sortBy: PropTypes.string,
-    onSort: PropTypes.func
+    onSort: PropTypes.func,
+    platform: PropTypes.oneOf(['leetcode', 'codeforces']).isRequired
 };

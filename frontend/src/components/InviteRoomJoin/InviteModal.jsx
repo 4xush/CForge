@@ -42,7 +42,6 @@ const InviteModal = () => {
             // Then check sessionStorage
             const storedInviteCode = sessionStorage.getItem('app-pendingInviteCode');
             if (storedInviteCode) {
-                console.log('Processing invite code from sessionStorage:', storedInviteCode);
                 processedRef.current = true;
                 setCurrentInviteCode(storedInviteCode);
                 await verifyInvite(storedInviteCode);
@@ -98,7 +97,6 @@ const InviteModal = () => {
             toast.error('Invalid invite details');
             return;
         }
-        console.log('Joining room with invite code:', currentInviteCode);
         try {
             setLoading(true);
             const response = await fetch(`${API_URI}/rooms/invite/${currentInviteCode}/join`, {
@@ -132,7 +130,6 @@ const InviteModal = () => {
         <Dialog
             open={isOpen}
             onOpenChange={(open) => {
-                console.log('Dialog onOpenChange:', open);
                 if (!open) handleClose();
                 else setIsOpen(true);
             }}

@@ -1,19 +1,20 @@
 import { useState, useEffect } from 'react';
-import { Search, RefreshCw } from 'lucide-react'; // Added RefreshCw icon
+import { Search, RefreshCw } from 'lucide-react';
 import { useAuthContext } from '../../context/AuthContext';
-import { TopUserCard } from './TopUserCard';
+import toast from 'react-hot-toast';
+import PropTypes from 'prop-types';
+import { getLeaderboard, refreshLeaderboard } from '../../api/authApi';
 import SortButton from './SortButton';
+import { TopUserCard } from './TopUserCard';
 import Pagination from './Pagination';
 import { LeaderboardTable } from './LeaderboardTable';
 import PublicUserProfileModal from '../PublicUserProfileModal';
-import toast from 'react-hot-toast';
-import PropTypes from 'prop-types';
-import { getLeaderboard, refreshLeaderboard } from '../../api/authApi'; // Added refreshLeaderboard
 
 const CodingLeaderboard = ({ selectedRoom }) => {
     const { authUser } = useAuthContext();
     const [users, setUsers] = useState([]);
     const [topUsers, setTopUsers] = useState([]);
+    const [selectedPlatform, setSelectedPlatform] = useState('leetcode'); // New state for platform selection
     const [sortBy, setSortBy] = useState('platforms.leetcode.totalQuestionsSolved');
     const [limit, setLimit] = useState(10);
     const [page, setPage] = useState(1);
@@ -24,17 +25,22 @@ const CodingLeaderboard = ({ selectedRoom }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [showSearchInput, setShowSearchInput] = useState(false);
     const [profileModal, setProfileModal] = useState({ isOpen: false, username: null });
-    const [lastUpdated, setLastUpdated] = useState(null); // New state for last update time
+    const [lastUpdated, setLastUpdated] = useState(null);
 
     const limitOptions = [10, 20, 50, 100];
 
-    // Function to check if 12 hours have passed since last update
-    const isRefreshNeeded = () => {
-        if (!lastUpdated) return false;
-        const now = new Date();
-        const lastUpdateTime = new Date(lastUpdated);
-        const hoursDiff = (now - lastUpdateTime) / (1000 * 60 * 60);
-        return hoursDiff >= 12;
+    // Platform-specific sort options
+    const platformSortOptions = {
+        leetcode: [
+            { value: 'platforms.leetcode.totalQuestionsSolved', label: 'Total problems' },
+            { value: 'platforms.leetcode.contestRating', label: 'Contest Rating' },
+            { value: 'platforms.leetcode.attendedContestsCount', label: 'Attended Contests' }
+        ],
+        codeforces: [
+            { value: 'platforms.codeforces.currentRating', label: 'Current Rating' },
+            { value: 'platforms.codeforces.maxRating', label: 'Max Rating' },
+            { value: 'platforms.codeforces.contribution', label: 'Contribution' }
+        ]
     };
 
     const fetchLeaderboard = async (pageNum = page) => {
@@ -43,12 +49,17 @@ const CodingLeaderboard = ({ selectedRoom }) => {
         setLoading(true);
         setError(null);
         try {
-            const data = await getLeaderboard(selectedRoom.id, sortBy, limit, pageNum);
+            const data = await getLeaderboard(
+                selectedRoom.id, 
+                sortBy, 
+                limit, 
+                pageNum, 
+                selectedPlatform
+            );
 
             if (pageNum === 1) {
                 setUsers(data.members);
                 setTopUsers(data.members.slice(0, 3));
-                // Assuming the most recent updatedAt comes from the first user
                 setLastUpdated(data.members[0]?.updatedAt || new Date().toISOString());
             } else {
                 setUsers(prevUsers => [...prevUsers, ...data.members]);
@@ -62,17 +73,14 @@ const CodingLeaderboard = ({ selectedRoom }) => {
         setLoading(false);
     };
 
-    // New function to handle refresh
     const handleRefresh = async () => {
         if (!selectedRoom) return;
 
         setLoading(true);
         try {
-            // Call our new API to update LeetCode stats for all members
-            const result = await refreshLeaderboard(selectedRoom.id);
-            toast.success("LeetCode stats update completed successfully");
+            const result = await refreshLeaderboard(selectedRoom.id, selectedPlatform);
+            toast.success(`${selectedPlatform === 'leetcode' ? 'LeetCode' : 'Codeforces'} stats update completed successfully`);
 
-            // Show details about the update if available
             if (result.results) {
                 if (result.results.success.length > 0) {
                     toast.success(`Updated stats for ${result.results.success.length} members`);
@@ -82,19 +90,20 @@ const CodingLeaderboard = ({ selectedRoom }) => {
                 }
             }
 
-            // Refresh the leaderboard data after updating
             await fetchLeaderboard(1);
         } catch (err) {
-            toast.error(err.message || "Failed to update LeetCode stats");
+            toast.error(err.message || `Failed to update ${selectedPlatform === 'leetcode' ? 'LeetCode' : 'Codeforces'} stats`);
         }
         setLoading(false);
     };
 
     useEffect(() => {
         if (selectedRoom) {
+            // Reset to default sort when platform changes
+            setSortBy(platformSortOptions[selectedPlatform][0].value);
             fetchLeaderboard(1);
         }
-    }, [selectedRoom?.id, sortBy, limit]);
+    }, [selectedRoom?.id, sortBy, limit, selectedPlatform]);
 
     const handleSort = (newSortBy) => {
         setSortBy(newSortBy);
@@ -107,9 +116,13 @@ const CodingLeaderboard = ({ selectedRoom }) => {
             return;
         }
 
-        const myUser = users.find(user =>
-            user.platforms.leetcode.username === authUser.platforms.leetcode.username
-        );
+        const myUser = users.find(user => {
+            if (selectedPlatform === 'leetcode') {
+                return user.platforms?.leetcode?.username === authUser.platforms?.leetcode?.username;
+            } else {
+                return user.platforms?.codeforces?.username === authUser.platforms?.codeforces?.username;
+            }
+        });
 
         if (myUser) {
             setHighlightedUserId(myUser._id);
@@ -125,7 +138,7 @@ const CodingLeaderboard = ({ selectedRoom }) => {
                 }
             }
         } else {
-            toast.error("You are not in the current leaderboard");
+            toast.error(`You are not in the current ${selectedPlatform === 'leetcode' ? 'LeetCode' : 'Codeforces'} leaderboard`);
         }
     };
 
@@ -138,13 +151,17 @@ const CodingLeaderboard = ({ selectedRoom }) => {
 
         try {
             while (true) {
-                const data = await getLeaderboard(selectedRoom.id, sortBy, totalCount, currentPage);
+                const data = await getLeaderboard(selectedRoom.id, sortBy, totalCount, currentPage, selectedPlatform);
                 allUsers = [...allUsers, ...data.members];
 
-                const foundUser = data.members.find(user =>
-                    user.fullName.toLowerCase().includes(searchTermLower) ||
-                    user.platforms.leetcode.username.toLowerCase().includes(searchTermLower)
-                );
+                const foundUser = data.members.find(user => {
+                    const platformUsername = selectedPlatform === 'leetcode' 
+                        ? user.platforms?.leetcode?.username 
+                        : user.platforms?.codeforces?.username;
+                    
+                    return user.fullName.toLowerCase().includes(searchTermLower) ||
+                        (platformUsername && platformUsername.toLowerCase().includes(searchTermLower));
+                });
 
                 if (foundUser) {
                     const userIndex = allUsers.findIndex(u => u._id === foundUser._id);
@@ -198,6 +215,14 @@ const CodingLeaderboard = ({ selectedRoom }) => {
         setProfileModal({ isOpen: false, username: null });
     };
 
+    // Function to handle platform change
+    const handlePlatformChange = (newPlatform) => {
+        setSelectedPlatform(newPlatform);
+        // Reset to default sort for the new platform
+        setSortBy(platformSortOptions[newPlatform][0].value);
+        setPage(1); // Reset to first page
+    };
+
     if (error) {
         return <div className="text-red-500 text-center">{error}</div>;
     }
@@ -205,26 +230,43 @@ const CodingLeaderboard = ({ selectedRoom }) => {
     return (
         <div className="bg-gray-900 text-white">
             <div className="flex justify-between items-center mb-4">
-                <div className="flex space-x-2 ">
-                    {/* Existing sort buttons */}
-                    <SortButton
-                        sortBy={sortBy}
-                        current="platforms.leetcode.totalQuestionsSolved"
-                        handleSort={handleSort}
-                        label="Total problems"
-                    />
-                    <SortButton
-                        sortBy={sortBy}
-                        current="platforms.leetcode.contestRating"
-                        handleSort={handleSort}
-                        label="Contest Rating"
-                    />
-                    <SortButton
-                        sortBy={sortBy}
-                        current="platforms.leetcode.attendedContestsCount"
-                        handleSort={handleSort}
-                        label="Attended Contests"
-                    />
+                <div className="flex space-x-2">
+                    {/* Platform Selection Tabs */}
+                    <div className="flex space-x-1 bg-gray-800 rounded-lg p-1">
+                        <button
+                            onClick={() => handlePlatformChange('leetcode')}
+                            className={`px-3 py-1 rounded-md transition-colors ${
+                                selectedPlatform === 'leetcode' 
+                                    ? 'bg-blue-500 text-white' 
+                                    : 'text-gray-300 hover:bg-gray-700'
+                            }`}
+                        >
+                            LeetCode
+                        </button>
+                        <button
+                            onClick={() => handlePlatformChange('codeforces')}
+                            className={`px-3 py-1 rounded-md transition-colors ${
+                                selectedPlatform === 'codeforces' 
+                                    ? 'bg-blue-500 text-white' 
+                                    : 'text-gray-300 hover:bg-gray-700'
+                            }`}
+                        >
+                            Codeforces
+                        </button>
+                    </div>
+
+                    {/* Platform-specific Sort Buttons */}
+                    <div className="flex space-x-2">
+                        {platformSortOptions[selectedPlatform].map((option) => (
+                            <SortButton
+                                key={option.value}
+                                sortBy={sortBy}
+                                current={option.value}
+                                handleSort={handleSort}
+                                label={option.label}
+                            />
+                        ))}
+                    </div>
                 </div>
 
                 <div className="flex space-x-2 items-center">
@@ -236,7 +278,7 @@ const CodingLeaderboard = ({ selectedRoom }) => {
                             className="bg-gray-800 px-3 py-1 rounded flex items-center text-sm hover:bg-gray-700 transition-colors disabled:opacity-50"
                         >
                             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-                            <span className="ml-1">Update LeetCode Stats</span>
+                            <span className="ml-1">Update {selectedPlatform === 'leetcode' ? 'LeetCode' : 'Codeforces'} Stats</span>
                         </button>
                     )}
                     <select
@@ -311,6 +353,7 @@ const CodingLeaderboard = ({ selectedRoom }) => {
                                     index={index}
                                     isHighlighted={user._id === highlightedUserId}
                                     onProfileClick={handleProfileClick}
+                                    platform={selectedPlatform}
                                 />
                             ))}
                         </div>
@@ -323,6 +366,7 @@ const CodingLeaderboard = ({ selectedRoom }) => {
                                 limit={limit}
                                 highlightedUserId={highlightedUserId}
                                 onProfileClick={handleProfileClick}
+                                platform={selectedPlatform}
                             />
                             <Pagination
                                 page={page}
@@ -342,6 +386,7 @@ const CodingLeaderboard = ({ selectedRoom }) => {
         </div>
     );
 };
+
 CodingLeaderboard.propTypes = {
     selectedRoom: PropTypes.shape({
         id: PropTypes.string.isRequired,

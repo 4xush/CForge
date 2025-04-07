@@ -52,7 +52,6 @@ export const getLeaderboard = async (roomId, sortBy, limit, page) => {
 export const createRoom = async (formData) => {
     try {
         const response = await api.post(`${BASE_URL}/create`, formData);
-        console.log('Room created:', response.data);
         return response.data;
     } catch (error) {
         throw error.response?.data || new Error("Failed to create room");

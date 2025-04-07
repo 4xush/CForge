@@ -46,7 +46,6 @@ const MessageInput = ({ initialMessage = '', onCancel }) => {
 
         setSending(true);
         try {
-            console.log("Sending message:", message);
             
             // Create message object
             const messageObj = {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Linkedin, Twitter } from 'lucide-react';
+import { Linkedin, Twitter, Loader2 } from 'lucide-react';
 import ApiService from '../../services/ApiService';
 import { toast } from 'react-hot-toast';
 
@@ -8,9 +8,11 @@ const SocialNetworks = ({ socialNetworks, onSocialNetworksUpdate }) => {
         linkedin: socialNetworks?.linkedin || '',
         twitter: socialNetworks?.twitter || ''
     });
+    const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
         try {
             const response = await ApiService.put('/users/update/social-networks', formData);
             toast.success('Social networks updated successfully');
@@ -19,6 +21,8 @@ const SocialNetworks = ({ socialNetworks, onSocialNetworksUpdate }) => {
             }
         } catch (error) {
             toast.error(error.response?.data?.message || 'Failed to update social networks');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -68,9 +72,17 @@ const SocialNetworks = ({ socialNetworks, onSocialNetworksUpdate }) => {
 
                 <button
                     type="submit"
-                    className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                    disabled={loading}
+                    className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:bg-blue-500/50 disabled:cursor-not-allowed"
                 >
-                    Update Social Networks
+                    {loading ? (
+                        <>
+                            <Loader2 className="inline mr-2 h-4 w-4 animate-spin" />
+                            Updating...
+                        </>
+                    ) : (
+                        'Update Social Networks'
+                    )}
                 </button>
             </form>
         </div>

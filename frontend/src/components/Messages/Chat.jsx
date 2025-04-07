@@ -66,7 +66,6 @@ const Chat = () => {
         
         const intervalId = setInterval(() => {
             if (socket?.connected && !hasJoined && attempts < MAX_ATTEMPTS) {
-                console.log(`Retry ${attempts + 1}/${MAX_ATTEMPTS}: Joining room ${selectedRoom._id}`);
                 joinRoom(selectedRoom._id);
                 hasJoined = true;
             } else if (attempts >= MAX_ATTEMPTS && !hasJoined) {

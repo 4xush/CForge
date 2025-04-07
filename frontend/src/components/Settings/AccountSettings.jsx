@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { Mail, Key, Trash2, AlertTriangle } from "lucide-react"
+import { Mail, Key, Trash2, AlertTriangle, Loader2 } from "lucide-react"
 import ApiService from "../../services/ApiService"
 import { toast } from "react-hot-toast"
 
@@ -15,6 +15,11 @@ const AccountSettings = ({ profileData, onProfileUpdate, onLogout }) => {
     confirmPassword: "",
   })
   const [deleteConfirmPassword, setDeleteConfirmPassword] = useState("")
+  const [loading, setLoading] = useState({
+    email: false,
+    password: false,
+    delete: false
+  })
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -34,6 +39,7 @@ const AccountSettings = ({ profileData, onProfileUpdate, onLogout }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setLoading(prev => ({ ...prev, email: true }))
     try {
       const responses = await Promise.all([ApiService.put("/users/update/email", { email: formData.email })])
 
@@ -46,6 +52,8 @@ const AccountSettings = ({ profileData, onProfileUpdate, onLogout }) => {
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to update account information")
+    } finally {
+      setLoading(prev => ({ ...prev, email: false }))
     }
   }
 
@@ -56,6 +64,7 @@ const AccountSettings = ({ profileData, onProfileUpdate, onLogout }) => {
       return
     }
 
+    setLoading(prev => ({ ...prev, password: true }))
     try {
       await ApiService.put("/users/update/password", {
         currentPassword: passwordData.currentPassword,
@@ -70,6 +79,8 @@ const AccountSettings = ({ profileData, onProfileUpdate, onLogout }) => {
       })
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to update password")
+    } finally {
+      setLoading(prev => ({ ...prev, password: false }))
     }
   }
 
@@ -78,6 +89,7 @@ const AccountSettings = ({ profileData, onProfileUpdate, onLogout }) => {
       toast.error("Please enter your password to confirm account deletion")
       return
     }
+    setLoading(prev => ({ ...prev, delete: true }))
     try {
       await ApiService.delete("/users/profile", {
         password: deleteConfirmPassword,
@@ -92,6 +104,8 @@ const AccountSettings = ({ profileData, onProfileUpdate, onLogout }) => {
       } else {
         toast.error(error.response?.data?.message || "Failed to delete account")
       }
+    } finally {
+      setLoading(prev => ({ ...prev, delete: false }))
     }
   }
 
@@ -118,9 +132,17 @@ const AccountSettings = ({ profileData, onProfileUpdate, onLogout }) => {
           </div>
           <button
             type="submit"
-            className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+            disabled={loading.email}
+            className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:bg-blue-500/50 disabled:cursor-not-allowed"
           >
-            Update Account Info
+            {loading.email ? (
+              <>
+                <Loader2 className="inline mr-2 h-4 w-4 animate-spin" />
+                Updating...
+              </>
+            ) : (
+              'Update Account Info'
+            )}
           </button>
         </form>
       </div>
@@ -169,9 +191,17 @@ const AccountSettings = ({ profileData, onProfileUpdate, onLogout }) => {
             <div className="flex gap-2">
               <button
                 type="submit"
-                className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                disabled={loading.password}
+                className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:bg-blue-500/50 disabled:cursor-not-allowed"
               >
-                Update Password
+                {loading.password ? (
+                  <>
+                    <Loader2 className="inline mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  'Update Password'
+                )}
               </button>
               <button
                 type="button"
@@ -236,9 +266,17 @@ const AccountSettings = ({ profileData, onProfileUpdate, onLogout }) => {
               <div className="flex gap-3 pt-4">
                 <button
                   onClick={handleDeleteAccount}
-                  className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+                  disabled={loading.delete}
+                  className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors disabled:bg-red-500/50 disabled:cursor-not-allowed"
                 >
-                  Yes, Delete My Account
+                  {loading.delete ? (
+                    <>
+                      <Loader2 className="inline mr-2 h-4 w-4 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    'Yes, Delete My Account'
+                  )}
                 </button>
                 <button
                   onClick={() => {

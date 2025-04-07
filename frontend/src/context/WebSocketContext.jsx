@@ -54,7 +54,7 @@ export const WebSocketProvider = ({ children }) => {
                     
                     // If there was a pending room join, execute it now
                     if (pendingRoomJoin) {
-                        console.log(`Executing pending room join for ${pendingRoomJoin}`);
+                        // console.log(`Executing pending room join for ${pendingRoomJoin}`);
                         newSocket.emit('join_room', { 
                             roomId: pendingRoomJoin, 
                             userId: activeUser._id 
@@ -113,7 +113,7 @@ export const WebSocketProvider = ({ children }) => {
 
     const sendMessage = useCallback((roomId, message) => {
         if (socket && isConnected) {
-            console.log(`Sending message to room ${roomId}:`, message);
+            // console.log(`Sending message to room ${roomId}:`, message);
             socket.emit('send_message', { roomId, message });
             return true;
         } else {

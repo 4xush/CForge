@@ -21,7 +21,6 @@ const updateUserCodeforcesStats = async (user, throwError = false, force = false
         }
 
         const codeforcesUsername = user.platforms.codeforces.username;
-        console.log(`Fetching Codeforces stats for user ${user._id} (${codeforcesUsername})`);
         // Fetch Codeforces stats
         const stats = await getCodeforcesStats(codeforcesUsername);
 
