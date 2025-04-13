@@ -1,22 +1,32 @@
 import React from 'react';
+import { cn } from '../../lib/utils';
 import PropTypes from 'prop-types';
 
-export const Spinner = ({ size = 'default', className = '', ...props }) => {
+/**
+ * Spinner component for loading states
+ */
+const Spinner = ({ size = 'md', className, ...props }) => {
   const sizeClasses = {
-    small: 'h-4 w-4 border-2',
-    default: 'h-8 w-8 border-3',
-    large: 'h-12 w-12 border-4'
+    sm: 'h-4 w-4 border-2',
+    md: 'h-8 w-8 border-2',
+    lg: 'h-12 w-12 border-t-2 border-b-2'
   };
 
   return (
     <div 
-      className={`inline-block rounded-full border-t-blue-500 border-r-blue-500 border-b-transparent border-l-transparent animate-spin ${sizeClasses[size]} ${className}`}
+      className={cn(
+        "animate-spin rounded-full border-purple-500", 
+        sizeClasses[size],
+        className
+      )}
       {...props}
     />
   );
 };
 
+export { Spinner };
+
 Spinner.propTypes = {
-  size: PropTypes.oneOf(['small', 'default', 'large']),
+  size: PropTypes.oneOf(['sm', 'md', 'lg']),
   className: PropTypes.string
 }; 

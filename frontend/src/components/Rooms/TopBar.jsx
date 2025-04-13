@@ -125,15 +125,18 @@ const TopBar = ({ roomId }) => {
         className="bg-gray-800 py-0.75 px-4 flex items-center justify-between border-b border-gray-700 relative"
       >
         <div>
-          <h2 className="text-lg font-bold text-gray-300">
+          <h2
+            className="text-lg font-bold text-gray-300 cursor-pointer"
+            onClick={handleRoomDetailsClick} // Add this onClick handler
+          >
             {loading || updatingRoom ? "Updating..." : roomDetails?.name || "Loading..."}
           </h2>
           <p className="text-xs text-gray-500">
             {loading || updatingRoom
               ? "Updating members..."
               : roomDetails
-              ? `${roomDetails.members?.length || 0} Members`
-              : "Loading members..."}
+                ? `${roomDetails.members?.length || 0} Members`
+                : "Loading members..."}
           </p>
         </div>
 

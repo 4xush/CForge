@@ -46,6 +46,34 @@ export const RoomProvider = ({ children }) => {
         }
     }, [authUser]);
 
+    const searchPublicRooms = useCallback(async (searchQuery) => {
+        const token = localStorage.getItem('app-token');
+
+        if (!token || !authUser) {
+            throw new Error('Authentication required');
+        }
+
+        try {
+            const response = await api.get('/rooms/search', {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+                params: {
+                    search: searchQuery,
+                    limit: 50
+                }
+            });
+            
+            if (response.data && response.data.rooms) {
+                return response.data.rooms;
+            }
+            return [];
+        } catch (error) {
+            console.error('Failed to search rooms:', error);
+            throw new Error(error.response?.data?.message || 'Failed to search rooms');
+        }
+    }, [authUser]);
+
     const selectRoom = useCallback(
         async (roomId) => {
             const token = localStorage.getItem('app-token');
@@ -103,6 +131,7 @@ export const RoomProvider = ({ children }) => {
                 selectedRoom,
                 setSelectedRoom,
                 refreshRoomList,
+                searchPublicRooms,
                 selectRoom,
                 loading,
                 error,
