@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Search, RefreshCw } from 'lucide-react';
 import { useAuthContext } from '../../context/AuthContext';
+import { useRoomContext } from '../../context/RoomContext';
 import toast from 'react-hot-toast';
-import PropTypes from 'prop-types';
 import { getLeaderboard, refreshLeaderboard } from '../../api/authApi';
 import SortButton from './SortButton';
 import { TopUserCard } from './TopUserCard';
@@ -10,11 +10,12 @@ import Pagination from './Pagination';
 import { LeaderboardTable } from './LeaderboardTable';
 import PublicUserProfileModal from '../PublicUserProfileModal';
 
-const CodingLeaderboard = ({ selectedRoom }) => {
+const CodingLeaderboard = () => {
     const { authUser } = useAuthContext();
+    const { currentRoomDetails, currentRoomLoading } = useRoomContext();
     const [users, setUsers] = useState([]);
     const [topUsers, setTopUsers] = useState([]);
-    const [selectedPlatform, setSelectedPlatform] = useState('leetcode'); // New state for platform selection
+    const [selectedPlatform, setSelectedPlatform] = useState('leetcode');
     const [sortBy, setSortBy] = useState('platforms.leetcode.totalQuestionsSolved');
     const [limit, setLimit] = useState(10);
     const [page, setPage] = useState(1);
@@ -25,11 +26,9 @@ const CodingLeaderboard = ({ selectedRoom }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [showSearchInput, setShowSearchInput] = useState(false);
     const [profileModal, setProfileModal] = useState({ isOpen: false, username: null });
-    const [lastUpdated, setLastUpdated] = useState(null);
 
     const limitOptions = [10, 20, 50, 100];
 
-    // Platform-specific sort options
     const platformSortOptions = {
         leetcode: [
             { value: 'platforms.leetcode.totalQuestionsSolved', label: 'Total problems' },
@@ -44,13 +43,13 @@ const CodingLeaderboard = ({ selectedRoom }) => {
     };
 
     const fetchLeaderboard = async (pageNum = page) => {
-        if (!selectedRoom) return;
+        if (!currentRoomDetails?.roomId) return;
 
         setLoading(true);
         setError(null);
         try {
             const data = await getLeaderboard(
-                selectedRoom.id, 
+                currentRoomDetails.roomId, 
                 sortBy, 
                 limit, 
                 pageNum, 
@@ -60,7 +59,6 @@ const CodingLeaderboard = ({ selectedRoom }) => {
             if (pageNum === 1) {
                 setUsers(data.members);
                 setTopUsers(data.members.slice(0, 3));
-                setLastUpdated(data.members[0]?.updatedAt || new Date().toISOString());
             } else {
                 setUsers(prevUsers => [...prevUsers, ...data.members]);
             }
@@ -69,16 +67,17 @@ const CodingLeaderboard = ({ selectedRoom }) => {
         } catch (err) {
             setError(err.message || "An error occurred while fetching the leaderboard");
             toast.error(err.message || "Failed to load leaderboard");
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     const handleRefresh = async () => {
-        if (!selectedRoom) return;
+        if (!currentRoomDetails?.roomId) return;
 
         setLoading(true);
         try {
-            const result = await refreshLeaderboard(selectedRoom.id, selectedPlatform);
+            const result = await refreshLeaderboard(currentRoomDetails.roomId, selectedPlatform);
             toast.success(`${selectedPlatform === 'leetcode' ? 'LeetCode' : 'Codeforces'} stats update completed successfully`);
 
             if (result.results) {
@@ -93,17 +92,21 @@ const CodingLeaderboard = ({ selectedRoom }) => {
             await fetchLeaderboard(1);
         } catch (err) {
             toast.error(err.message || `Failed to update ${selectedPlatform === 'leetcode' ? 'LeetCode' : 'Codeforces'} stats`);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     useEffect(() => {
-        if (selectedRoom) {
-            // Reset to default sort when platform changes
-            setSortBy(platformSortOptions[selectedPlatform][0].value);
-            fetchLeaderboard(1);
+        if (currentRoomDetails?.roomId && !currentRoomLoading) {
+            const defaultSort = platformSortOptions[selectedPlatform][0].value;
+            if (sortBy !== defaultSort) {
+                setSortBy(defaultSort);
+            } else {
+                fetchLeaderboard(1);
+            }
         }
-    }, [selectedRoom?.id, sortBy, limit, selectedPlatform]);
+    }, [currentRoomDetails?.roomId, currentRoomLoading, sortBy, limit, selectedPlatform]);
 
     const handleSort = (newSortBy) => {
         setSortBy(newSortBy);
@@ -131,6 +134,7 @@ const CodingLeaderboard = ({ selectedRoom }) => {
 
             if (targetPage !== page) {
                 setPage(targetPage);
+                fetchLeaderboard(targetPage);
             } else {
                 const element = document.getElementById(`user-row-${myUser._id}`);
                 if (element) {
@@ -143,6 +147,7 @@ const CodingLeaderboard = ({ selectedRoom }) => {
     };
 
     const searchUser = async (searchTerm) => {
+        if (!currentRoomDetails?.roomId) return null;
         setLoading(true);
         setError(null);
         let allUsers = [];
@@ -150,8 +155,9 @@ const CodingLeaderboard = ({ selectedRoom }) => {
         const searchTermLower = searchTerm.toLowerCase();
 
         try {
-            while (true) {
-                const data = await getLeaderboard(selectedRoom.id, sortBy, totalCount, currentPage, selectedPlatform);
+            const maxPages = Math.ceil(totalCount / limit);
+            while (currentPage <= maxPages) {
+                const data = await getLeaderboard(currentRoomDetails.roomId, sortBy, limit, currentPage, selectedPlatform);
                 allUsers = [...allUsers, ...data.members];
 
                 const foundUser = data.members.find(user => {
@@ -166,16 +172,25 @@ const CodingLeaderboard = ({ selectedRoom }) => {
                 if (foundUser) {
                     const userIndex = allUsers.findIndex(u => u._id === foundUser._id);
                     const targetPage = Math.floor(userIndex / limit) + 1;
+                    
+                    setUsers(allUsers.slice(0, targetPage * limit));
                     setPage(targetPage);
-                    setUsers(allUsers);
+                    
+                    setHighlightedUserId(foundUser._id);
+                    setTimeout(() => {
+                        const element = document.getElementById(`user-row-${foundUser._id}`);
+                        if (element) {
+                            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }, 100);
+
                     return foundUser._id;
                 }
 
-                if (data.members.length < totalCount) {
-                    currentPage++;
-                } else {
+                if (allUsers.length >= totalCount) {
                     break;
-                }
+                }    
+                currentPage++;
             }
             toast.error("User not found");
             return null;
@@ -194,14 +209,7 @@ const CodingLeaderboard = ({ selectedRoom }) => {
             toast.error("Please enter a search term");
             return;
         }
-        const foundUserId = await searchUser(searchQuery);
-        if (foundUserId) {
-            setHighlightedUserId(foundUserId);
-            const element = document.getElementById(`user-row-${foundUserId}`);
-            if (element) {
-                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        }
+        await searchUser(searchQuery);
     };
 
     const handleProfileClick = (username) => {
@@ -215,23 +223,30 @@ const CodingLeaderboard = ({ selectedRoom }) => {
         setProfileModal({ isOpen: false, username: null });
     };
 
-    // Function to handle platform change
     const handlePlatformChange = (newPlatform) => {
         setSelectedPlatform(newPlatform);
-        // Reset to default sort for the new platform
         setSortBy(platformSortOptions[newPlatform][0].value);
-        setPage(1); // Reset to first page
+        setPage(1);
     };
 
+    if (currentRoomLoading) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                <p className="ml-4 text-gray-400">Loading room details...</p>
+            </div>
+        );
+    }
+
     if (error) {
-        return <div className="text-red-500 text-center">{error}</div>;
+        return <div className="text-red-500 text-center p-4">Error loading leaderboard: {error}</div>;
     }
 
     return (
         <div className="bg-gray-900 text-white">
+
             <div className="flex justify-between items-center mb-4">
                 <div className="flex space-x-2">
-                    {/* Platform Selection Tabs */}
                     <div className="flex space-x-1 bg-gray-800 rounded-lg p-1">
                         <button
                             onClick={() => handlePlatformChange('leetcode')}
@@ -255,7 +270,6 @@ const CodingLeaderboard = ({ selectedRoom }) => {
                         </button>
                     </div>
 
-                    {/* Platform-specific Sort Buttons */}
                     <div className="flex space-x-2">
                         {platformSortOptions[selectedPlatform].map((option) => (
                             <SortButton
@@ -270,8 +284,7 @@ const CodingLeaderboard = ({ selectedRoom }) => {
                 </div>
 
                 <div className="flex space-x-2 items-center">
-                    {/* Existing controls */}
-                    {(
+                    {(authUser || currentRoomDetails?.admins?.some(admin => admin.username === authUser?.username)) && (
                         <button
                             onClick={handleRefresh}
                             disabled={loading}
@@ -312,7 +325,6 @@ const CodingLeaderboard = ({ selectedRoom }) => {
                         </button>
                     )}
 
-                    {/* Existing search controls */}
                     {showSearchInput ? (
                         <form onSubmit={handleSearch} className="flex items-center">
                             <input
@@ -341,11 +353,16 @@ const CodingLeaderboard = ({ selectedRoom }) => {
                     )}
                 </div>
             </div>
-            {/* Rest of your existing JSX */}
-            {!loading && (
+            
+            {loading ? (
+                 <div className="flex justify-center items-center h-64">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                    <p className="ml-4 text-gray-400">Loading leaderboard...</p>
+                </div>
+            ) : (
                 <>
                     {topUsers.length > 0 && (
-                        <div className="grid grid-cols-3 gap-4 mb-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                             {topUsers.map((user, index) => (
                                 <TopUserCard
                                     key={user._id}
@@ -358,7 +375,7 @@ const CodingLeaderboard = ({ selectedRoom }) => {
                             ))}
                         </div>
                     )}
-                    {users.length > 0 && (
+                    {users.length > 0 ? (
                         <>
                             <LeaderboardTable
                                 users={users}
@@ -367,6 +384,7 @@ const CodingLeaderboard = ({ selectedRoom }) => {
                                 highlightedUserId={highlightedUserId}
                                 onProfileClick={handleProfileClick}
                                 platform={selectedPlatform}
+                                sortBy={sortBy}
                             />
                             <Pagination
                                 page={page}
@@ -375,9 +393,14 @@ const CodingLeaderboard = ({ selectedRoom }) => {
                                 setPage={setPage}
                             />
                         </>
+                    ) : (
+                         <div className="text-center py-10 text-gray-500">
+                            No users found in this leaderboard for {selectedPlatform}.
+                        </div>
                     )}
                 </>
             )}
+
             <PublicUserProfileModal
                 username={profileModal.username}
                 isOpen={profileModal.isOpen}
@@ -385,12 +408,6 @@ const CodingLeaderboard = ({ selectedRoom }) => {
             />
         </div>
     );
-};
-
-CodingLeaderboard.propTypes = {
-    selectedRoom: PropTypes.shape({
-        id: PropTypes.string.isRequired,
-    }).isRequired,
 };
 
 export default CodingLeaderboard;

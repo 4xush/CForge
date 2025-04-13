@@ -92,7 +92,42 @@ const googleAuth = async (req, res) => {
     res.status(401).json({ message: 'Google authentication failed' });
   }
 };
- signupUser = async (req, res) => {
+
+/**
+ * Refresh token endpoint - creates a new token for authenticated users
+ * Uses the current token to generate a new one with extended expiry
+ */
+const refreshToken = async (req, res) => {
+  try {
+    // The user is already authenticated through the auth middleware
+    // We just need to generate a new token
+    const userId = req.user.id;
+    
+    // Verify user still exists and is active
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+    
+    // Generate a new JWT token with extended expiration
+    const token = jwt.sign(
+      { id: user._id, username: user.username, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "30d" } // Can be adjusted as needed
+    );
+    
+    // Return the new token
+    res.status(200).json({
+      message: "Token refreshed successfully",
+      token
+    });
+  } catch (error) {
+    console.error("Token refresh error:", error);
+    res.status(500).json({ message: "Failed to refresh token. Please log in again." });
+  }
+};
+
+signupUser = async (req, res) => {
   const { fullName, email, password, gender } = req.body;
 
   try {
@@ -237,5 +272,6 @@ const login = async (req, res) => {
 module.exports = {
   signupUser,
   login,
-  googleAuth
+  googleAuth,
+  refreshToken
 };

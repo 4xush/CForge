@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import ApiService from '../services/ApiService';
 import AddPlatform from '../components/Settings/AddPlatform';
@@ -10,7 +10,7 @@ import { CheckCircle, ArrowRight, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Settings = () => {
-    const { authUser, updateUser, logout } = useAuthContext();
+    const { updateUser, logout } = useAuthContext();
     const [activeTab, setActiveTab] = useState('basic');
     const [profileData, setProfileData] = useState(null);
     const [loading, setLoading] = useState(true);

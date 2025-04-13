@@ -15,7 +15,7 @@ const RoomDetails = ({ roomDetails, loading, error, onInviteLinkGenerated }) => 
   const { authUser } = useAuthContext();
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
   const [showAllMembers, setShowAllMembers] = useState(false);
-
+console.log(roomDetails)
   const handleInviteClick = async () => {
     try {
       setIsGeneratingLink(true);
@@ -96,8 +96,8 @@ const RoomDetails = ({ roomDetails, loading, error, onInviteLinkGenerated }) => 
           <Users size={16} className="mr-2" /> Members ({allMembers.length})
         </h3>
         <div className="space-y-2">
-          {displayMembers.map((member) => (
-            <div key={member._id} className="flex items-center">
+          {displayMembers.map((member, index) => (
+            <div key={member._id || `member-${index}`} className="flex items-center">
               <img
                 src={member.profilePicture || "/placeholder.svg"}
                 alt={member.username}

@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { login, register, googleLogin } from "../api/authApi";
-import toast from 'react-hot-toast';
 import { validateUserData } from "@/lib/utils/validation";
 
 export const AuthContext = createContext();
@@ -32,13 +31,13 @@ export const AuthProvider = ({ children }) => {
       try {
         const storedUser = localStorage.getItem("app-user");
         const token = localStorage.getItem("app-token");
-        
+
         if (storedUser && token) {
           const userData = JSON.parse(storedUser);
           if (!validateUserData(userData)) {
             throw new Error("Stored user data is invalid");
           }
-          
+
           try {
             const tokenData = JSON.parse(atob(token.split('.')[1]));
             if (tokenData.exp * 1000 < Date.now()) {
@@ -68,34 +67,34 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = googleToken ? await googleLogin(googleToken) : await login(email, password);
       const { user, token } = response;
-      
+
       if (!user || !token) {
         throw new Error("Invalid response from server - missing user or token");
       }
-      
+
       // Set token first
       localStorage.setItem("app-token", token);
-      
+
       // Then set user data
       if (!setValidatedUser(user)) {
         localStorage.removeItem("app-token");
         throw new Error("Received invalid user data from server");
       }
-      
+
       return user;
     } catch (error) {
       console.error("Login error in AuthContext:", error);
-      
+
       // Clean up any partially set data
       localStorage.removeItem("app-user");
       localStorage.removeItem("app-token");
-      
+
       // Format error message for display
-      const errorMessage = 
-        error.response?.data?.message || 
-        error.message || 
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
         "Login failed. Please check your credentials and try again.";
-      
+
       setError(errorMessage);
       throw error; // Re-throw to allow component to handle it
     } finally {
@@ -108,30 +107,30 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     try {
       const { user, token } = await register(userData);
-      
+
       if (!user || !token) {
         throw new Error("Invalid response from server - missing user or token");
       }
-      
+
       if (!setValidatedUser(user)) {
         throw new Error("Received invalid user data from server");
       }
-      
+
       localStorage.setItem("app-token", token);
       return user;
     } catch (error) {
       console.error("Registration error in AuthContext:", error);
-      
+
       // Clean up any partially set data
       localStorage.removeItem("app-user");
       localStorage.removeItem("app-token");
-      
+
       // Format error message for display
-      const errorMessage = 
-        error.response?.data?.message || 
-        error.message || 
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
         "Registration failed. Please try again.";
-      
+
       setError(errorMessage);
       throw error; // Re-throw to allow component to handle it
     } finally {

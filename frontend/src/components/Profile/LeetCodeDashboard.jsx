@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import {
     Card,
@@ -130,7 +130,7 @@ const LeetCodeDashboard = ({ leetcodeData, nestedUsername }) => {
                                 </Box>
                                 <Typography variant="h4">{total}</Typography>
                                 <Typography variant="body2" color="text.secondary">
-                                    Problems Included
+                                    Concepts Included
                                 </Typography>
                             </CardContent>
                         </Card>
@@ -186,7 +186,7 @@ const LeetCodeDashboard = ({ leetcodeData, nestedUsername }) => {
                                 <TableRow>
                                     <TableCell>Category</TableCell>
                                     <TableCell>Tag</TableCell>
-                                    <TableCell align="right">Problems Included</TableCell>
+                                    <TableCell align="right">Concepts Included</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>

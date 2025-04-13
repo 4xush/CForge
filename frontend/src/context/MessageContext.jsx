@@ -11,12 +11,12 @@ export const MessageProvider = ({ children }) => {
     const [hasMore, setHasMore] = useState(true)
     const [error, setError] = useState(null)
     const { authUser } = useAuthContext()
-    const { selectedRoom } = useRoomContext()
+    const { currentRoomDetails } = useRoomContext()
     const fetchIdRef = useRef(0)
 
     const fetchMessages = useCallback(
         async (lastMessageId = null) => {
-            if (!selectedRoom) return
+            if (!currentRoomDetails) return
             setLoading(true)
             setError(null)
 
@@ -24,7 +24,7 @@ export const MessageProvider = ({ children }) => {
 
             try {
                 const query = lastMessageId ? `?lastMessageId=${lastMessageId}&limit=50` : "?limit=50"
-                const response = await api.get(`/rooms/${selectedRoom._id}/messages${query}`)
+                const response = await api.get(`/rooms/${currentRoomDetails._id}/messages${query}`)
 
                 // Only update state if this is the latest fetch request
                 if (currentFetchId === fetchIdRef.current) {
@@ -56,7 +56,7 @@ export const MessageProvider = ({ children }) => {
                 }
             }
         },
-        [selectedRoom],
+        [currentRoomDetails],
     )
 
     const addMessage = useCallback(

@@ -2,23 +2,28 @@ import { useState, useRef, useEffect } from "react";
 import { MoreVertical, LogOut, X, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
-import CenteredRoomDetailsModal from "./CenteredRoomDetailsModal"; // Updated import
+import CenteredRoomDetailsModal from "./CenteredRoomDetailsModal";
 import RoomSettings from "./RoomSettings";
 import ConfirmDialog from "../ui/ConfirmDialog";
 import ApiService from "../../services/ApiService";
 import toast from "react-hot-toast";
 import { useAuthContext } from "../../context/AuthContext";
+import { useRoomContext } from "../../context/RoomContext";
 import InviteLinkModal from "../InviteRoomJoin/InviteLinkModal";
 
 const TopBar = ({ roomId }) => {
   const navigate = useNavigate();
-  const [activeComponent, setActiveComponent] = useState(null); // 'menu', 'details', 'settings'
-  const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
-  const [roomDetails, setRoomDetails] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [updatingRoom, setUpdatingRoom] = useState(false);
-  const [error, setError] = useState(null);
+  const {
+    currentRoomDetails,
+    currentRoomLoading,
+    currentRoomError,
+    setCurrentRoomDetails
+  } = useRoomContext();
   const { authUser } = useAuthContext();
+
+  const [activeComponent, setActiveComponent] = useState(null);
+  const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
+  const [updatingRoom, setUpdatingRoom] = useState(false);
   const topBarRef = useRef(null);
   const [settingsKey, setSettingsKey] = useState(Date.now());
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -41,49 +46,27 @@ const TopBar = ({ roomId }) => {
     setActiveComponent(null);
   };
 
-  const handleRoomUpdate = async (updatedRoom) => {
+  const handleRoomUpdate = async (updatedRoomData) => {
     setUpdatingRoom(true);
     try {
-      await fetchRoomDetails(roomId);
-      setRoomDetails(updatedRoom);
+      setCurrentRoomDetails(updatedRoomData);
       setSettingsKey(Date.now());
       toast.success("Room updated successfully");
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to update room details.");
-      toast.error("Error updating room");
+      console.error("Error updating room display:", err);
+      toast.error("Error updating room display");
     } finally {
       setUpdatingRoom(false);
     }
   };
-
-  const fetchRoomDetails = async (id) => {
-    if (!id) return;
-
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await ApiService.get(`/rooms/${id}`);
-      setRoomDetails(response.data);
-      return response.data;
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to fetch room details.");
-      toast.error("Failed to fetch room details.");
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchRoomDetails(roomId);
-  }, [roomId]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
         event.target.closest('[role="dialog"]') ||
         event.target.closest(".dialog-content") ||
-        event.target.closest('[class*="dialog"]')
+        event.target.closest('[class*="dialog"]') ||
+        event.target.closest('[data-radix-popper-content-wrapper]')
       ) {
         return;
       }
@@ -102,21 +85,39 @@ const TopBar = ({ roomId }) => {
       const response = await ApiService.delete(`/rooms/${roomId}/leave`);
       setShowLeaveConfirmation(false);
       toast.success(response.data.message || "Successfully left the room");
+      setCurrentRoomDetails(null);
       navigate("/rooms", { replace: true });
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to leave room.");
     }
   };
 
-  const isCurrentUserAdmin = roomDetails?.admins?.some(
+  const isCurrentUserAdmin = !currentRoomLoading && currentRoomDetails && authUser && currentRoomDetails.admins?.some(
     (admin) => admin.username === authUser.username
   );
 
   const handleInviteLinkGenerated = (data) => {
     setInviteData(data);
     setIsInviteModalOpen(true);
-    setActiveComponent(null); // This will close the details modal
+    setActiveComponent(null);
   };
+
+  const getRoomName = () => {
+    if (currentRoomLoading) return "Loading Room...";
+    if (currentRoomError) return "Error Loading Room";
+    return currentRoomDetails?.name || "Room";
+  };
+
+  const getMemberCountText = () => {
+    if (currentRoomLoading) return "Loading members...";
+    if (currentRoomError) return "Error";
+    return `${currentRoomDetails?.members?.length || 0} Members`;
+  };
+
+  // Debug code - uncomment if needed to debug state issues
+  // const roomDetailsId = currentRoomDetails?._id || currentRoomDetails?.id || 'none';
+  // const roomDetailsAdminCount = currentRoomDetails?.admins?.length || 0;
+  // console.log(`TopBar rendering for room: ${roomId}, details: ${roomDetailsId}, admins: ${roomDetailsAdminCount}`);
 
   return (
     <>
@@ -126,17 +127,14 @@ const TopBar = ({ roomId }) => {
       >
         <div>
           <h2
-            className="text-lg font-bold text-gray-300 cursor-pointer"
-            onClick={handleRoomDetailsClick} // Add this onClick handler
+            className="text-lg font-bold text-gray-300 cursor-pointer truncate max-w-[200px] sm:max-w-xs md:max-w-sm lg:max-w-md"
+            onClick={handleRoomDetailsClick}
+            title={currentRoomDetails?.name || ""}
           >
-            {loading || updatingRoom ? "Updating..." : roomDetails?.name || "Loading..."}
+            {getRoomName()}
           </h2>
           <p className="text-xs text-gray-500">
-            {loading || updatingRoom
-              ? "Updating members..."
-              : roomDetails
-                ? `${roomDetails.members?.length || 0} Members`
-                : "Loading members..."}
+            {getMemberCountText()}
           </p>
         </div>
 
@@ -175,17 +173,17 @@ const TopBar = ({ roomId }) => {
           </div>
         )}
 
-        {activeComponent === "details" && roomDetails && (
+        {activeComponent === "details" && currentRoomDetails && (
           <CenteredRoomDetailsModal
-            roomDetails={roomDetails}
-            loading={loading || updatingRoom}
-            error={error}
+            roomDetails={currentRoomDetails}
+            loading={currentRoomLoading || updatingRoom}
+            error={currentRoomError}
             onClose={() => setActiveComponent(null)}
             onInviteLinkGenerated={handleInviteLinkGenerated}
           />
         )}
 
-        {activeComponent === "settings" && roomDetails && !updatingRoom && (
+        {activeComponent === "settings" && currentRoomDetails && !updatingRoom && (
           <div className="fixed right-0 top-0 h-full w-auto bg-gray-800 text-gray-300 shadow-lg z-20 transition-transform duration-300 ease-in-out transform translate-x-0">
             <div className="flex items-center justify-between p-4 border-b border-gray-700">
               <h2 className="text-lg font-bold">Room Settings</h2>
@@ -198,7 +196,7 @@ const TopBar = ({ roomId }) => {
             </div>
             <RoomSettings
               key={settingsKey}
-              room={roomDetails}
+              room={currentRoomDetails}
               onClose={() => setActiveComponent(null)}
               onUpdate={handleRoomUpdate}
             />

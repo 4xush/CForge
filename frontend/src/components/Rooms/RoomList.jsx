@@ -1,10 +1,11 @@
-import React, { useContext, useState } from 'react';
+import { useContext, useState } from 'react';
 import { RoomContext } from '../../context/RoomContext';
 import { Plus, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import PropTypes from 'prop-types';
 
 const RoomList = ({ setRoomFormVisible }) => {
-    const { rooms, selectedRoom, setSelectedRoom } = useContext(RoomContext);
+    const { rooms, currentRoomDetails } = useContext(RoomContext);
     const [isExpanded, setIsExpanded] = useState(false);
     const navigate = useNavigate();
 
@@ -12,8 +13,7 @@ const RoomList = ({ setRoomFormVisible }) => {
     const hasMoreRooms = rooms.length > 2;
 
     const handleRoomClick = (room) => {
-        setSelectedRoom(room);
-        navigate(`/rooms/${room.roomId}/leaderboard`); // Navigate to the room's ID endpoint
+        navigate(`/rooms/${room.roomId}/leaderboard`);
     };
 
     return (
@@ -30,7 +30,7 @@ const RoomList = ({ setRoomFormVisible }) => {
                         <button
                             onClick={() => handleRoomClick(room)}
                             className={`ml-6 flex items-center inline-block w-auto space-x-2 px-2 rounded-xl 
-                                transition-colors duration-200 ${selectedRoom?.roomId === room.roomId
+                                transition-colors duration-200 ${currentRoomDetails?.roomId === room.roomId
                                     ? 'bg-orange-600 text-white' // Highlight selected room
                                     : 'bg-gray-700/50 hover:bg-orange-500/20 text-white'
                                 }`}
@@ -74,6 +74,10 @@ const RoomList = ({ setRoomFormVisible }) => {
             </div>
         </div>
     );
+};
+
+RoomList.propTypes = {
+    setRoomFormVisible: PropTypes.func.isRequired,
 };
 
 export default RoomList;

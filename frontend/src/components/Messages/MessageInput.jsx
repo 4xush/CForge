@@ -8,7 +8,7 @@ import { Send, X, WifiOff } from 'lucide-react';
 import PropTypes from 'prop-types';
 
 const MessageInput = ({ initialMessage = '', onCancel }) => {
-    const { selectedRoom } = useRoomContext();
+    const { currentRoomDetails } = useRoomContext();
     const { authUser } = useAuthContext();
     const { socket, sendMessage, connected } = useWebSocket();
     const { addMessage } = useMessageContext();
@@ -37,7 +37,7 @@ const MessageInput = ({ initialMessage = '', onCancel }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!message.trim() || !selectedRoom || sending) return;
+        if (!message.trim() || !currentRoomDetails || sending) return;
 
         if (!connected) {
             toast.error('Cannot send message: Not connected to the server');
@@ -50,7 +50,7 @@ const MessageInput = ({ initialMessage = '', onCancel }) => {
             // Create message object
             const messageObj = {
                 content: message.trim(),
-                roomId: selectedRoom._id,
+                roomId: currentRoomDetails._id,
                 sender: authUser._id
             };
 
@@ -70,7 +70,7 @@ const MessageInput = ({ initialMessage = '', onCancel }) => {
             addMessage(tempMessage);
             
             // Send message through WebSocket
-            const sent = sendMessage(selectedRoom._id, messageObj);
+            const sent = sendMessage(currentRoomDetails._id, messageObj);
             
             if (!sent) {
                 toast.error('Failed to send message: Connection issue');
@@ -102,7 +102,7 @@ const MessageInput = ({ initialMessage = '', onCancel }) => {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
-                disabled={(!selectedRoom && !initialMessage) || sending || !connected}
+                disabled={(!currentRoomDetails && !initialMessage) || sending || !connected}
             />
 
             {!connected && (

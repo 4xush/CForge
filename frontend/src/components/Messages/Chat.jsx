@@ -12,7 +12,7 @@ import { AlertCircle, RefreshCw } from "lucide-react";
 import { Spinner } from "../ui/Spinner";
 
 const Chat = () => {
-    const { selectedRoom } = useRoomContext();
+    const { currentRoomDetails } = useRoomContext();
     const { authUser } = useAuthContext();
     const { socket, joinRoom, leaveRoom } = useWebSocket();
     const { 
@@ -40,22 +40,22 @@ const Chat = () => {
 
     // Fetch messages when room changes
     useEffect(() => {
-        if (selectedRoom) {
+        if (currentRoomDetails) {
             isInitialLoadRef.current = true;
             fetchMessages();
         }
-    }, [selectedRoom, selectedRoom?._id, fetchMessages]);
+    }, [currentRoomDetails, currentRoomDetails?._id, fetchMessages]);
 
     // Join room when selected room changes - more stable implementation
     useEffect(() => {
-        if (!selectedRoom?._id) return;
+        if (!currentRoomDetails?._id) return;
         
         // Track if we've already joined to prevent duplicate joins
         let hasJoined = false;
         
         // Join immediately if possible
         if (socket?.connected) {
-            joinRoom(selectedRoom._id);
+            joinRoom(currentRoomDetails._id);
             hasJoined = true;
         }
         
@@ -66,10 +66,10 @@ const Chat = () => {
         
         const intervalId = setInterval(() => {
             if (socket?.connected && !hasJoined && attempts < MAX_ATTEMPTS) {
-                joinRoom(selectedRoom._id);
+                joinRoom(currentRoomDetails._id);
                 hasJoined = true;
             } else if (attempts >= MAX_ATTEMPTS && !hasJoined) {
-                console.warn(`Failed to join room ${selectedRoom._id} after ${MAX_ATTEMPTS} attempts`);
+                console.warn(`Failed to join room ${currentRoomDetails._id} after ${MAX_ATTEMPTS} attempts`);
                 clearInterval(intervalId);
             }
             attempts++;
@@ -78,10 +78,10 @@ const Chat = () => {
         return () => {
             clearInterval(intervalId);
             if (hasJoined) {
-                leaveRoom(selectedRoom._id);
+                leaveRoom(currentRoomDetails._id);
             }
         };
-    }, [selectedRoom?._id, joinRoom, leaveRoom, socket]);
+    }, [currentRoomDetails?._id, joinRoom, leaveRoom, socket]);
 
     // Listen for real-time messages
     useEffect(() => {
@@ -169,8 +169,8 @@ const Chat = () => {
     const canModifyMessage = useCallback((message) => {
         if (!authUser || !message) return false;
         if (message.sender._id === authUser._id) return true;
-        return selectedRoom?.admins?.some((admin) => admin.toString() === authUser._id.toString());
-    }, [authUser, selectedRoom]);
+        return currentRoomDetails?.admins?.some((admin) => admin.toString() === authUser._id.toString());
+    }, [authUser, currentRoomDetails]);
     
     // Handle context menu
     const handleContextMenu = useCallback((e, messageId) => {
@@ -245,13 +245,13 @@ const Chat = () => {
 
     // Retry loading messages
     const handleRetry = () => {
-        if (selectedRoom) {
+        if (currentRoomDetails) {
             fetchMessages();
         }
     };
 
     // Render loading state
-    if (!selectedRoom) {
+    if (!currentRoomDetails) {
         return (
             <div className="flex flex-col h-full items-center justify-center text-gray-500">
                 <p>Select a room to view messages</p>
@@ -282,7 +282,7 @@ const Chat = () => {
     if (loading && !loadingMore && messages.length === 0) {
         return (
             <div className="flex flex-col h-full items-center justify-center">
-                <Spinner size="large" />
+                <Spinner size="lg" />
                 <p className="text-gray-500 mt-4">Loading messages...</p>
             </div>
         );
@@ -400,7 +400,7 @@ const Chat = () => {
             <div className="px-4 py-2">
                 <MessageInput 
                     onMessageSent={addMessage} 
-                    disabled={!selectedRoom} 
+                    disabled={!currentRoomDetails} 
                 />
             </div>
 

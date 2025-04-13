@@ -1,10 +1,41 @@
-import React from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import TopBar from './Rooms/TopBar';
+import { useRoomContext } from '../context/RoomContext';
+import { useEffect } from 'react';
+import PropTypes from 'prop-types';
 
 const MainContent = ({ children }) => {
     const location = useLocation();
     const { roomId } = useParams();
+    const { loadCurrentRoomDetails, currentRoomDetails, currentRoomLoading } = useRoomContext();
+
+    useEffect(() => {
+
+        if (!roomId) {
+            return;
+        }
+
+        if (currentRoomLoading) {
+            return;
+        }
+
+        if (currentRoomDetails?._id === roomId) {
+            return;
+        }
+
+        if (currentRoomDetails?.id === roomId) {
+            return;
+        }
+
+        if (currentRoomDetails?.roomId === roomId) {
+            return;
+        }
+
+        // console.log(`MainContent useEffect: Conditions met. Triggering loadCurrentRoomDetails for ${roomId}. Current details roomId: ${currentRoomDetails?.roomId}`);
+        loadCurrentRoomDetails(roomId);
+
+    }, [roomId, loadCurrentRoomDetails, currentRoomLoading]);
+
     const isLeaderboardActive = location.pathname.endsWith('/leaderboard');
     const isChatActive = location.pathname.endsWith('/chat');
 
@@ -36,6 +67,10 @@ const MainContent = ({ children }) => {
             </div>
         </div>
     );
+};
+
+MainContent.propTypes = {
+    children: PropTypes.node.isRequired,
 };
 
 export default MainContent;

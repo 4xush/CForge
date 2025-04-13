@@ -1,7 +1,8 @@
-import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
+import { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import api from '../config/api';
 import { useAuthContext } from './AuthContext';
+import PropTypes from 'prop-types';
 
 export const RoomContext = createContext();
 
@@ -15,9 +16,11 @@ export const useRoomContext = () => {
 
 export const RoomProvider = ({ children }) => {
     const [rooms, setRooms] = useState([]);
-    const [selectedRoom, setSelectedRoom] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+    const [currentRoomDetails, setCurrentRoomDetails] = useState(null);
+    const [listLoading, setListLoading] = useState(false);
+    const [listError, setListError] = useState(null);
+    const [currentRoomLoading, setCurrentRoomLoading] = useState(false);
+    const [currentRoomError, setCurrentRoomError] = useState(null);
     const location = useLocation();
     const { authUser, isLoading: authLoading } = useAuthContext();
 
@@ -28,8 +31,8 @@ export const RoomProvider = ({ children }) => {
             return;
         }
 
-        setLoading(true);
-        setError(null);
+        setListLoading(true);
+        setListError(null);
 
         try {
             const response = await api.get('/rooms', {
@@ -40,9 +43,9 @@ export const RoomProvider = ({ children }) => {
             setRooms(response.data.rooms);
         } catch (error) {
             console.error('Failed to fetch rooms:', error);
-            setError('Unable to load rooms. Please try again.');
+            setListError('Unable to load rooms. Please try again.');
         } finally {
-            setLoading(false);
+            setListLoading(false);
         }
     }, [authUser]);
 
@@ -69,21 +72,25 @@ export const RoomProvider = ({ children }) => {
             }
             return [];
         } catch (error) {
-            console.error('Failed to search rooms:', error);
             throw new Error(error.response?.data?.message || 'Failed to search rooms');
         }
     }, [authUser]);
 
-    const selectRoom = useCallback(
+    const loadCurrentRoomDetails = useCallback(
         async (roomId) => {
             const token = localStorage.getItem('app-token');
 
             if (!token) {
+                setCurrentRoomError('Authentication required.');
+                return;
+            }
+            if (!roomId) {
+                setCurrentRoomDetails(null);
                 return;
             }
 
-            setLoading(true);
-            setError(null);
+            setCurrentRoomLoading(true);
+            setCurrentRoomError(null);
 
             try {
                 const response = await api.get(`/rooms/${roomId}`, {
@@ -91,33 +98,39 @@ export const RoomProvider = ({ children }) => {
                         Authorization: `Bearer ${token}`,
                     },
                 });
-                setSelectedRoom(response.data.room);
+
+                // Set state directly with response.data as it contains the room object
+                setCurrentRoomDetails(response.data);
+
             } catch (error) {
-                console.error('Failed to select room:', error);
-                setError('Unable to load the selected room. Please try again.');
+                setCurrentRoomError(error.response?.data?.message || 'Unable to load the selected room.');
+                setCurrentRoomDetails(null);
             } finally {
-                setLoading(false);
+                setCurrentRoomLoading(false);
             }
         },
         []
     );
 
-    // Reset selectedRoom when navigating away from a room page
     useEffect(() => {
-        if (!location.pathname.startsWith('/rooms')) {
-            setSelectedRoom(null);
+        const pathSegments = location.pathname.split('/').filter(Boolean);
+        if (pathSegments[0] !== 'rooms' || pathSegments.length < 2) {
+             if (currentRoomDetails) {
+                 setCurrentRoomDetails(null);
+                 setCurrentRoomError(null);
+             }
         }
-    }, [location]);
+    }, [location, currentRoomDetails]);
 
-    // Reset rooms when user logs out
     useEffect(() => {
         if (!authUser) {
             setRooms([]);
-            setSelectedRoom(null);
+            setCurrentRoomDetails(null);
+            setCurrentRoomError(null);
+            setListError(null);
         }
     }, [authUser]);
 
-    // Fetch rooms when auth state is ready and user is logged in
     useEffect(() => {
         if (!authLoading && authUser) {
             refreshRoomList();
@@ -128,16 +141,22 @@ export const RoomProvider = ({ children }) => {
         <RoomContext.Provider
             value={{
                 rooms,
-                selectedRoom,
-                setSelectedRoom,
+                currentRoomDetails,
+                setCurrentRoomDetails,
                 refreshRoomList,
                 searchPublicRooms,
-                selectRoom,
-                loading,
-                error,
+                loadCurrentRoomDetails,
+                listLoading,
+                listError,
+                currentRoomLoading,
+                currentRoomError,
             }}
         >
             {children}
         </RoomContext.Provider>
     );
+};
+
+RoomProvider.propTypes = {
+    children: PropTypes.node.isRequired,
 };

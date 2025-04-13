@@ -1,10 +1,13 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Mail, Key, Trash2, AlertTriangle, Loader2 } from "lucide-react"
 import ApiService from "../../services/ApiService"
 import { toast } from "react-hot-toast"
 
 const AccountSettings = ({ profileData, onProfileUpdate, onLogout }) => {
   const [formData, setFormData] = useState({
+    email: profileData?.email || "",
+  })
+  const [originalData, setOriginalData] = useState({
     email: profileData?.email || "",
   })
   const [showPasswordForm, setShowPasswordForm] = useState(false)
@@ -20,6 +23,13 @@ const AccountSettings = ({ profileData, onProfileUpdate, onLogout }) => {
     password: false,
     delete: false
   })
+
+  useEffect(() => {
+    if (profileData) {
+      setFormData({ email: profileData.email || "" })
+      setOriginalData({ email: profileData.email || "" })
+    }
+  }, [profileData])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -132,7 +142,7 @@ const AccountSettings = ({ profileData, onProfileUpdate, onLogout }) => {
           </div>
           <button
             type="submit"
-            disabled={loading.email}
+            disabled={loading.email || formData.email === originalData.email}
             className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:bg-blue-500/50 disabled:cursor-not-allowed"
           >
             {loading.email ? (

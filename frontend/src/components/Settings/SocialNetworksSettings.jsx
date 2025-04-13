@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Linkedin, Twitter, Loader2 } from 'lucide-react';
 import ApiService from '../../services/ApiService';
 import { toast } from 'react-hot-toast';
@@ -8,7 +8,22 @@ const SocialNetworks = ({ socialNetworks, onSocialNetworksUpdate }) => {
         linkedin: socialNetworks?.linkedin || '',
         twitter: socialNetworks?.twitter || ''
     });
+    const [originalData, setOriginalData] = useState({
+        linkedin: socialNetworks?.linkedin || '',
+        twitter: socialNetworks?.twitter || ''
+    });
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (socialNetworks) {
+            const newData = {
+                linkedin: socialNetworks.linkedin || '',
+                twitter: socialNetworks.twitter || ''
+            };
+            setFormData(newData);
+            setOriginalData(newData);
+        }
+    }, [socialNetworks]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -33,6 +48,9 @@ const SocialNetworks = ({ socialNetworks, onSocialNetworksUpdate }) => {
             [name]: value
         }));
     };
+
+    // Check if form data has changed
+    const hasChanged = formData.linkedin !== originalData.linkedin || formData.twitter !== originalData.twitter;
 
     return (
         <div className="space-y-6 bg-gray-800/50 p-6 rounded-xl">
@@ -72,7 +90,7 @@ const SocialNetworks = ({ socialNetworks, onSocialNetworksUpdate }) => {
 
                 <button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || !hasChanged}
                     className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:bg-blue-500/50 disabled:cursor-not-allowed"
                 >
                     {loading ? (

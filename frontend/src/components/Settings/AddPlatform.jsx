@@ -10,6 +10,11 @@ const AddPlatform = ({ onPlatformsUpdate, platforms }) => {
         githubUsername: platforms?.github?.username || '',
         codeforcesUsername: platforms?.codeforces?.username || ''
     });
+    const [originalData, setOriginalData] = useState({
+        leetcodeUsername: platforms?.leetcode?.username || '',
+        githubUsername: platforms?.github?.username || '',
+        codeforcesUsername: platforms?.codeforces?.username || ''
+    });
     const [isNewUser, setIsNewUser] = useState(false);
     const [loading, setLoading] = useState({
         leetcode: false,
@@ -22,6 +27,18 @@ const AddPlatform = ({ onPlatformsUpdate, platforms }) => {
         const params = new URLSearchParams(window.location.search);
         setIsNewUser(params.get('newUser') === 'true');
     }, []);
+
+    useEffect(() => {
+        if (platforms) {
+            const newFormData = {
+                leetcodeUsername: platforms?.leetcode?.username || '',
+                githubUsername: platforms?.github?.username || '',
+                codeforcesUsername: platforms?.codeforces?.username || ''
+            };
+            setFormData(newFormData);
+            setOriginalData(newFormData);
+        }
+    }, [platforms]);
 
     const updatePlatform = async (platform) => {
         const usernameKey = `${platform}Username`;
@@ -82,7 +99,7 @@ const AddPlatform = ({ onPlatformsUpdate, platforms }) => {
                     </div>
                     <button
                         onClick={() => updatePlatform('leetcode')}
-                        disabled={loading.leetcode || !formData.leetcodeUsername}
+                        disabled={loading.leetcode || !formData.leetcodeUsername || formData.leetcodeUsername === originalData.leetcodeUsername}
                         className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:bg-blue-500/50 disabled:cursor-not-allowed min-w-[120px]"
                     >
                         {loading.leetcode ? (
@@ -113,7 +130,7 @@ const AddPlatform = ({ onPlatformsUpdate, platforms }) => {
                     </div>
                     <button
                         onClick={() => updatePlatform('github')}
-                        disabled={loading.github || !formData.githubUsername}
+                        disabled={loading.github || !formData.githubUsername || formData.githubUsername === originalData.githubUsername}
                         className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:bg-blue-500/50 disabled:cursor-not-allowed min-w-[120px]"
                     >
                         {loading.github ? (
@@ -144,7 +161,7 @@ const AddPlatform = ({ onPlatformsUpdate, platforms }) => {
                     </div>
                     <button
                         onClick={() => updatePlatform('codeforces')}
-                        disabled={loading.codeforces || !formData.codeforcesUsername}
+                        disabled={loading.codeforces || !formData.codeforcesUsername || formData.codeforcesUsername === originalData.codeforcesUsername}
                         className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:bg-blue-500/50 disabled:cursor-not-allowed min-w-[120px]"
                     >
                         {loading.codeforces ? (
