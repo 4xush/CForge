@@ -66,7 +66,12 @@ exports.setupLeetCode = async (req, res) => {
 
         // Validate username
         try {
-            await checkLeetCodeUsername(leetcodeUsername);
+            const isValid = await checkLeetCodeUsername(leetcodeUsername);
+            if (!isValid) {
+                return res.status(400).json({
+                    message: "Invalid LeetCode username"
+                });
+            }
         } catch (error) {
             return res.status(400).json({
                 message: "Invalid LeetCode username"
@@ -125,7 +130,12 @@ exports.setupGitHub = async (req, res) => {
 
         // Validate username
         try {
-            await checkGitHubUsername(githubUsername);
+            const isValid = await checkGitHubUsername(githubUsername);
+            if (!isValid) {
+                return res.status(400).json({
+                    message: "Invalid GitHub username"
+                });
+            }
         } catch (error) {
             return res.status(400).json({
                 message: "Invalid GitHub username"
@@ -183,7 +193,12 @@ exports.setupCodeforces = async (req, res) => {
 
         // Validate username
         try {
-            await checkCodeforcesUsername(codeforcesUsername);
+            const isValid = await checkCodeforcesUsername(codeforcesUsername);
+            if (!isValid) {
+                return res.status(400).json({
+                    message: "Invalid Codeforces username"
+                });
+            }
         } catch (error) {
             return res.status(400).json({
                 message: "Invalid Codeforces username"

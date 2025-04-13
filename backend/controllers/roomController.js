@@ -2,11 +2,11 @@ const Room = require("../models/Room");
 const User = require("../models/User");
 const shortid = require('shortid');
 const { getLeetCodeStats } = require("../services/leetcode/leetcodeService");
+const { PlatformUsernameError } = require('../utils/customErrors');
 
 const isMember = (room, userId) => {
   return room.members.some((member) => member.toString() === userId.toString());
 };
-
 const hasAvailableSpace = (room) => {
   return room.members.length < room.maxMembers;
 };

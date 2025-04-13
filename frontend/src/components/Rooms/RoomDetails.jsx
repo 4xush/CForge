@@ -10,7 +10,6 @@ import { useAuthContext } from "../../context/AuthContext.jsx";
 import ApiService from "../../services/ApiService.js";
 import toast from "react-hot-toast";
 import PropTypes from "prop-types";
-import InviteLinkModal from "../InviteRoomJoin/InviteLinkModal.jsx";
 
 const RoomDetails = ({ roomDetails, loading, error, onInviteLinkGenerated }) => {
   const { authUser } = useAuthContext();
@@ -61,7 +60,7 @@ const RoomDetails = ({ roomDetails, loading, error, onInviteLinkGenerated }) => 
   const displayMembers = showAllMembers ? allMembers : allMembers.slice(0, 5);
 
   return (
-    <div className="p-3 h-full overflow-y-auto">
+    <div className="p-5 h-full overflow-y-auto">
       <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg p-3 mb-3">
         <div className="bg-white bg-opacity-20 w-14 h-14 rounded-full flex items-center justify-center text-2xl font-bold mb-2 mx-auto">
           #

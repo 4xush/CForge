@@ -39,12 +39,21 @@ const checkLeetCodeUsername = async (username) => {
       }
     );
 
-    return response.data.data.matchedUser !== null;
+    if (response.data.data.matchedUser === null) {
+      return false;
+    }
+    
+    return true;
   } catch (error) {
     if (error.response?.status === 429) {
       throw new Error(
         "LeetCode API rate limit exceeded. Please try again later."
       );
+    }
+    if (error.response?.status === 404 || 
+        (error.response?.data?.errors && 
+         error.response.data.errors.some(e => e.message.includes("not exist")))) {
+      return false;
     }
     console.error("LeetCode API error:", error.message || error);
     throw new Error(

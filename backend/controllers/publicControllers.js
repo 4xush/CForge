@@ -70,7 +70,22 @@ async function getLeetCodeHeatmap(leetcodeUsername) {
     }, {
         headers: { "Content-Type": "application/json" },
     });
-    return JSON.parse(response.data.data.matchedUser.submissionCalendar); // Returns { "timestamp": "count", ... }
+
+    // Add null checks before accessing submissionCalendar
+    const matchedUser = response.data?.data?.matchedUser;
+    const submissionCalendar = matchedUser?.submissionCalendar;
+
+    if (!submissionCalendar) {
+        console.warn(`No submissionCalendar found for LeetCode user: ${leetcodeUsername}`);
+        return {}; // Return empty object if data is missing
+    }
+
+    try {
+        return JSON.parse(submissionCalendar); // Returns { "timestamp": "count", ... }
+    } catch (parseError) {
+        console.error(`Error parsing submissionCalendar for LeetCode user ${leetcodeUsername}:`, parseError);
+        return {}; // Return empty object on parsing error
+    }
 }
 async function getGitHubHeatmap(githubUsername) {
     try {
