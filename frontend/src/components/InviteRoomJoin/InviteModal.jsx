@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from '../ui/Alert';
 import { Loader2, Users, Lock, Unlock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useRoomContext } from '../../context/RoomContext';
-const API_URI = import.meta.env.VITE_API_URI2;
+const API_URI = import.meta.env.VITE_API_URI;
 
 const InviteModal = () => {
     const location = useLocation();

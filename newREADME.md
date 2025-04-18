@@ -1,12 +1,13 @@
 ## Project Overview
 
-CodeForge is a collaborative platform designed for programmers to create rooms, share information, and track their progress across various coding platforms (LeetCode, GitHub, and Codeforces). The application provides features such as user authentication, room management, messaging, and platform statistics integration.
+C-Forge is a collaborative platform designed for programmers to create rooms, share information, and track their progress across various coding platforms (LeetCode, GitHub, and Codeforces). The application provides features such as user authentication, room management, messaging, and platform statistics integration.
 
 ## Architecture Analysis
 
 ### Backend Architecture
 
 The backend is built with:
+
 - **Framework**: Express.js (Node.js)
 - **Database**: MongoDB with Mongoose ODM
 - **Authentication**: JWT-based authentication
@@ -14,6 +15,7 @@ The backend is built with:
 - **Security**: Helmet for HTTP headers, CORS protection, and message encryption
 
 The architecture follows an MVC-like pattern:
+
 - Models: Define database schemas
 - Controllers: Handle request/response logic
 - Routes: Define API endpoints
@@ -23,6 +25,7 @@ The architecture follows an MVC-like pattern:
 ### Code Structure Evaluation
 
 **Strengths:**
+
 - Well-organized folder structure with clear separation of concerns
 - Consistent error handling patterns
 - Modular code with reusable components
@@ -30,6 +33,7 @@ The architecture follows an MVC-like pattern:
 - Good use of middleware for authentication
 
 **Areas for Improvement:**
+
 - Some controllers are too large (e.g., `authController.js`, `adminRoomController.js`)
 - Inconsistent use of async/await error handling (some use try/catch, others don't)
 - Duplicate code in platform service modules
@@ -38,6 +42,7 @@ The architecture follows an MVC-like pattern:
 ## Security Analysis
 
 **Implemented Security Measures:**
+
 - JWT authentication for protected routes
 - Password hashing with bcrypt
 - Message encryption for chat functionality
@@ -45,6 +50,7 @@ The architecture follows an MVC-like pattern:
 - HTTP security headers with helmet
 
 **Security Concerns:**
+
 1. Token refresh mechanism is missing
 2. No rate limiting for authentication endpoints
 3. Potential MongoDB injection vulnerabilities in some queries
@@ -54,18 +60,21 @@ The architecture follows an MVC-like pattern:
 ## API Design Evaluation
 
 The API follows RESTful conventions with appropriate HTTP methods:
+
 - GET for retrieving data
 - POST for creating resources
 - PUT for updating resources
 - DELETE for removing resources
 
 **Strengths:**
+
 - Logical endpoint naming
 - Proper use of HTTP status codes
 - Consistent response formats
 - Protected routes with middleware
 
 **Improvement Opportunities:**
+
 - Add API versioning (e.g., `/api/v1/...`)
 - Implement pagination consistently across all list endpoints
 - Add more comprehensive query parameter validation
@@ -74,17 +83,20 @@ The API follows RESTful conventions with appropriate HTTP methods:
 ## Database Schema Analysis
 
 The project uses three main collections:
+
 - User: Stores user information and platform stats
 - Room: Manages room details, members, and permissions
 - Message: Stores encrypted communications
 
 **Schema Design Evaluation:**
+
 - Good use of references between collections
 - Proper indexing for performance optimization
 - Appropriate data validation
 - Well-thought-out nested objects for platform data
 
 **Potential Improvements:**
+
 - Consider using transactions for operations that modify multiple documents
 - Add more granular indexing for specific query patterns
 - Add TTL index for temporary data like join requests
@@ -93,6 +105,7 @@ The project uses three main collections:
 ## Critical Updates Required
 
 1. **Security Fixes:**
+
    - Implement rate limiting on authentication routes
    - Add input sanitization for MongoDB queries
    - Remove sensitive error details from production responses
@@ -100,12 +113,14 @@ The project uses three main collections:
    - Strengthen password validation requirements
 
 2. **Performance Optimizations:**
+
    - Add caching for platform API responses
    - Optimize MongoDB queries with proper projection
    - Implement connection pooling
    - Add database query timeouts
 
 3. **Code Quality Improvements:**
+
    - Refactor large controllers into smaller, focused modules
    - Standardize error handling patterns
    - Add comprehensive JSDoc comments
@@ -120,9 +135,9 @@ The project uses three main collections:
 
 ## README.md
 
-# CodeForge
+# C-Forge
 
-CodeForge is a collaborative platform for programmers to track progress across coding platforms, create community rooms, and share knowledge.
+C-Forge is a collaborative platform for programmers to track progress across coding platforms, create community rooms, and share knowledge.
 
 ## Features
 
@@ -136,6 +151,7 @@ CodeForge is a collaborative platform for programmers to track progress across c
 ## Tech Stack
 
 ### Backend
+
 - Node.js with Express
 - MongoDB with Mongoose
 - JWT Authentication
@@ -143,6 +159,7 @@ CodeForge is a collaborative platform for programmers to track progress across c
 - Crypto for message encryption
 
 ### Frontend (not included in this analysis)
+
 - React.js
 - React Router
 - Redux for state management
@@ -152,11 +169,13 @@ CodeForge is a collaborative platform for programmers to track progress across c
 ## Getting Started
 
 ### Prerequisites
+
 - Node.js (v14+)
 - MongoDB
 - npm or yarn
 
 ### Environment Variables
+
 Create a `.env` file in the root directory with the following variables:
 
 ```
@@ -166,7 +185,7 @@ NODE_ENV=development
 
 # MongoDB Connection
 MONGO_URI=your_mongodb_connection_string
-MONGO_URI2=your_mongodb_connection_string_backup
+MONGO_URI=your_mongodb_connection_string_backup
 
 # JWT Authentication
 JWT_SECRET=your_jwt_secret_key
@@ -185,18 +204,21 @@ FRONTEND_URL=http://localhost:5173
 ### Installation
 
 1. Clone the repository
+
 ```bash
 git clone https://github.com/your-username/cforge.git
 cd cforge
 ```
 
 2. Install backend dependencies
+
 ```bash
 cd backend
 npm install
 ```
 
 3. Start the development server
+
 ```bash
 npm run dev
 ```
@@ -204,17 +226,20 @@ npm run dev
 ## API Documentation
 
 ### Authentication Endpoints
+
 - `POST /api/auth/signup`: Register a new user
 - `POST /api/auth/login`: Login with email and password
 - `POST /api/auth/google`: Authenticate with Google
 
 ### User Endpoints
+
 - `GET /api/users/profile`: Get current user profile
 - `POST /api/users/setup-platforms`: Set up coding platform usernames
 - `PUT /api/users/platform/refresh`: Refresh platform statistics
 - Various update endpoints for user settings
 
 ### Room Endpoints
+
 - `POST /api/rooms/create`: Create a new room
 - `GET /api/rooms`: Get all rooms for current user
 - `GET /api/rooms/search`: Search public rooms
@@ -223,18 +248,21 @@ npm run dev
 - `DELETE /api/rooms/:roomId/leave`: Leave a room
 
 ### Admin Room Endpoints
+
 - `PUT /api/rooms/admin/:roomId`: Update room details
 - `POST /api/rooms/admin/:roomId/admins/add`: Add a room admin
 - `POST /api/rooms/admin/:roomId/kick`: Kick a user from room
 - `POST /api/rooms/admin/:roomId/invite`: Generate room invite
 
 ### Message Endpoints
+
 - `POST /api/rooms/:roomId/messages`: Send a message
 - `GET /api/rooms/:roomId/messages`: Get room messages
 - `PUT /api/rooms/messages/:messageId`: Edit a message
 - `DELETE /api/rooms/messages/:messageId`: Delete a message
 
 ### Public Endpoints
+
 - `GET /api/u/:username`: Get public user profile
 - `GET /api/u/hmap/:username`: Get platform heatmaps
 - `GET /api/u/lc-stats/:username`: Get LeetCode question stats
@@ -263,7 +291,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Acknowledgements
 
 - LeetCode, GitHub and Codeforces for their APIs
-- The amazing open-source community for their tools and librariesProject overview -Cross-Platform Leaderboard 
-Integrate leaderboards that aggregate performance across multiple platforms like LeetCode, Codeforces, HackerRank, etc.,
-Allowing users to see their overall coding rank across platforms.
-This would provide a unified view of their competitive programming skills.
+- The amazing open-source community for their tools and librariesProject overview -Cross-Platform Leaderboard
+  Integrate leaderboards that aggregate performance across multiple platforms like LeetCode, Codeforces, HackerRank, etc.,
+  Allowing users to see their overall coding rank across platforms.
+  This would provide a unified view of their competitive programming skills.

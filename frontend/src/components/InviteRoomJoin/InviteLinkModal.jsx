@@ -32,7 +32,7 @@ const InviteLinkModal = ({ inviteData, onClose }) => {
     const handleShare = (platform) => {
         let url;
         const encodedLink = encodeURIComponent(inviteData.inviteLink);
-        const message = encodeURIComponent('Join my coding room on CodeForge!');
+        const message = encodeURIComponent('Join my coding room on C-Forge!');
 
         switch (platform) {
             case 'email':
@@ -70,9 +70,8 @@ const InviteLinkModal = ({ inviteData, onClose }) => {
                         </span>
                         <button
                             onClick={handleCopy}
-                            className={`p-1 rounded transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                copied ? 'text-green-400' : 'text-gray-400 hover:text-white'
-                            }`}
+                            className={`p-1 rounded transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 ${copied ? 'text-green-400' : 'text-gray-400 hover:text-white'
+                                }`}
                             aria-label={copied ? 'Link copied' : 'Copy invite link'}
                         >
                             {copied ? <Check size={16} /> : <Copy size={16} />}

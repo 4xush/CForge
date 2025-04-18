@@ -10,11 +10,11 @@ const createApiClient = (options = {}) => {
     timeout: options.timeout || 10000,
     headers: {
       'Content-Type': 'application/json',
-      'User-Agent': 'CodeForge/1.0.0',
+      'User-Agent': 'C-Forge/1.0.0',
       ...options.headers
     }
   });
-  
+
   // Response interceptor
   client.interceptors.response.use(
     response => response,
@@ -23,7 +23,7 @@ const createApiClient = (options = {}) => {
       if (error.response) {
         // API responded with error status
         const status = error.response.status;
-        
+
         if (status === 404) {
           error.customMessage = 'Resource not found';
           error.code = 'RESOURCE_NOT_FOUND';
@@ -44,18 +44,18 @@ const createApiClient = (options = {}) => {
         error.customMessage = 'Request configuration error';
         error.code = 'REQUEST_ERROR';
       }
-      
+
       console.error(`API Error (${error.code}): ${error.customMessage}`, {
         url: error.config?.url,
         method: error.config?.method,
         status: error.response?.status,
         data: error.response?.data
       });
-      
+
       return Promise.reject(error);
     }
   );
-  
+
   return client;
 };
 

@@ -126,7 +126,7 @@ const Settings = () => {
                             <Info className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
                             <div>
                                 <h3 className="font-medium text-white">
-                                    {isNewUser ? 'Welcome to CodeForge! 🎉' : 'Connect your LeetCode account'}
+                                    {isNewUser ? 'Welcome to C-Forge! 🎉' : 'Connect your LeetCode account'}
                                 </h3>
                                 <p className="text-gray-300 text-sm mt-1">
                                     {isNewUser

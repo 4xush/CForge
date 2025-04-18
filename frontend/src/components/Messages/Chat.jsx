@@ -8,21 +8,21 @@ import MessageInput from "./MessageInput";
 import ContextMenu from "./ChatContextMenu";
 import PublicUserProfileModal from "../../components/PublicUserProfileModal";
 import { format, isToday, isYesterday, isSameYear } from "date-fns";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw, ChevronDown } from "lucide-react";
 import { Spinner } from "../ui/Spinner";
 
 const Chat = () => {
     const { currentRoomDetails } = useRoomContext();
     const { authUser } = useAuthContext();
     const { socket, joinRoom, leaveRoom } = useWebSocket();
-    const { 
-        messages, 
-        loading, 
-        hasMore, 
+    const {
+        messages,
+        loading,
+        hasMore,
         error,
-        fetchMessages, 
-        addMessage, 
-        deleteMessage, 
+        fetchMessages,
+        addMessage,
+        deleteMessage,
         editMessage,
         setMessages
     } = useMessageContext();
@@ -32,11 +32,16 @@ const Chat = () => {
     const [loadingMore, setLoadingMore] = useState(false);
     const [profileModal, setProfileModal] = useState({ isOpen: false, username: null });
     const [scrollBehavior, setScrollBehavior] = useState("smooth");
+    const [showScrollButton, setShowScrollButton] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [isNearBottom, setIsNearBottom] = useState(true);
     const messagesEndRef = useRef(null);
     const contextMenuRef = useRef(null);
     const messagesContainerRef = useRef(null);
     const lastMessageCountRef = useRef(0);
     const isInitialLoadRef = useRef(true);
+    const lastScrollPositionRef = useRef(0);
+    const observerRef = useRef(null);
 
     // Fetch messages when room changes
     useEffect(() => {
@@ -49,21 +54,18 @@ const Chat = () => {
     // Join room when selected room changes - more stable implementation
     useEffect(() => {
         if (!currentRoomDetails?._id) return;
-        
-        // Track if we've already joined to prevent duplicate joins
+
         let hasJoined = false;
-        
-        // Join immediately if possible
+
         if (socket?.connected) {
             joinRoom(currentRoomDetails._id);
             hasJoined = true;
         }
-        
-        // Create a more stable interval with controlled execution
+
         let attempts = 0;
         const MAX_ATTEMPTS = 5;
-        const RETRY_INTERVAL = 5000; // 5 seconds
-        
+        const RETRY_INTERVAL = 5000;
+
         const intervalId = setInterval(() => {
             if (socket?.connected && !hasJoined && attempts < MAX_ATTEMPTS) {
                 joinRoom(currentRoomDetails._id);
@@ -74,7 +76,7 @@ const Chat = () => {
             }
             attempts++;
         }, RETRY_INTERVAL);
-        
+
         return () => {
             clearInterval(intervalId);
             if (hasJoined) {
@@ -88,26 +90,21 @@ const Chat = () => {
         if (!socket) return;
 
         const handleNewMessage = (message) => {
-            
-            // Check if this message is replacing a temporary one
-            const isReplacingTemp = messages.some(msg => 
-                msg.isTemporary && 
-                msg.content === message.content && 
+            const isReplacingTemp = messages.some(msg =>
+                msg.isTemporary &&
+                msg.content === message.content &&
                 msg.sender._id.toString() === message.sender._id.toString()
             );
 
             if (isReplacingTemp) {
-                
-                // Replace temporary message with the real one from server
-                setMessages(prevMessages => prevMessages.map(msg => 
-                    (msg.isTemporary && 
-                     msg.content === message.content && 
-                     msg.sender._id.toString() === message.sender._id.toString()) 
-                        ? message 
+                setMessages(prevMessages => prevMessages.map(msg =>
+                    (msg.isTemporary &&
+                        msg.content === message.content &&
+                        msg.sender._id.toString() === message.sender._id.toString())
+                        ? message
                         : msg
                 ));
             } else {
-                // Add new message from another user
                 addMessage(message);
             }
         };
@@ -119,21 +116,75 @@ const Chat = () => {
         };
     }, [socket, addMessage, messages, setMessages]);
 
-    // Smart scroll management
-    useEffect(() => {
-        if (!messagesContainerRef.current || messages.length === 0) return;
-        
-        const container = messagesContainerRef.current;
-        const isScrolledToBottom = container.scrollHeight - container.clientHeight <= container.scrollTop + 100;
-        const messageCountIncreased = messages.length > lastMessageCountRef.current;
-        
-        if (isInitialLoadRef.current || (isScrolledToBottom && messageCountIncreased)) {
-            messagesEndRef.current?.scrollIntoView({ behavior: scrollBehavior });
-            isInitialLoadRef.current = false;
+    // Scroll position handler
+    const handleScroll = useCallback(() => {
+        if (!messagesContainerRef.current) return;
+
+        const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+        const scrollPosition = scrollHeight - scrollTop - clientHeight;
+        const isBottom = scrollPosition < 100;
+
+        setShowScrollButton(!isBottom);
+        setIsNearBottom(isBottom);
+
+        if (!isBottom && scrollTop < lastScrollPositionRef.current) {
+            setUnreadCount(prev => prev + 1);
         }
-        
-        lastMessageCountRef.current = messages.length;
-    }, [messages, scrollBehavior]);
+
+        lastScrollPositionRef.current = scrollTop;
+    }, []);
+
+    // Scroll to bottom
+    const scrollToBottom = useCallback((behavior = "smooth") => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior });
+            setUnreadCount(0);
+            setShowScrollButton(false);
+        }
+    }, []);
+
+    // Intersection Observer for load more trigger
+    useEffect(() => {
+        if (!messagesContainerRef.current) return;
+
+        const options = {
+            root: messagesContainerRef.current,
+            threshold: 0.1,
+        };
+
+        const handleIntersect = (entries) => {
+            if (entries[0].isIntersecting && hasMore && !loadingMore) {
+                loadOlderMessages();
+            }
+        };
+
+        observerRef.current = new IntersectionObserver(handleIntersect, options);
+
+        const firstMessage = messagesContainerRef.current.firstElementChild;
+        if (firstMessage) {
+            observerRef.current.observe(firstMessage);
+        }
+
+        return () => observerRef.current?.disconnect();
+    }, [hasMore, loadingMore, messages]);
+
+    // Auto-scroll handling
+    useEffect(() => {
+        if (!messagesContainerRef.current) return;
+
+        const shouldAutoScroll = isNearBottom || isInitialLoadRef.current;
+
+        if (shouldAutoScroll) {
+            scrollToBottom(isInitialLoadRef.current ? "auto" : "smooth");
+            isInitialLoadRef.current = false;
+        } else if (!loadingMore) {
+            setUnreadCount(prev => prev + 1);
+        }
+
+        const container = messagesContainerRef.current;
+        container.addEventListener('scroll', handleScroll);
+        return () => container.removeEventListener('scroll', handleScroll);
+    }, [messages, isNearBottom, loadingMore, handleScroll, scrollToBottom]);
 
     // Handle click outside context menu
     useEffect(() => {
@@ -142,7 +193,7 @@ const Chat = () => {
                 closeContextMenu();
             }
         };
-        
+
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
@@ -152,8 +203,8 @@ const Chat = () => {
         if (!hasMore || loadingMore || !messages.length) return;
 
         setLoadingMore(true);
-        setScrollBehavior("auto"); // Disable smooth scrolling during loading to maintain position
-        
+        setScrollBehavior("auto");
+
         try {
             const oldestMessage = messages[0];
             await fetchMessages(oldestMessage._id);
@@ -171,7 +222,7 @@ const Chat = () => {
         if (message.sender._id === authUser._id) return true;
         return currentRoomDetails?.admins?.some((admin) => admin.toString() === authUser._id.toString());
     }, [authUser, currentRoomDetails]);
-    
+
     // Handle context menu
     const handleContextMenu = useCallback((e, messageId) => {
         e.preventDefault();
@@ -179,7 +230,7 @@ const Chat = () => {
         if (canModifyMessage(message)) {
             setContextMenu({
                 visible: true,
-                x: Math.min(e.clientX, window.innerWidth - 200), // Prevent menu from going off-screen
+                x: Math.min(e.clientX, window.innerWidth - 200),
                 y: Math.min(e.clientY, window.innerHeight - 150),
                 messageId,
             });
@@ -190,7 +241,6 @@ const Chat = () => {
     const closeContextMenu = () => {
         setContextMenu({ visible: false, x: 0, y: 0, messageId: null });
     };
-
 
     // Handle message deletion
     const handleDeleteMessage = async (messageId) => {
@@ -299,27 +349,14 @@ const Chat = () => {
     }, {});
 
     return (
-        <div className="flex flex-col h-full">
-            <div 
+        <div className="flex flex-col h-full relative">
+            <div
                 ref={messagesContainerRef}
                 className="flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800"
             >
-                {hasMore && (
+                {loadingMore && (
                     <div className="text-center py-2">
-                        <button
-                            onClick={loadOlderMessages}
-                            disabled={loadingMore}
-                            className="px-4 py-2 text-sm bg-gray-800 text-gray-300 rounded-md hover:bg-gray-700 disabled:bg-gray-800 disabled:text-gray-500 transition-colors duration-200 flex items-center justify-center mx-auto"
-                        >
-                            {loadingMore ? (
-                                <>
-                                    <Spinner size="small" className="mr-2" />
-                                    Loading...
-                                </>
-                            ) : (
-                                "Load older messages"
-                            )}
-                        </button>
+                        <Spinner size="small" />
                     </div>
                 )}
 
@@ -372,8 +409,32 @@ const Chat = () => {
                         </div>
                     </div>
                 )}
-                
+
                 <div ref={messagesEndRef} />
+            </div>
+
+            {showScrollButton && (
+                <button
+                    onClick={() => scrollToBottom()}
+                    className="absolute bottom-20 right-6 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full shadow-lg transition-all duration-200 flex items-center space-x-2"
+                >
+                    <ChevronDown size={20} />
+                    {unreadCount > 0 && (
+                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                            {unreadCount}
+                        </span>
+                    )}
+                </button>
+            )}
+
+            <div className="px-4 py-2 border-t border-gray-800">
+                <MessageInput
+                    onMessageSent={(message) => {
+                        addMessage(message);
+                        scrollToBottom();
+                    }}
+                    disabled={!currentRoomDetails}
+                />
             </div>
 
             {contextMenu.visible && (
@@ -397,14 +458,6 @@ const Chat = () => {
                 </div>
             )}
 
-            <div className="px-4 py-2">
-                <MessageInput 
-                    onMessageSent={addMessage} 
-                    disabled={!currentRoomDetails} 
-                />
-            </div>
-
-            {/* User Profile Modal */}
             <PublicUserProfileModal
                 username={profileModal.username}
                 isOpen={profileModal.isOpen}

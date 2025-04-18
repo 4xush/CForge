@@ -10,6 +10,7 @@ export const MessageProvider = ({ children }) => {
     const [loading, setLoading] = useState(false)
     const [hasMore, setHasMore] = useState(true)
     const [error, setError] = useState(null)
+    const [isTyping, setIsTyping] = useState({})
     const { authUser } = useAuthContext()
     const { currentRoomDetails } = useRoomContext()
     const fetchIdRef = useRef(0)
@@ -26,19 +27,16 @@ export const MessageProvider = ({ children }) => {
                 const query = lastMessageId ? `?lastMessageId=${lastMessageId}&limit=50` : "?limit=50"
                 const response = await api.get(`/rooms/${currentRoomDetails._id}/messages${query}`)
 
-                // Only update state if this is the latest fetch request
                 if (currentFetchId === fetchIdRef.current) {
                     setMessages((prevMessages) => {
-                        // Inside fetchMessages setMessages callback
                         const newMessages = response.data.messages;
 
                         if (!lastMessageId) {
-                            // Initial load: reverse messages to show oldest -> newest
-                            return newMessages.reverse();
+                            // Initial load: messages should be in chronological order
+                            return [...newMessages].reverse();
                         } else {
-                            // Loading more: reverse older messages and prepend
-                            const reversedMessages = newMessages.reverse();
-                            const uniqueNewMessages = reversedMessages.filter(
+                            // Loading more: prepend older messages
+                            const uniqueNewMessages = [...newMessages].reverse().filter(
                                 (newMsg) => !prevMessages.some((prevMsg) => prevMsg._id === newMsg._id)
                             );
                             return [...uniqueNewMessages, ...prevMessages];
@@ -61,15 +59,12 @@ export const MessageProvider = ({ children }) => {
 
     const addMessage = useCallback(
         (newMessage) => {
-            // console.log("Adding message to context:", newMessage);
-            
-            // If the message already has sender info, use it directly
+            // Add new messages at the end of the list
             if (newMessage.sender && typeof newMessage.sender === 'object') {
                 setMessages((prevMessages) => [...prevMessages, newMessage]);
                 return;
             }
-            
-            // Otherwise, construct a full message object
+
             setMessages((prevMessages) => [
                 ...prevMessages,
                 {
@@ -87,7 +82,7 @@ export const MessageProvider = ({ children }) => {
     )
 
     const updateMessage = useCallback((messageId, updatedMessage) => {
-        setMessages(prevMessages => 
+        setMessages(prevMessages =>
             prevMessages.map(msg => msg._id === messageId ? updatedMessage : msg)
         );
     }, []);
@@ -113,6 +108,15 @@ export const MessageProvider = ({ children }) => {
         }
     }, [])
 
+    const handleTypingStart = useCallback((userId) => {
+        setIsTyping(prev => ({ ...prev, [userId]: true }));
+
+        // Clear typing indicator after 3 seconds
+        setTimeout(() => {
+            setIsTyping(prev => ({ ...prev, [userId]: false }));
+        }, 3000);
+    }, []);
+
     return (
         <MessageContext.Provider
             value={{
@@ -125,7 +129,9 @@ export const MessageProvider = ({ children }) => {
                 updateMessage,
                 deleteMessage,
                 editMessage,
-                setMessages
+                setMessages,
+                isTyping,
+                handleTypingStart
             }}
         >
             {children}
