@@ -1,22 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <!-- Character encoding -->
     <meta charset="UTF-8" />
-    <link rel="icon" href="/logo.png" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <!-- Viewport settings -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Primary Meta Tags -->
+    <!-- Favicon -->
+    <link rel="icon" href="/logo.png" type="image/png" />
+
+    <!-- Title & Meta -->
     <title>C-Forge</title>
     <meta name="title" content="C-Forge" />
     <meta
       name="description"
-      content="C-Forge - A platform connecting developers with programming tools and resources."
+      content="C-Forge is a collaborative platform connecting developers with tools, rooms, messaging, and coding statistics from LeetCode, GitHub, and Codeforces."
     />
     <meta
       name="keywords"
-      content="C-Forge, programming, coding, developer tools, software development"
+      content="C-Forge, coding platform, developer tools, LeetCode, GitHub, Codeforces, programming community"
     />
     <meta name="author" content="C-Forge Team" />
+    <meta name="robots" content="index, follow" />
+    <meta name="language" content="en" />
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://cforge.live/" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
@@ -24,37 +35,35 @@
     <meta property="og:title" content="C-Forge" />
     <meta
       property="og:description"
-      content="Discover C-Forge - Your coding companion."
+      content="Join C-Forge — a collaborative platform to connect developers, track your coding progress, and grow together."
     />
     <meta property="og:image" content="https://cforge.live/og-image.png" />
 
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://cforge.live/" />
-    <meta property="twitter:title" content="C-Forge" />
+    <!-- Twitter Meta -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://cforge.live/" />
+    <meta name="twitter:title" content="C-Forge" />
     <meta
-      property="twitter:description"
-      content="Discover C-Forge - Your coding companion."
-    />
-    <meta
-      property="twitter:image"
-      content="https://cforge.live/twitter-image.png"
+      name="twitter:description"
+      content="Join C-Forge — your all-in-one coding companion."
     />
 
-    <!-- Canonical URL -->
-    <link rel="canonical" href="https://cforge.live/" />
-
-    <!-- Google Font -->
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
       rel="stylesheet"
     />
 
-    <!-- Other optional meta tags -->
-    <meta name="robots" content="index, follow" />
-    <meta name="language" content="English" />
+    <!-- Performance optimizations -->
+    <link rel="preload" as="script" href="/src/main.jsx" />
+    <meta name="theme-color" content="#6b46c1" />
   </head>
-  <body>
+
+  <body
+    style="margin: 0; padding: 0; font-family: 'Press Start 2P', sans-serif"
+  >
+    <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
