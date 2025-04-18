@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Code2, Github, RotateCw, Trophy, ChevronDown,
-    BarChart2, RefreshCw, Calendar, Star, Zap, Award, TrendingUp
+    Code2, Github, Trophy,
+    BarChart2, RefreshCw, Award, TrendingUp
 } from 'lucide-react';
 import ApiService from '../services/ApiService';
 import { ProfileHeader } from './Profile/ProfileHeader';
@@ -10,7 +10,7 @@ import { PlatformCard, getPlatformStats } from './Profile/PlatformCards';
 import ActivityHeatmap from './Profile/ActivityHeatmap';
 import { useHeatmapData } from '../hooks/useHeatmapData';
 import LeetCodeDashboard from './Profile/LeetCodeDashboard';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from './ui/dialog';
 import { Button } from './ui/Button';
 
 const TabButton = ({ active, onClick, icon: Icon, children }) => (
@@ -83,15 +83,13 @@ const UserProfile = () => {
             await ApiService.put('users/platform/refresh');
             await fetchProfile();
         } catch (err) {
-            setError('Failed to refresh platform data. Please try again later.');
+            setError(`Failed to refresh platform data: ${err.message}`);
         } finally {
             setRefreshing(false);
         }
     };
 
-    const combinedLoading = loading || heatmapLoading;
-
-    if (combinedLoading) {
+    if (loading) {
         return (
             <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-gray-900 to-purple">
                 <div className="flex flex-col items-center gap-4">
@@ -134,30 +132,18 @@ const UserProfile = () => {
             </div>
         </div>
     );
-    if (!user.isProfileComplete) {
-        return (<Dialog>
-            <DialogContent>
-                <DialogTitle>Complete Your Profile</DialogTitle>
-                <p>Please complete your profile by adding your LeetCode profile in the settings.</p>
-                <Button onClick={navigate('/settings?tab=platforms')}>Complete Profile</Button>
-            </DialogContent>
-        </Dialog>);
-    }
 
-    if (heatmapError) return (
-        <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-gray-900 to-purple">
-            <div className="bg-gray-800 border border-yellow-500 rounded-xl p-8 max-w-lg text-center">
-                <div className="text-yellow-500 text-xl font-bold mb-4">Activity Data Unavailable</div>
-                <p className="text-gray-300">Failed to load activity history. Your profile information is still available.</p>
-                <button
-                    onClick={() => window.location.reload()}
-                    className="mt-6 px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-xl text-white font-bold transition-all"
-                >
-                    Try Again
-                </button>
-            </div>
-        </div>
-    );
+    if (!user.isProfileComplete) {
+        return (
+            <Dialog>
+                <DialogContent>
+                    <DialogTitle>Complete Your Profile</DialogTitle>
+                    <p>Please complete your profile by adding your LeetCode profile in the settings.</p>
+                    <Button onClick={() => navigate('/settings?tab=platforms')}>Complete Profile</Button>
+                </DialogContent>
+            </Dialog>
+        );
+    }
 
     const leetcodeData = user.platforms.leetcode;
     const platformStats = getPlatformStats(user);
@@ -227,25 +213,46 @@ const UserProfile = () => {
                                 { platform: 'leetcode', data: heatmapData?.leetcode, icon: Code2, color: 'text-yellow-400' },
                                 { platform: 'github', data: heatmapData?.github, icon: Github, color: 'text-blue-400' },
                                 { platform: 'codeforces', data: heatmapData?.codeforces, icon: TrendingUp, color: 'text-red-500' }
-                            ].map(({ platform, data, icon: Icon, color }) =>
-                                data && Object.keys(data).length > 0 && (
-                                    <div
-                                        key={platform}
-                                        className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl shadow-lg p-6 transform transition-all duration-300 hover:shadow-xl hover:border-indigo-500"
-                                    >
-                                        <div className="flex items-center gap-3 mb-6">
-                                            <Icon className={`w-6 h-6 ${color}`} />
-                                            <h3 className="text-xl font-bold text-white capitalize">
-                                                {platform} Activity
-                                            </h3>
+                            ].map(({ platform, data, icon: Icon, color }) => (
+                                <div
+                                    key={platform}
+                                    className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl shadow-lg p-6 transform transition-all duration-300 hover:shadow-xl hover:border-indigo-500"
+                                >
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <Icon className={`w-6 h-6 ${color}`} />
+                                        <h3 className="text-xl font-bold text-white capitalize">
+                                            {platform} Activity
+                                        </h3>
+                                    </div>
+                                    {heatmapLoading ? (
+                                        <div className="flex justify-center items-center h-32">
+                                            <div className="flex flex-col items-center gap-4">
+                                                <div className="w-12 h-12 relative">
+                                                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-full animate-ping opacity-75"></div>
+                                                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-full"></div>
+                                                </div>
+                                                <p className="text-gray-300 font-medium">Loading {platform} activity...</p>
+                                            </div>
                                         </div>
+                                    ) : heatmapError ? (
+                                        <div className="flex justify-center items-center h-32">
+                                            <div className="text-center">
+                                                <p className="text-yellow-500 font-bold">Failed to load {platform} activity</p>
+                                                <p className="text-gray-400 mt-2">Please try again later.</p>
+                                            </div>
+                                        </div>
+                                    ) : data && Object.keys(data).length > 0 ? (
                                         <ActivityHeatmap
                                             data={data}
                                             platform={platform}
                                         />
-                                    </div>
-                                )
-                            )}
+                                    ) : (
+                                        <div className="flex justify-center items-center h-32">
+                                            <p className="text-gray-400">No activity data available for {platform}.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
                         </div>
                     </div>
                 ) : (

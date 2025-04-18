@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Search, RefreshCw } from 'lucide-react';
+import { Search, RefreshCw, ChevronDown } from 'lucide-react';
 import { useAuthContext } from '../../context/AuthContext';
 import { useRoomContext } from '../../context/RoomContext';
 import toast from 'react-hot-toast';
 import { getLeaderboard, refreshLeaderboard } from '../../api/authApi';
-import SortButton from './SortButton';
 import { TopUserCard } from './TopUserCard';
 import Pagination from './Pagination';
 import { LeaderboardTable } from './LeaderboardTable';
@@ -24,8 +23,8 @@ const CodingLeaderboard = () => {
     const [totalCount, setTotalCount] = useState(0);
     const [highlightedUserId, setHighlightedUserId] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
-    const [showSearchInput, setShowSearchInput] = useState(false);
     const [profileModal, setProfileModal] = useState({ isOpen: false, username: null });
+    const [dropdownOpen, setDropdownOpen] = useState(false);
 
     const limitOptions = [10, 20, 50, 100];
 
@@ -49,10 +48,10 @@ const CodingLeaderboard = () => {
         setError(null);
         try {
             const data = await getLeaderboard(
-                currentRoomDetails.roomId, 
-                sortBy, 
-                limit, 
-                pageNum, 
+                currentRoomDetails.roomId,
+                sortBy,
+                limit,
+                pageNum,
                 selectedPlatform
             );
 
@@ -99,21 +98,22 @@ const CodingLeaderboard = () => {
 
     useEffect(() => {
         if (currentRoomDetails?.roomId && !currentRoomLoading) {
-            const defaultSort = platformSortOptions[selectedPlatform][0].value;
-            if (sortBy !== defaultSort) {
-                setSortBy(defaultSort);
-            } else {
-                fetchLeaderboard(1);
-            }
+            fetchLeaderboard(1);
         }
     }, [currentRoomDetails?.roomId, currentRoomLoading, sortBy, limit, selectedPlatform]);
 
     const handleSort = (newSortBy) => {
         setSortBy(newSortBy);
         setPage(1);
+        setDropdownOpen(false);
     };
 
     const handleShowMyPlace = () => {
+        if (highlightedUserId) {
+            setHighlightedUserId(null);
+            return;
+        }
+
         if (!authUser) {
             toast.error("Please login to use this feature");
             return;
@@ -161,10 +161,10 @@ const CodingLeaderboard = () => {
                 allUsers = [...allUsers, ...data.members];
 
                 const foundUser = data.members.find(user => {
-                    const platformUsername = selectedPlatform === 'leetcode' 
-                        ? user.platforms?.leetcode?.username 
+                    const platformUsername = selectedPlatform === 'leetcode'
+                        ? user.platforms?.leetcode?.username
                         : user.platforms?.codeforces?.username;
-                    
+
                     return user.fullName.toLowerCase().includes(searchTermLower) ||
                         (platformUsername && platformUsername.toLowerCase().includes(searchTermLower));
                 });
@@ -172,10 +172,10 @@ const CodingLeaderboard = () => {
                 if (foundUser) {
                     const userIndex = allUsers.findIndex(u => u._id === foundUser._id);
                     const targetPage = Math.floor(userIndex / limit) + 1;
-                    
+
                     setUsers(allUsers.slice(0, targetPage * limit));
                     setPage(targetPage);
-                    
+
                     setHighlightedUserId(foundUser._id);
                     setTimeout(() => {
                         const element = document.getElementById(`user-row-${foundUser._id}`);
@@ -189,7 +189,7 @@ const CodingLeaderboard = () => {
 
                 if (allUsers.length >= totalCount) {
                     break;
-                }    
+                }
                 currentPage++;
             }
             toast.error("User not found");
@@ -224,8 +224,9 @@ const CodingLeaderboard = () => {
     };
 
     const handlePlatformChange = (newPlatform) => {
+        const defaultSort = platformSortOptions[newPlatform][0].value;
         setSelectedPlatform(newPlatform);
-        setSortBy(platformSortOptions[newPlatform][0].value);
+        setSortBy(defaultSort);
         setPage(1);
     };
 
@@ -239,168 +240,198 @@ const CodingLeaderboard = () => {
     }
 
     if (error) {
-        return <div className="text-red-500 text-center p-4">Error loading leaderboard: {error}</div>;
+        return <div className="text-red-500 text-center p-4 font-medium">Error loading leaderboard: {error}</div>;
     }
 
     return (
-        <div className="bg-gray-900 text-white">
+        <div className="bg-gray-900 text-white h-full flex flex-col">
+            {/* Main content with proper scrolling */}
+            <div className="flex flex-col h-full overflow-hidden">
+                {/* Fixed Headers */}
+                <div className="bg-gray-900 border-b border-gray-800 pb-2">
+                    {/* Platform selectors and controls row */}
+                    <div className="flex justify-between items-center px-2">
+                        <div className="flex space-x-2">
+                            <button
+                                onClick={() => handlePlatformChange('leetcode')}
+                                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${selectedPlatform === 'leetcode'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                                    }`}
+                            >
+                                LeetCode
+                            </button>
+                            <button
+                                onClick={() => handlePlatformChange('codeforces')}
+                                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${selectedPlatform === 'codeforces'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                                    }`}
+                            >
+                                Codeforces
+                            </button>
+                        </div>
 
-            <div className="flex justify-between items-center mb-4">
-                <div className="flex space-x-2">
-                    <div className="flex space-x-1 bg-gray-800 rounded-lg p-1">
-                        <button
-                            onClick={() => handlePlatformChange('leetcode')}
-                            className={`px-3 py-1 rounded-md transition-colors ${
-                                selectedPlatform === 'leetcode' 
-                                    ? 'bg-blue-500 text-white' 
-                                    : 'text-gray-300 hover:bg-gray-700'
-                            }`}
-                        >
-                            LeetCode
-                        </button>
-                        <button
-                            onClick={() => handlePlatformChange('codeforces')}
-                            className={`px-3 py-1 rounded-md transition-colors ${
-                                selectedPlatform === 'codeforces' 
-                                    ? 'bg-blue-500 text-white' 
-                                    : 'text-gray-300 hover:bg-gray-700'
-                            }`}
-                        >
-                            Codeforces
-                        </button>
-                    </div>
+                        <div className="flex items-center space-x-2">
+                            {/* Sort Dropdown */}
+                            <div className="relative">
+                                <button
+                                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                                    className="bg-gray-800 px-3 py-1.5 rounded flex items-center text-sm hover:bg-gray-700 transition-colors w-40 justify-between"
+                                >
+                                    <span className="truncate">
+                                        {platformSortOptions[selectedPlatform].find(opt => opt.value === sortBy)?.label || 'Sort by'}
+                                    </span>
+                                    <ChevronDown size={16} className={`ml-1 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                                {dropdownOpen && (
+                                    <div className="absolute right-0 mt-1 w-40 bg-gray-800 rounded-md shadow-lg z-10 border border-gray-700">
+                                        <div>
+                                            {platformSortOptions[selectedPlatform].map((option) => (
+                                                <button
+                                                    key={option.value}
+                                                    onClick={() => {
+                                                        handleSort(option.value);
+                                                        setDropdownOpen(false);
+                                                    }}
+                                                    className={`block w-full text-left px-4 py-2 text-sm rounded-md ${sortBy === option.value
+                                                        ? 'bg-blue-600 text-white'
+                                                        : 'text-gray-300 hover:bg-gray-700'
+                                                        }`}
+                                                >
+                                                    {option.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
 
-                    <div className="flex space-x-2">
-                        {platformSortOptions[selectedPlatform].map((option) => (
-                            <SortButton
-                                key={option.value}
-                                sortBy={sortBy}
-                                current={option.value}
-                                handleSort={handleSort}
-                                label={option.label}
-                            />
-                        ))}
+                            <button
+                                onClick={handleRefresh}
+                                disabled={loading}
+                                className="bg-gray-800 px-3 py-1.5 rounded flex items-center text-sm hover:bg-gray-700 transition-colors disabled:opacity-50"
+                            >
+                                <RefreshCw size={14} className={loading ? "animate-spin mr-1" : "mr-1"} />
+                                <span>Update Stats</span>
+                            </button>
+
+                            <select
+                                value={limit}
+                                onChange={(e) => {
+                                    setLimit(Number(e.target.value));
+                                    setPage(1);
+                                }}
+                                className="bg-gray-800 px-3 py-1.5 rounded text-sm hover:bg-gray-700 transition-colors h-[32px]"
+                            >
+                                {limitOptions.map(option => (
+                                    <option key={option} value={option}>
+                                        {option} per page
+                                    </option>
+                                ))}
+                            </select>
+
+                            <button
+                                onClick={handleShowMyPlace}
+                                className={`px-3 py-1.5 rounded text-sm transition-colors ${highlightedUserId
+                                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                                    }`}
+                            >
+                                {highlightedUserId ? 'Clear highlight' : 'Show my place'}
+                            </button>
+
+                            <form onSubmit={handleSearch} className="flex items-center relative">
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="Search user..."
+                                    className="bg-gray-800 px-3 py-1.5 rounded-l text-sm focus:outline-none w-64"
+                                    onFocus={(e) => e.target.placeholder = ''}
+                                    onBlur={(e) => e.target.placeholder = 'Search user...'}
+                                />
+                                {searchQuery && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setSearchQuery('')}
+                                        className="absolute right-12 text-gray-400 hover:text-white"
+                                    >
+                                        ×
+                                    </button>
+                                )}
+                                <button
+                                    type="submit"
+                                    className="bg-gray-700 px-3 py-2 rounded-r flex items-center justify-center text-sm hover:bg-gray-600 transition-colors w-10"
+                                    disabled={loading}
+                                >
+                                    <Search size={16} />
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
 
-                <div className="flex space-x-2 items-center">
-                    {(authUser || currentRoomDetails?.admins?.some(admin => admin.username === authUser?.username)) && (
-                        <button
-                            onClick={handleRefresh}
-                            disabled={loading}
-                            className="bg-gray-800 px-3 py-1 rounded flex items-center text-sm hover:bg-gray-700 transition-colors disabled:opacity-50"
-                        >
-                            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-                            <span className="ml-1">Update {selectedPlatform === 'leetcode' ? 'LeetCode' : 'Codeforces'} Stats</span>
-                        </button>
-                    )}
-                    <select
-                        value={limit}
-                        onChange={(e) => {
-                            setLimit(Number(e.target.value));
-                            setPage(1);
-                        }}
-                        className="bg-gray-800 px-2 py-1 rounded flex items-center text-sm hover:bg-gray-700 transition-colors disabled:opacity-50"
-                    >
-                        {limitOptions.map(option => (
-                            <option key={option} value={option}>
-                                {option} per page
-                            </option>
-                        ))}
-                    </select>
-                    {authUser && (
-                        <button
-                            onClick={handleShowMyPlace}
-                            className="bg-gray-800 px-3 py-1 rounded text-sm hover:bg-gray-700 transition-colors"
-                        >
-                            Show my place
-                        </button>
-                    )}
-                    {highlightedUserId && (
-                        <button
-                            onClick={() => setHighlightedUserId(null)}
-                            className="bg-gray-800 px-3 py-1 rounded text-sm hover:bg-gray-700 transition-colors"
-                        >
-                            Clear highlight
-                        </button>
-                    )}
-
-                    {showSearchInput ? (
-                        <form onSubmit={handleSearch} className="flex items-center">
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Search user..."
-                                className="bg-gray-800 px-3 py-1 rounded-l text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            />
-                            <button
-                                type="submit"
-                                className="bg-gray-800 px-3 py-1 rounded-r flex items-center text-sm hover:bg-gray-700 transition-colors"
-                                disabled={loading}
-                            >
-                                <Search size={14} />
-                            </button>
-                        </form>
+                {/* Scrollable Content Area */}
+                <div className="flex-1 overflow-y-auto p-2">
+                    {loading ? (
+                        <div className="flex justify-center items-center h-64">
+                            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                            <p className="ml-4 text-gray-400">Loading leaderboard...</p>
+                        </div>
                     ) : (
-                        <button
-                            onClick={() => setShowSearchInput(true)}
-                            className="bg-gray-800 px-3 py-1 rounded flex items-center text-sm hover:bg-gray-700 transition-colors"
-                        >
-                            <Search size={14} />
-                            <span className="ml-1">Search</span>
-                        </button>
+                        <>
+                            {/* Top Users */}
+                            {topUsers.length > 0 && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                                    {topUsers.map((user, index) => (
+                                        <TopUserCard
+                                            key={user._id}
+                                            user={user}
+                                            index={index}
+                                            isHighlighted={user._id === highlightedUserId}
+                                            onProfileClick={handleProfileClick}
+                                            platform={selectedPlatform}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Table */}
+                            {users.length > 0 ? (
+                                <div className="bg-gray-800 rounded-lg overflow-hidden">
+                                    <LeaderboardTable
+                                        users={users}
+                                        page={page}
+                                        limit={limit}
+                                        highlightedUserId={highlightedUserId}
+                                        onProfileClick={handleProfileClick}
+                                        platform={selectedPlatform}
+                                        sortBy={sortBy}
+                                    />
+                                </div>
+                            ) : (
+                                <div className="text-center py-16 text-gray-400 bg-gray-800 rounded-lg">
+                                    <p className="text-lg font-medium">No users found</p>
+                                    <p className="text-sm mt-2">No data available for {selectedPlatform === 'leetcode' ? 'LeetCode' : 'Codeforces'} leaderboard</p>
+                                </div>
+                            )}
+                        </>
                     )}
+                </div>
+
+                {/* Fixed Footer */}
+                <div className="bg-gray-900 border-t border-gray-800 p-3">
+                    <Pagination
+                        page={page}
+                        totalCount={totalCount}
+                        limit={limit}
+                        setPage={setPage}
+                    />
                 </div>
             </div>
-            
-            {loading ? (
-                 <div className="flex justify-center items-center h-64">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-                    <p className="ml-4 text-gray-400">Loading leaderboard...</p>
-                </div>
-            ) : (
-                <>
-                    {topUsers.length > 0 && (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                            {topUsers.map((user, index) => (
-                                <TopUserCard
-                                    key={user._id}
-                                    user={user}
-                                    index={index}
-                                    isHighlighted={user._id === highlightedUserId}
-                                    onProfileClick={handleProfileClick}
-                                    platform={selectedPlatform}
-                                />
-                            ))}
-                        </div>
-                    )}
-                    {users.length > 0 ? (
-                        <>
-                            <LeaderboardTable
-                                users={users}
-                                page={page}
-                                limit={limit}
-                                highlightedUserId={highlightedUserId}
-                                onProfileClick={handleProfileClick}
-                                platform={selectedPlatform}
-                                sortBy={sortBy}
-                            />
-                            <Pagination
-                                page={page}
-                                totalCount={totalCount}
-                                limit={limit}
-                                setPage={setPage}
-                            />
-                        </>
-                    ) : (
-                         <div className="text-center py-10 text-gray-500">
-                            No users found in this leaderboard for {selectedPlatform}.
-                        </div>
-                    )}
-                </>
-            )}
 
+            {/* Profile Modal */}
             <PublicUserProfileModal
                 username={profileModal.username}
                 isOpen={profileModal.isOpen}

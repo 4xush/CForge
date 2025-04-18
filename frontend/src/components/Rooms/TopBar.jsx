@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { MoreVertical, LogOut, X, Settings } from "lucide-react";
+import { MoreVertical, LogOut, X, Settings, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import CenteredRoomDetailsModal from "./CenteredRoomDetailsModal";
@@ -17,7 +17,8 @@ const TopBar = ({ roomId }) => {
     currentRoomDetails,
     currentRoomLoading,
     currentRoomError,
-    setCurrentRoomDetails
+    setCurrentRoomDetails,
+    loadCurrentRoomDetails
   } = useRoomContext();
   const { authUser } = useAuthContext();
 
@@ -46,15 +47,15 @@ const TopBar = ({ roomId }) => {
     setActiveComponent(null);
   };
 
-  const handleRoomUpdate = async (updatedRoomData) => {
+  const handleRoomUpdate = async () => {
     setUpdatingRoom(true);
     try {
-      setCurrentRoomDetails(updatedRoomData);
+      await loadCurrentRoomDetails(roomId);
       setSettingsKey(Date.now());
-      toast.success("Room updated successfully");
+      toast.success("Room updated successfully and details refreshed");
     } catch (err) {
-      console.error("Error updating room display:", err);
-      toast.error("Error updating room display");
+      console.error("Error triggering room details refetch after update:", err);
+      toast.error("Failed to refresh room details after update.");
     } finally {
       setUpdatingRoom(false);
     }
@@ -148,14 +149,15 @@ const TopBar = ({ roomId }) => {
           <div className="absolute right-4 top-12 w-40 bg-gray-700 text-gray-300 rounded-lg shadow-lg z-10">
             <ul>
               <li
-                className="px-4 py-2 hover:bg-gray-600 rounded cursor-pointer"
+                className="px-4 py-2 hover:bg-gray-600 rounded cursor-pointer flex items-center"
                 onClick={handleRoomDetailsClick}
               >
+                <Info size={16} className="inline mr-2" />
                 Room Details
               </li>
               {isCurrentUserAdmin && (
                 <li
-                  className="px-4 py-2 hover:bg-gray-600 rounded cursor-pointer"
+                  className="px-4 py-2 hover:bg-gray-600 rounded cursor-pointer flex items-center"
                   onClick={handleRoomSettingsClick}
                 >
                   <Settings size={16} className="inline mr-2" />

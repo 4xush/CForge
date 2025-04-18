@@ -3,11 +3,13 @@ import api from "../config/api";
 export const refreshLeaderboard = async (roomId) => {
   try {
     const response = await api.post(`/rooms/${roomId}/update-leetcode-stats`);
+    // Clear cached data after successful refresh
+    clearLeaderboardCache(roomId);
     return response.data;
   } catch (error) {
     throw error.response?.data || new Error("Failed to update LeetCode stats");
   }
-} 
+};
 
 export const googleLogin = async (idToken) => {
   try {
@@ -62,13 +64,59 @@ export const register = async (userData) => {
 
 export const getLeaderboard = async (roomId, sortBy, limit, page) => {
   try {
+    // Create a unique key for this specific leaderboard request
+    const cacheKey = `leaderboard_${roomId}_${sortBy}_${limit}_${page}`;
+
+    // Check if we have cached data and it's not expired
+    const cachedData = sessionStorage.getItem(cacheKey);
+    if (cachedData) {
+      const { data, timestamp } = JSON.parse(cachedData);
+      const cacheAge = Date.now() - timestamp;
+
+      // Use cache if it's less than 5 minutes old
+      if (cacheAge < 5 * 60 * 1000) {
+        return data;
+      }
+
+      // Remove expired cache
+      sessionStorage.removeItem(cacheKey);
+    }
+
+    // Fetch fresh data if no cache or cache expired
     const response = await api.get(`/rooms/${roomId}/leaderboard`, {
       params: { sortBy, limit, page }
     });
+
+    // Cache the new data with timestamp
+    const cacheData = {
+      data: response.data,
+      timestamp: Date.now()
+    };
+    sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
+
     return response.data;
   } catch (error) {
+    // Try to return cached data if request fails, even if expired
+    const cacheKey = `leaderboard_${roomId}_${sortBy}_${limit}_${page}`;
+    const cachedData = sessionStorage.getItem(cacheKey);
+
+    if (cachedData) {
+      const { data } = JSON.parse(cachedData);
+      return data;
+    }
+
     throw error.response?.data || new Error("Failed to fetch leaderboard");
   }
+};
+
+// Add a function to clear leaderboard cache for a room
+export const clearLeaderboardCache = (roomId) => {
+  // Clear all cached data for this room
+  Object.keys(sessionStorage).forEach(key => {
+    if (key.startsWith(`leaderboard_${roomId}`)) {
+      sessionStorage.removeItem(key);
+    }
+  });
 };
 
 export const updateProfile = async (type, data) => {

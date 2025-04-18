@@ -67,11 +67,15 @@ const RoomSettings = ({ room, onClose, onUpdate }) => {
         e.preventDefault();
         try {
             const response = await ApiService.put(`/rooms/admin/${room.roomId}`, formData);
-            const updatedRoom = response.data.room;
-            onUpdate?.(updatedRoom);
-            onClose(); // Close settings after successful update
+            
+            if (response.status === 200 || response.data.success) { 
+                onUpdate?.(); 
+                onClose();
+            } else {
+                toast.error(response.data?.message || 'Failed to update room settings (API error)');
+            }
         } catch (error) {
-            toast.error(error.response?.data?.message || 'Failed to update room settings');
+            toast.error(error.response?.data?.message || 'Failed to update room settings (Network error)');
         }
     };
     const showConfirmation = (title, message, onConfirm, confirmText) => {
