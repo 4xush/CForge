@@ -1,24 +1,35 @@
 const socketIO = require('socket.io');
 const Message = require('../models/Message');
 const mongoose = require('mongoose');
-const { encrypt, decrypt } = require("../utils/cryptoUtils");
+const { encrypt, decrypt } = require('../utils/cryptoUtils');
 const jwt = require('jsonwebtoken');
+const winston = require('winston');
+
+const logger = winston.createLogger({
+    level: 'info',
+    format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
+    transports: [
+        new winston.transports.File({ filename: 'error.log', level: 'error' }),
+        new winston.transports.File({ filename: 'combined.log' })
+    ]
+});
+
+if (process.env.NODE_ENV !== 'production') {
+    logger.add(new winston.transports.Console({ format: winston.format.simple() }));
+}
 
 class WebSocketService {
     constructor() {
         this.io = null;
         this.connectedUsers = new Map();
-        // Track connections to prevent duplicate joins
-        this.userRooms = new Map(); // userId -> Set of roomIds
+        this.userRooms = new Map();
     }
 
     initialize(server) {
-        console.log('Setting up Socket.IO server...');
-
         try {
             this.io = socketIO(server, {
                 cors: {
-                    origin: "*", // Allow all origins in development
+                    origin: process.env.FRONTEND_URL,
                     methods: ["GET", "POST"],
                     credentials: true,
                     allowedHeaders: ["Authorization"]
@@ -29,85 +40,54 @@ class WebSocketService {
                 connectTimeout: 30000
             });
 
-            console.log('Socket.IO instance created successfully');
+            logger.info('Socket.IO instance created successfully');
 
-            // Middleware for authentication (optional in development)
             this.io.use((socket, next) => {
                 const token = socket.handshake.auth?.token;
-
                 if (!token) {
-                    console.warn(`Socket ${socket.id} has no authentication token`);
-                    // In development, allow connections without token
-                    if (process.env.NODE_ENV !== 'production') {
-                        return next();
-                    }
-                    return next(new Error('Authentication error'));
+                    return next(new Error('Authentication token required'));
                 }
-
                 try {
-                    // Verify token (if JWT_SECRET is set)
-                    if (process.env.JWT_SECRET) {
-                        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-                        socket.user = decoded;
-                        // console.log(`Socket ${socket.id} authenticated as user ${decoded.id || decoded._id}`);
-                    }
+                    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                    socket.user = decoded;
                     next();
                 } catch (error) {
-                    console.error(`Socket ${socket.id} authentication error:`, error.message);
-                    // In development, allow connections even with invalid tokens
-                    if (process.env.NODE_ENV !== 'production') {
-                        return next();
-                    }
-                    next(new Error('Authentication error'));
+                    next(new Error('Invalid authentication token'));
                 }
             });
 
             this.io.on('connection', (socket) => {
-                // console.log(`New client connected: ${socket.id}`);
-
-                // Handle user joining a room
                 socket.on('join_room', ({ roomId, userId }) => {
                     if (!roomId || !userId) {
-                        console.error('Invalid join_room event data:', { roomId, userId });
+                        logger.error('Invalid join_room event data', { roomId, userId });
                         return;
                     }
 
-                    // Check if user is already in the room
                     if (!this.userRooms.has(userId)) {
                         this.userRooms.set(userId, new Set());
                     }
 
                     const userRoomSet = this.userRooms.get(userId);
                     if (userRoomSet.has(roomId)) {
-                        // Still send confirmation back
                         socket.emit('room_joined', { roomId });
                         return;
                     }
 
-                    // Join the room
                     socket.join(roomId);
                     this.connectedUsers.set(socket.id, { userId, roomId });
                     userRoomSet.add(roomId);
-
-                    // Notify client that join was successful
                     socket.emit('room_joined', { roomId });
                 });
 
-                // Handle new message
                 socket.on('send_message', async ({ roomId, message }) => {
-                    // console.log(`Received message for room ${roomId}:`, message);
-
                     if (!roomId || !message || !message.content || !message.sender) {
-                        console.error('Invalid message format:', message);
+                        logger.error('Invalid message format', { message });
                         socket.emit('message_error', { error: 'Invalid message format' });
                         return;
                     }
 
                     try {
-                        // Encrypt the message content
                         const { encryptedData, iv } = encrypt(message.content);
-
-                        // Save message to database
                         const newMessage = new Message({
                             content: encryptedData,
                             iv: iv,
@@ -116,8 +96,6 @@ class WebSocketService {
                         });
 
                         const savedMessage = await newMessage.save();
-
-                        // Populate sender information for broadcasting
                         const populatedMessage = await Message.findById(savedMessage._id)
                             .populate('sender', 'username profilePicture')
                             .lean();
@@ -126,24 +104,18 @@ class WebSocketService {
                             throw new Error('Message saved but could not be retrieved');
                         }
 
-                        // Decrypt the message for sending to clients
                         const decryptedMessage = {
                             ...populatedMessage,
                             content: decrypt(populatedMessage.content, populatedMessage.iv)
                         };
 
-                        // Emit the saved message with database ID to all clients in the room
                         this.io.to(roomId).emit('receive_message', decryptedMessage);
-                        // console.log(`Message broadcasted to room ${roomId}`);
-
-                        // Send confirmation to the sender
                         socket.emit('message_sent', {
                             success: true,
                             messageId: savedMessage._id
                         });
                     } catch (error) {
-                        console.error('Error saving message:', error);
-                        // Notify sender of error
+                        logger.error('Error saving message', { error: error.message });
                         socket.emit('message_error', {
                             error: 'Failed to save message',
                             details: error.message
@@ -151,22 +123,19 @@ class WebSocketService {
                     }
                 });
 
-                // Handle user leaving a room
                 socket.on('leave_room', ({ roomId }) => {
                     if (!roomId) {
-                        console.error('Invalid leave_room event: no roomId provided');
+                        logger.error('Invalid leave_room event: no roomId provided');
                         return;
                     }
 
                     const userData = this.connectedUsers.get(socket.id);
                     if (!userData) {
-                        console.warn(`Socket ${socket.id} tried to leave room ${roomId} but is not tracked in connectedUsers`);
+                        logger.warn(`Socket ${socket.id} tried to leave room ${roomId} but is not tracked`);
                         return;
                     }
 
                     socket.leave(roomId);
-
-                    // Remove from tracking
                     this.connectedUsers.delete(socket.id);
 
                     if (this.userRooms.has(userData.userId)) {
@@ -177,43 +146,32 @@ class WebSocketService {
                         }
                     }
 
-                    // Notify client that leave was successful
                     socket.emit('room_left', { roomId });
                 });
 
-                // Handle disconnection more gracefully
                 socket.on('disconnect', (reason) => {
                     const userData = this.connectedUsers.get(socket.id);
                     if (userData) {
-                        // Don't immediately remove user from rooms on disconnect
-                        // This allows for reconnection without losing room state
-                        // console.log(`User ${userData.userId} disconnected from socket. Reason: ${reason}`);
-
-                        // After a timeout, if they haven't reconnected, clean up completely
+                        logger.info(`User ${userData.userId} disconnected. Reason: ${reason}`);
                         setTimeout(() => {
                             if (!this.io.sockets.sockets.has(socket.id)) {
                                 this.connectedUsers.delete(socket.id);
                             }
-                        }, 30000); // 30 second grace period
+                        }, 30000);
                     }
-                    //  else {
-                    //     console.log(`Socket ${socket.id} disconnected. Reason: ${reason}`);
-                    // }
                 });
 
-                // Handle errors
                 socket.on('error', (error) => {
-                    console.error(`Socket ${socket.id} error:`, error);
+                    logger.error(`Socket ${socket.id} error`, { error: error.message });
                 });
             });
 
-            // Handle server-level errors
             this.io.engine.on('connection_error', (err) => {
-                console.error('Connection error:', err);
+                logger.error('Connection error', { error: err.message });
             });
 
         } catch (error) {
-            console.error('Failed to initialize WebSocket service:', error);
+            logger.error('Failed to initialize WebSocket service', { error: error.message });
         }
     }
 
@@ -222,4 +180,4 @@ class WebSocketService {
     }
 }
 
-module.exports = new WebSocketService(); 
+module.exports = new WebSocketService();
