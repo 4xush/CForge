@@ -184,8 +184,8 @@ PORT=5000
 NODE_ENV=development
 
 # MongoDB Connection
-MONGO_URI=your_mongodb_connection_string
-MONGO_URI=your_mongodb_connection_string_backup
+MONGODB_URI=your_mongodb_connection_string
+MONGODB_URI=your_mongodb_connection_string_backup
 
 # JWT Authentication
 JWT_SECRET=your_jwt_secret_key

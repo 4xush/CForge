@@ -139,7 +139,7 @@ websocketService.initialize(server);
 logger.info('WebSocket service initialized successfully');
 
 server.listen(PORT, () => {
-  const domain = isProduction ? process.env.DOMAIN || 'yourdomain.com' : 'localhost';
+  const domain = isProduction ? process.env.DOMAIN || 'cforge.onrender.com' : 'localhost';
   const protocol = isProduction ? 'wss' : 'ws';
   logger.info(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
   logger.info(`WebSocket server available at ${protocol}://${domain}:${PORT}`);
