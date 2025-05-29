@@ -1,17 +1,13 @@
 import React from 'react';
-// import { useParams } from 'react-router-dom';
 import MainContent from '../components/MainContent';
-import ChatWithWebSocket from '../components/Messages/ChatWithWebSocket';
+import Chat from '../components/Messages/Chat';
 
-const RoomChat = () => {
-    // const { roomId } = useParams();
+const RoomChat = () => { // Renamed to RoomChat as per your page file name
     
     return (
         <MainContent>
-            <ChatWithWebSocket />
+            <Chat />
         </MainContent>
     );
 };
-
-export default RoomChat;
-
+export default RoomChat; // Renamed to RoomChat

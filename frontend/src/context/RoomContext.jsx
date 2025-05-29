@@ -2,6 +2,7 @@ import { createContext, useState, useEffect, useContext, useCallback } from 'rea
 import { useLocation } from 'react-router-dom';
 import api from '../config/api';
 import { useAuthContext } from './AuthContext';
+import { useWebSocket } from './WebSocketContext';
 import PropTypes from 'prop-types';
 
 export const RoomContext = createContext();
@@ -23,6 +24,7 @@ export const RoomProvider = ({ children }) => {
     const [currentRoomError, setCurrentRoomError] = useState(null);
     const location = useLocation();
     const { authUser, isLoading: authLoading } = useAuthContext();
+    const { socket, joinRoom, leaveRoom, connected: isConnected } = useWebSocket();
 
     const refreshRoomList = useCallback(async () => {
         const token = localStorage.getItem('app-token');
@@ -66,7 +68,7 @@ export const RoomProvider = ({ children }) => {
                     limit: 50
                 }
             });
-            
+
             if (response.data && response.data.rooms) {
                 return response.data.rooms;
             }
@@ -99,9 +101,7 @@ export const RoomProvider = ({ children }) => {
                     },
                 });
 
-                // Set state directly with response.data as it contains the room object
                 setCurrentRoomDetails(response.data);
-
             } catch (error) {
                 setCurrentRoomError(error.response?.data?.message || 'Unable to load the selected room.');
                 setCurrentRoomDetails(null);
@@ -112,13 +112,85 @@ export const RoomProvider = ({ children }) => {
         []
     );
 
+    const setCurrentRoom = useCallback((room) => {
+        setCurrentRoomDetails(room);
+    }, []);
+
+    // Handle room changes and WebSocket sync
+    useEffect(() => {
+        if (!socket || !isConnected || !currentRoomDetails?._id || !authUser?._id) {
+            return;
+        }
+
+        const handleRoomJoined = ({ roomId }) => {
+            console.log('Successfully joined room:', {
+                roomId,
+                socketId: socket.id,
+                userId: authUser._id
+            });
+        };
+
+        const handleRoomError = ({ error }) => {
+            console.error('Room error:', error);
+            setCurrentRoomError(error);
+        };
+
+        socket.on('room_joined', handleRoomJoined);
+        socket.on('room_error', handleRoomError);
+
+        console.log('Syncing room with WebSocket:', {
+            roomId: currentRoomDetails._id,
+            userId: authUser._id,
+            socketId: socket.id
+        });
+
+        socket.emit('join_room', {
+            roomId: currentRoomDetails._id,
+            userId: authUser._id
+        });
+
+        return () => {
+            socket.off('room_joined', handleRoomJoined);
+            socket.off('room_error', handleRoomError);
+
+            if (currentRoomDetails._id) {
+                console.log('Leaving room:', {
+                    roomId: currentRoomDetails._id,
+                    userId: authUser._id
+                });
+                socket.emit('leave_room', { roomId: currentRoomDetails._id });
+            }
+        };
+    }, [currentRoomDetails?._id, socket, isConnected, authUser?._id]);
+
+    // Add this effect for room/socket synchronization
+    useEffect(() => {
+        if (!socket || !isConnected || !currentRoomDetails?._id) return;
+
+        const joinCurrentRoom = () => {
+            console.log('Joining current room via RoomContext');
+            socket.emit('join_room', {
+                roomId: currentRoomDetails._id,
+                userId: authUser._id
+            });
+        };
+
+        if (socket.connected) {
+            joinCurrentRoom();
+        } else {
+            const handleConnect = () => joinCurrentRoom();
+            socket.on('connect', handleConnect);
+            return () => socket.off('connect', handleConnect);
+        }
+    }, [currentRoomDetails?._id, socket, isConnected, authUser]);
+
     useEffect(() => {
         const pathSegments = location.pathname.split('/').filter(Boolean);
         if (pathSegments[0] !== 'rooms' || pathSegments.length < 2) {
-             if (currentRoomDetails) {
-                 setCurrentRoomDetails(null);
-                 setCurrentRoomError(null);
-             }
+            if (currentRoomDetails) {
+                setCurrentRoomDetails(null);
+                setCurrentRoomError(null);
+            }
         }
     }, [location, currentRoomDetails]);
 

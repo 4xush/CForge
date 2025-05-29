@@ -10,6 +10,7 @@ import PublicUserProfileModal from "../../components/PublicUserProfileModal";
 import { format, isToday, isYesterday, isSameYear } from "date-fns";
 import { AlertCircle, RefreshCw, ChevronDown } from "lucide-react";
 import { Spinner } from "../ui/Spinner";
+import { toast } from "react-hot-toast";
 
 const Chat = () => {
     const { currentRoomDetails } = useRoomContext();
@@ -259,6 +260,7 @@ const Chat = () => {
             setEditingMessage(null);
         } catch (error) {
             console.error("Edit error:", error);
+            toast.error(error.message || 'Failed to edit message');
         }
     };
 
@@ -269,7 +271,36 @@ const Chat = () => {
     };
 
     // Cancel editing
-    const cancelEditing = () => setEditingMessage(null);
+    const cancelEditing = () => {
+        setEditingMessage(null);
+        closeContextMenu();
+    };
+
+    // Listen for message updates
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleMessageUpdated = (updatedMessage) => {
+            setMessages(prevMessages =>
+                prevMessages.map(msg =>
+                    msg._id === updatedMessage._id
+                        ? {
+                            ...msg,
+                            content: updatedMessage.content,
+                            isEdited: true,
+                            editedAt: updatedMessage.editedAt
+                        }
+                        : msg
+                )
+            );
+        };
+
+        socket.on('message_updated', handleMessageUpdated);
+
+        return () => {
+            socket.off('message_updated', handleMessageUpdated);
+        };
+    }, [socket]);
 
     // Format message date
     const formatMessageDate = (date) => {
@@ -374,6 +405,7 @@ const Chat = () => {
                                             onMessageSent={(content) => handleEditMessage(msg._id, content)}
                                             onCancel={cancelEditing}
                                             isEditing={true}
+                                            messageId={msg._id}
                                         />
                                     </div>
                                 ) : (

@@ -1,5 +1,6 @@
 const socketIO = require('socket.io');
 const Message = require('../models/Message');
+const Room = require('../models/Room');
 const mongoose = require('mongoose');
 const { encrypt, decrypt } = require('../utils/cryptoUtils');
 const jwt = require('jsonwebtoken');
@@ -45,11 +46,20 @@ class WebSocketService {
             this.io.use((socket, next) => {
                 const token = socket.handshake.auth?.token;
                 if (!token) {
+                    logger.error('Socket authentication failed: No token provided');
                     return next(new Error('Authentication token required'));
                 }
                 try {
                     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-                    socket.user = decoded;
+                    const userId = decoded.userId || decoded._id || decoded.id;
+                    if (!userId) {
+                        return next(new Error('Invalid token: No user ID'));
+                    }
+                    socket.user = {
+                        _id: userId,
+                        username: decoded.username,
+                        email: decoded.email
+                    };
                     next();
                 } catch (error) {
                     next(new Error('Invalid authentication token'));
@@ -58,9 +68,8 @@ class WebSocketService {
 
             this.io.on('connection', (socket) => {
                 socket.on('join_room', ({ roomId, userId }) => {
-                    if (!roomId || !userId) {
-                        logger.error('Invalid join_room event data', { roomId, userId });
-                        return;
+                    if (!roomId || !userId || socket.user?._id !== userId) {
+                        return socket.emit('room_error', { error: 'User ID mismatch or invalid data' });
                     }
 
                     if (!this.userRooms.has(userId)) {
@@ -76,14 +85,13 @@ class WebSocketService {
                     socket.join(roomId);
                     this.connectedUsers.set(socket.id, { userId, roomId });
                     userRoomSet.add(roomId);
+
                     socket.emit('room_joined', { roomId });
                 });
 
                 socket.on('send_message', async ({ roomId, message }) => {
                     if (!roomId || !message || !message.content || !message.sender) {
-                        logger.error('Invalid message format', { message });
-                        socket.emit('message_error', { error: 'Invalid message format' });
-                        return;
+                        return socket.emit('message_error', { error: 'Invalid message format' });
                     }
 
                     try {
@@ -115,25 +123,81 @@ class WebSocketService {
                             messageId: savedMessage._id
                         });
                     } catch (error) {
-                        logger.error('Error saving message', { error: error.message });
                         socket.emit('message_error', {
                             error: 'Failed to save message',
-                            details: error.message
+                            details: error.message,
+                            tempId: message.tempId // Include tempId from client
+                        });
+                    }
+                });
+
+                socket.on('edit_message', async ({ roomId, messageId, newContent }) => {
+                    try {
+                        if (!roomId || !messageId || !newContent || newContent.trim() === '') {
+                            return socket.emit('message_error', {
+                                error: 'Missing or invalid fields',
+                                messageId
+                            });
+                        }
+
+                        if (!mongoose.Types.ObjectId.isValid(messageId)) {
+                            return socket.emit('message_error', {
+                                error: 'Invalid message ID format',
+                                messageId
+                            });
+                        }
+
+                        const message = await Message.findById(messageId);
+                        if (!message) {
+                            return socket.emit('message_error', {
+                                error: 'Message not found',
+                                messageId
+                            });
+                        }
+
+                        const userId = socket.user?._id;
+                        if (!userId || message.sender.toString() !== userId.toString()) {
+                            return socket.emit('message_error', {
+                                error: 'Not authorized to edit this message',
+                                messageId
+                            });
+                        }
+
+                        const room = await Room.findById(roomId);
+                        if (!room) {
+                            return socket.emit('message_error', {
+                                error: 'Room not found',
+                                messageId
+                            });
+                        }
+
+                        const { encryptedData, iv } = encrypt(newContent, room.encryptionKey);
+                        message.content = encryptedData;
+                        message.iv = iv;
+                        message.isEdited = true;
+                        message.editedAt = new Date();
+                        await message.save();
+
+                        await message.populate('sender', 'username profilePicture');
+                        const decryptedMessage = {
+                            ...message.toObject(),
+                            content: decrypt(message.content, message.iv)
+                        };
+
+                        this.io.to(roomId).emit('message_updated', decryptedMessage);
+                        socket.emit('edit_success', { messageId });
+                    } catch (error) {
+                        socket.emit('message_error', {
+                            error: 'Failed to save message',
+                            details: error.message,
+                            messageId
                         });
                     }
                 });
 
                 socket.on('leave_room', ({ roomId }) => {
-                    if (!roomId) {
-                        logger.error('Invalid leave_room event: no roomId provided');
-                        return;
-                    }
-
                     const userData = this.connectedUsers.get(socket.id);
-                    if (!userData) {
-                        logger.warn(`Socket ${socket.id} tried to leave room ${roomId} but is not tracked`);
-                        return;
-                    }
+                    if (!roomId || !userData) return;
 
                     socket.leave(roomId);
                     this.connectedUsers.delete(socket.id);
@@ -152,7 +216,6 @@ class WebSocketService {
                 socket.on('disconnect', (reason) => {
                     const userData = this.connectedUsers.get(socket.id);
                     if (userData) {
-                        logger.info(`User ${userData.userId} disconnected. Reason: ${reason}`);
                         setTimeout(() => {
                             if (!this.io.sockets.sockets.has(socket.id)) {
                                 this.connectedUsers.delete(socket.id);
@@ -169,7 +232,6 @@ class WebSocketService {
             this.io.engine.on('connection_error', (err) => {
                 logger.error('Connection error', { error: err.message });
             });
-
         } catch (error) {
             logger.error('Failed to initialize WebSocket service', { error: error.message });
         }
