@@ -244,14 +244,14 @@ const Chat = () => {
     };
 
     // Handle message deletion
-    const handleDeleteMessage = async (messageId) => {
-        try {
-            await deleteMessage(messageId);
-            closeContextMenu();
-        } catch (error) {
-            console.error("Delete error:", error);
-        }
-    };
+    // const handleDeleteMessage = async (messageId) => {
+    //     try {
+    //         await deleteMessage(messageId);
+    //         closeContextMenu();
+    //     } catch (error) {
+    //         console.error("Delete error:", error);
+    //     }
+    // };
 
     // Handle message editing
     const handleEditMessage = async (messageId, newContent) => {
@@ -423,7 +423,7 @@ const Chat = () => {
                                         onContextMenu={(e) => handleContextMenu(e, msg._id)}
                                         onAvatarClick={() => handleAvatarClick(msg.sender.username)}
                                         onEdit={() => startEditing(msg)}
-                                        onDelete={() => handleDeleteMessage(msg._id)}
+                                        // onDelete={() => handleDeleteMessage(msg._id)}
                                     />
                                 )}
                             </div>
@@ -484,7 +484,7 @@ const Chat = () => {
                             const messageToEdit = messages.find((m) => m._id === contextMenu.messageId);
                             startEditing(messageToEdit);
                         }}
-                        onDelete={() => handleDeleteMessage(contextMenu.messageId)}
+                        // onDelete={() => handleDeleteMessage(contextMenu.messageId)}
                         onCancel={closeContextMenu}
                     />
                 </div>

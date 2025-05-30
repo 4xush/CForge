@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Github, Terminal, Code2, Loader2 } from 'lucide-react';
+import { Github, Terminal, Code2, Loader2, AlertCircle } from 'lucide-react';
 import ApiService from '../../services/ApiService';
 import { toast } from 'react-hot-toast';
 
@@ -15,18 +15,11 @@ const AddPlatform = ({ onPlatformsUpdate, platforms }) => {
         githubUsername: platforms?.github?.username || '',
         codeforcesUsername: platforms?.codeforces?.username || ''
     });
-    const [isNewUser, setIsNewUser] = useState(false);
     const [loading, setLoading] = useState({
         leetcode: false,
         github: false,
         codeforces: false
     });
-
-    useEffect(() => {
-        // Check if this is a new user by looking at the URL params
-        const params = new URLSearchParams(window.location.search);
-        setIsNewUser(params.get('newUser') === 'true');
-    }, []);
 
     useEffect(() => {
         if (platforms) {
@@ -58,6 +51,12 @@ const AddPlatform = ({ onPlatformsUpdate, platforms }) => {
 
             if (response.data) {
                 toast.success(`${platform} username updated successfully`);
+                const updatedFormData = {
+                    ...formData,
+                    [usernameKey]: username
+                };
+                setFormData(updatedFormData);
+                setOriginalData(updatedFormData);
                 if (onPlatformsUpdate) {
                     onPlatformsUpdate(response.data.platform);
                 }
@@ -82,10 +81,10 @@ const AddPlatform = ({ onPlatformsUpdate, platforms }) => {
             <h3 className="text-lg font-medium text-white">Platform Integration</h3>
             <div className="space-y-4">
                 {/* LeetCode Input */}
-                <div className={`relative flex items-center gap-2 ${isNewUser && !formData.leetcodeUsername ? 'animate-pulse ring-2 ring-blue-500 rounded-lg' : ''}`}>
+                <div className="relative flex items-center gap-2">
                     <div className="flex-1 relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Terminal className={`h-5 w-5 ${isNewUser && !formData.leetcodeUsername ? 'text-blue-400' : 'text-gray-400'}`} />
+                            <Terminal className="h-5 w-5 text-gray-400" />
                         </div>
                         <input
                             type="text"
@@ -93,8 +92,7 @@ const AddPlatform = ({ onPlatformsUpdate, platforms }) => {
                             value={formData.leetcodeUsername}
                             onChange={handleChange}
                             placeholder="LeetCode Username"
-                            className={`w-full pl-10 pr-3 py-2 ${isNewUser && !formData.leetcodeUsername ? 'bg-blue-900/20' : 'bg-gray-800/50'} rounded-lg border ${isNewUser && !formData.leetcodeUsername ? 'border-blue-500' : 'border-gray-700'} focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white`}
-                            autoFocus={isNewUser}
+                            className="w-full pl-10 pr-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white"
                         />
                     </div>
                     <button
@@ -175,9 +173,39 @@ const AddPlatform = ({ onPlatformsUpdate, platforms }) => {
                     </button>
                 </div>
             </div>
+
+            {/* Pending Invite Note */}
+            {(() => {
+                const params = new URLSearchParams(window.location.search);
+                const isNewUser = params.get('newUser') === 'true';
+                const pendingInviteCode = sessionStorage.getItem('app-pendingInviteCode');
+                console.log(pendingInviteCode);
+
+                if (isNewUser && pendingInviteCode) {
+                    return (
+                        <div className="mt-6 p-4 bg-blue-900/20 border border-blue-500 rounded-lg">
+                            <div className="flex items-start gap-3">
+                                <AlertCircle className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                                <div>
+                                    <p className="text-blue-400 font-medium">You have a pending room invite!</p>
+                                    <p className="text-gray-400 mt-1">
+                                        After adding your platform usernames, you can join the room by:
+                                    </p>
+                                    <ul className="list-disc list-inside text-gray-400 mt-2 space-y-1">
+                                        <li>Navigating to the Rooms tab in your dashboard, or</li>
+                                        <li>Reopening the invite link you received.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                }
+                return null;
+            })()}
         </div>
     );
 };
+
 AddPlatform.propTypes = {
     onPlatformsUpdate: PropTypes.func.isRequired,
     platforms: PropTypes.shape({

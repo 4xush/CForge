@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit, Trash2, X } from 'lucide-react';
+import { Edit, X } from 'lucide-react';
 
 const ContextMenu = ({ onEdit, onDelete, onCancel }) => {
     return (
@@ -13,13 +13,13 @@ const ContextMenu = ({ onEdit, onDelete, onCancel }) => {
                     <span className="text-white">Edit Message</span>
                 </button>
                 <div className="border-t border-gray-600"></div>
-                <button
+                {/* <button
                     onClick={onDelete}
                     className="flex items-center px-4 py-3 text-sm hover:bg-gray-600 w-full text-left transition-colors duration-200"
                 >
                     <Trash2 size={16} className="mr-3 text-red-400" />
                     <span className="text-red-400">Delete Message</span>
-                </button>
+                </button> */}
                 <div className="border-t border-gray-600"></div>
                 <button
                     onClick={onCancel}

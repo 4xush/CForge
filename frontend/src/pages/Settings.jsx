@@ -6,30 +6,18 @@ import SocialNetworks from '../components/Settings/SocialNetworksSettings';
 import BasicInfo from '../components/Settings/BasicInfoSettings';
 import AccountSettings from '../components/Settings/AccountSettings';
 import { useAuthContext } from '../context/AuthContext';
-import { CheckCircle, ArrowRight, Info } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-
+import { CheckCircle} from 'lucide-react';
 const Settings = () => {
     const { updateUser, logout } = useAuthContext();
     const [activeTab, setActiveTab] = useState('basic');
     const [profileData, setProfileData] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [showLeetCodePrompt, setShowLeetCodePrompt] = useState(false);
-    const [isNewUser, setIsNewUser] = useState(false);
-    const navigate = useNavigate();
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const tabParam = params.get('tab');
         if (tabParam) {
             setActiveTab(tabParam);
-
-            // Check if user was redirected from signup
-            const fromSignup = params.get('newUser');
-            if (fromSignup === 'true' && tabParam === 'platforms') {
-                setIsNewUser(true);
-                setShowLeetCodePrompt(true);
-            }
         }
     }, []);
 
@@ -42,12 +30,6 @@ const Settings = () => {
             const response = await ApiService.get('users/profile');
             setProfileData(response.data);
             updateUser(response.data);
-
-            // Show LeetCode prompt if on platforms tab and LeetCode is not connected
-            if (activeTab === 'platforms' &&
-                (!response.data.platforms || !response.data.platforms.leetcode)) {
-                setShowLeetCodePrompt(true);
-            }
         } catch (error) {
             toast.error('Failed to load profile data');
             console.error('Error fetching profile:', error);
@@ -61,23 +43,17 @@ const Settings = () => {
         updateUser(updatedData);
     };
 
-    const handlePlatformsUpdate = (platforms) => {
-        const updatedData = { ...profileData, platforms };
+    const handlePlatformsUpdate = (updatedPlatform) => {
+        const updatedPlatforms = {
+            ...profileData.platforms,
+            [updatedPlatform.name]: updatedPlatform,
+        };
+    
+        const updatedData = { ...profileData, platforms: updatedPlatforms };
         setProfileData(updatedData);
         updateUser(updatedData);
-
-        // Hide the prompt if LeetCode is now connected
-        if (platforms && platforms.leetcode) {
-            setShowLeetCodePrompt(false);
-
-            // Check for pending invite code in sessionStorage
-            const pendingInviteCode = sessionStorage.getItem('app-pendingInviteCode');
-            if (pendingInviteCode) {
-                sessionStorage.removeItem('app-pendingInviteCode');
-                navigate(`/rooms/join/${pendingInviteCode}`);
-            }
-        }
     };
+    
 
     const handleSocialNetworksUpdate = (socialNetworks) => {
         const updatedData = { ...profileData, socialNetworks };
@@ -118,30 +94,7 @@ const Settings = () => {
                         )}
                     </div>
                 </div>
-
-                {/* LeetCode Connect Prompt */}
-                {showLeetCodePrompt && activeTab === 'platforms' && (
-                    <div className={`mb-6 p-4 rounded-lg ${isNewUser ? 'bg-blue-600/20 border border-blue-500' : 'bg-gray-700'}`}>
-                        <div className="flex items-start gap-3">
-                            <Info className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
-                            <div>
-                                <h3 className="font-medium text-white">
-                                    {isNewUser ? 'Welcome to C-Forge! 🎉' : 'Connect your LeetCode account'}
-                                </h3>
-                                <p className="text-gray-300 text-sm mt-1">
-                                    {isNewUser
-                                        ? 'Start by connecting your LeetCode account to track your progress and participate in coding rooms.'
-                                        : 'Connecting your LeetCode account helps you track your progress and collaborate with others.'}
-                                </p>
-                                <div className="mt-2 flex items-center text-blue-400 text-sm">
-                                    <span>Enter your LeetCode username below</span>
-                                    <ArrowRight className="w-4 h-4 ml-1" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
+                
                 {/* Tabs */}
                 <div className="flex mb-6">
                     {['basic', 'platforms', 'social', 'account'].map((tab) => (

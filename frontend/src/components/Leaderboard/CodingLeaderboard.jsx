@@ -3,7 +3,7 @@ import { Search, RefreshCw, ChevronDown } from 'lucide-react';
 import { useAuthContext } from '../../context/AuthContext';
 import { useRoomContext } from '../../context/RoomContext';
 import toast from 'react-hot-toast';
-import { getLeaderboard, refreshLeaderboard } from '../../api/authApi';
+import { getLeaderboard, refreshLeetcodeLeaderboard, refreshCodeforcesLeaderboard } from '../../api/leaderboardApi';
 import { TopUserCard } from './TopUserCard';
 import Pagination from './Pagination';
 import { LeaderboardTable } from './LeaderboardTable';
@@ -76,7 +76,11 @@ const CodingLeaderboard = () => {
 
         setLoading(true);
         try {
-            const result = await refreshLeaderboard(currentRoomDetails.roomId, selectedPlatform);
+            const refreshFunction = selectedPlatform === 'leetcode' 
+                ? refreshLeetcodeLeaderboard 
+                : refreshCodeforcesLeaderboard;
+            
+            const result = await refreshFunction(currentRoomDetails.roomId);
             toast.success(`${selectedPlatform === 'leetcode' ? 'LeetCode' : 'Codeforces'} stats update completed successfully`);
 
             if (result.results) {

@@ -9,7 +9,7 @@ import PrivateRoute from './components/PrivateRoute.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import FullScreenLoader from './components/FullScreenLoader';
 import RoomPage from './pages/RoomPage.jsx';
-import { WebSocketProvider } from './context/WebSocketContext.jsx';
+
 // Lazy loaded components
 const LoginPage = React.lazy(() => import('./pages/Login'));
 const SignupPage = React.lazy(() => import('./pages/Signup'));
@@ -28,123 +28,121 @@ const App = () => {
     <ErrorBoundary>
       <Router>
         <AuthProvider>
-          <WebSocketProvider>
-            <RoomProvider>
-              <MessageProvider>
-                <Toaster
-                  position="top-right"
-                  reverseOrder={false}
-                  toastOptions={{
-                    duration: 5000,
-                    style: {
-                      background: '#333',
-                      color: '#fff',
-                    },
-                  }}
-                />
-                <Suspense
-                  fallback={
-                    <div className="fixed inset-0 flex items-center justify-center bg-gray-900">
-                      <FullScreenLoader />
-                    </div>
-                  }
-                >
-                  <Routes>
-                    {/* Public routes */}
-                    <Route path="/signup" element={<SignupPage />} />
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/" element={<WelcomePage />} />
-                    <Route path="/404" element={<NotFoundPage />} />
+          <RoomProvider>
+            <MessageProvider>
+              <Toaster
+                position="top-right"
+                reverseOrder={false}
+                toastOptions={{
+                  duration: 5000,
+                  style: {
+                    background: '#333',
+                    color: '#fff',
+                  },
+                }}
+              />
+              <Suspense
+                fallback={
+                  <div className="fixed inset-0 flex items-center justify-center bg-gray-900">
+                    <FullScreenLoader />
+                  </div>
+                }
+              >
+                <Routes>
+                  {/* Public routes */}
+                  <Route path="/signup" element={<SignupPage />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/" element={<WelcomePage />} />
+                  <Route path="/404" element={<NotFoundPage />} />
 
-                    {/* Protected routes within Layout */}
-                    <Route element={<Layout />}>
-                      <Route
-                        path="/u/:username"
-                        element={
-                          <ErrorBoundary>
-                            <PublicUserProfile />
-                          </ErrorBoundary>
-                        }
-                      />
-                      <Route
-                        path="/dashboard"
-                        element={
-                          <PrivateRoute>
-                            <ErrorBoundary>
-                              <DashboardPage />
-                            </ErrorBoundary>
-                          </PrivateRoute>
-                        }
-                      />
-                      <Route
-                        path="/rooms/"
-                        element={
-                          <PrivateRoute>
-                            <ErrorBoundary>
-                              <RoomPage />
-                            </ErrorBoundary>
-                          </PrivateRoute>
-                        }
-                      />
-                      <Route
-                        path="/rooms/:roomId/leaderboard"
-                        element={
-                          <PrivateRoute>
-                            <ErrorBoundary>
-                              <RoomLeaderboard />
-                            </ErrorBoundary>
-                          </PrivateRoute>
-                        }
-                      />
-                      <Route
-                        path="/rooms/:roomId/chat"
-                        element={
-                          <PrivateRoute>
-                            <ErrorBoundary>
-                              <RoomChat />
-                            </ErrorBoundary>
-                          </PrivateRoute>
-                        }
-                      />
-                      <Route
-                        path="/settings"
-                        element={
-                          <PrivateRoute>
-                            <ErrorBoundary>
-                              <Settings />
-                            </ErrorBoundary>
-                          </PrivateRoute>
-                        }
-                      />
-                      <Route
-                        path="/help"
-                        element={
-                          <PrivateRoute>
-                            <ErrorBoundary>
-                              <HelpFAQ />
-                            </ErrorBoundary>
-                          </PrivateRoute>
-                        }
-                      />
-                    </Route>
-
-                    {/* Special routes */}
+                  {/* Protected routes within Layout */}
+                  <Route element={<Layout />}>
                     <Route
-                      path="/rooms/join/:inviteCode"
+                      path="/u/:username"
                       element={
                         <ErrorBoundary>
-                          <RoomInviteHandler />
+                          <PublicUserProfile />
                         </ErrorBoundary>
                       }
                     />
+                    <Route
+                      path="/dashboard"
+                      element={
+                        <PrivateRoute>
+                          <ErrorBoundary>
+                            <DashboardPage />
+                          </ErrorBoundary>
+                        </PrivateRoute>
+                      }
+                    />
+                    <Route
+                      path="/rooms/"
+                      element={
+                        <PrivateRoute>
+                          <ErrorBoundary>
+                            <RoomPage />
+                          </ErrorBoundary>
+                        </PrivateRoute>
+                      }
+                    />
+                    <Route
+                      path="/rooms/:roomId/leaderboard"
+                      element={
+                        <PrivateRoute>
+                          <ErrorBoundary>
+                            <RoomLeaderboard />
+                          </ErrorBoundary>
+                        </PrivateRoute>
+                      }
+                    />
+                    <Route
+                      path="/rooms/:roomId/chat"
+                      element={
+                        <PrivateRoute>
+                          <ErrorBoundary>
+                            <RoomChat />
+                          </ErrorBoundary>
+                        </PrivateRoute>
+                      }
+                    />
+                    <Route
+                      path="/settings"
+                      element={
+                        <PrivateRoute>
+                          <ErrorBoundary>
+                            <Settings />
+                          </ErrorBoundary>
+                        </PrivateRoute>
+                      }
+                    />
+                    <Route
+                      path="/help"
+                      element={
+                        <PrivateRoute>
+                          <ErrorBoundary>
+                            <HelpFAQ />
+                          </ErrorBoundary>
+                        </PrivateRoute>
+                      }
+                    />
+                  </Route>
 
-                    {/* Catch all route */}
-                    <Route path="*" element={<Navigate to="/404" replace />} />
-                  </Routes>
-                </Suspense>
-              </MessageProvider>
-            </RoomProvider>
-          </WebSocketProvider>
+                  {/* Special routes */}
+                  <Route
+                    path="/rooms/join/:inviteCode"
+                    element={
+                      <ErrorBoundary>
+                        <RoomInviteHandler />
+                      </ErrorBoundary>
+                    }
+                  />
+
+                  {/* Catch all route */}
+                  <Route path="*" element={<Navigate to="/404" replace />} />
+                </Routes>
+              </Suspense>
+            </MessageProvider>
+          </RoomProvider>
         </AuthProvider>
       </Router>
     </ErrorBoundary>

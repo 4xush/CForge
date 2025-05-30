@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Edit, Trash2, MoreVertical } from 'lucide-react';
+import { Edit,MoreVertical } from 'lucide-react';
 
 const Message = ({
   avatar,
@@ -13,7 +13,7 @@ const Message = ({
   onContextMenu = () => {},
   onAvatarClick = () => {},
   onEdit = () => {},
-  onDelete = () => {}
+  // onDelete = () => {}
 }) => {
   const [showActions, setShowActions] = useState(false);
   
@@ -107,13 +107,13 @@ const Message = ({
           >
             <Edit size={14} />
           </button>
-          <button
+          {/* <button
             onClick={onDelete}
             className="p-1 rounded-full bg-gray-700 hover:bg-red-600 text-gray-300 hover:text-white transition-colors"
             title="Delete Message"
           >
             <Trash2 size={14} />
-          </button>
+          </button> */}
         </div>
       )}
       

@@ -46,6 +46,16 @@ const roomSchema = new mongoose.Schema(
         type: Date,
       },
     },
+    platformStats: {
+      leetcode: {
+        lastUpdated: { type: Date, default: null },
+        updateStatus: { type: String, enum: ['idle', 'updating', 'failed'], default: 'idle' }
+      },
+      codeforces: {
+        lastUpdated: { type: Date, default: null },
+        updateStatus: { type: String, enum: ['idle', 'updating', 'failed'], default: 'idle' }
+      }
+    }
   },
   { timestamps: true }
 );

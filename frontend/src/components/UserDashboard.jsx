@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Code2, Github, Trophy,
-    BarChart2, RefreshCw, Award, TrendingUp
+    BarChart2, RefreshCw, Award, TrendingUp,
+    AlertCircle, X
 } from 'lucide-react';
+import PropTypes from 'prop-types';
 import ApiService from '../services/ApiService';
 import { ProfileHeader } from './Profile/ProfileHeader';
 import { PlatformCard, getPlatformStats } from './Profile/PlatformCards';
@@ -30,6 +32,13 @@ const TabButton = ({ active, onClick, icon: Icon, children }) => (
     </button>
 );
 
+TabButton.propTypes = {
+    active: PropTypes.bool.isRequired,
+    onClick: PropTypes.func.isRequired,
+    icon: PropTypes.elementType.isRequired,
+    children: PropTypes.node.isRequired
+};
+
 const RefreshButton = ({ onClick, refreshing }) => (
     <button
         onClick={onClick}
@@ -48,18 +57,129 @@ const RefreshButton = ({ onClick, refreshing }) => (
     </button>
 );
 
+RefreshButton.propTypes = {
+    onClick: PropTypes.func.isRequired,
+    refreshing: PropTypes.bool.isRequired
+};
+
+const PlatformVerificationModal = ({ user, onClose }) => {
+    const navigate = useNavigate();
+    const platformUsernames = {
+        leetcode: user?.platforms?.leetcode?.username,
+        codeforces: user?.platforms?.codeforces?.username,
+        github: user?.platforms?.github?.username
+    };
+
+    const getPlatformIcon = (platform) => {
+        switch (platform) {
+            case 'leetcode':
+                return <Code2 className="w-5 h-5 text-yellow-400" />;
+            case 'codeforces':
+                return <TrendingUp className="w-5 h-5 text-red-500" />;
+            case 'github':
+                return <Github className="w-5 h-5 text-blue-400" />;
+            default:
+                return null;
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4 border border-gray-700 shadow-xl">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                        <AlertCircle className="w-6 h-6 text-yellow-400" />
+                        <h2 className="text-xl font-bold text-white">Verify Your Platform Usernames</h2>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="text-gray-400 hover:text-white transition-colors"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+                
+                <p className="text-gray-400 mb-6">
+                    Please verify your coding platform usernames to ensure accurate stats tracking.
+                </p>
+
+                <div className="space-y-3 mb-6">
+                    {Object.entries(platformUsernames).map(([platform, username]) => (
+                        <div
+                            key={platform}
+                            className="flex items-center justify-between bg-gray-700/50 p-3 rounded-lg"
+                        >
+                            <div className="flex items-center gap-3">
+                                {getPlatformIcon(platform)}
+                                <div>
+                                    <p className="text-white font-medium capitalize">{platform}</p>
+                                    <p className="text-sm text-gray-400">
+                                        {username || 'Not set'}
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => navigate('/settings?tab=platforms')}
+                                className="px-3 py-1.5 text-sm font-medium rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+                            >
+                                {username ? 'Update' : 'Add'}
+                            </button>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="flex justify-end gap-3">
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-2 text-sm font-medium rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition-colors"
+                    >
+                        Remind me later
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+PlatformVerificationModal.propTypes = {
+    user: PropTypes.shape({
+        email: PropTypes.string,
+        platforms: PropTypes.shape({
+            leetcode: PropTypes.shape({
+                username: PropTypes.string
+            }),
+            codeforces: PropTypes.shape({
+                username: PropTypes.string
+            }),
+            github: PropTypes.shape({
+                username: PropTypes.string
+            })
+        })
+    }),
+    onClose: PropTypes.func.isRequired
+};
+
 const UserProfile = () => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('overview');
+    const [showVerificationModal, setShowVerificationModal] = useState(false);
     const navigate = useNavigate();
 
     const fetchProfile = async () => {
         try {
             const response = await ApiService.get('users/profile');
             setUser(response.data);
+            
+            // Check if we should show the verification modal
+            if (response.data?.email) {
+                const modalShown = sessionStorage.getItem(`platform_usernameCheck_${response.data.email}`);
+                if (!modalShown) {
+                    setShowVerificationModal(true);
+                }
+            }
         } catch (err) {
             if (err.response?.status === 404) {
                 navigate('/404');
@@ -87,6 +207,13 @@ const UserProfile = () => {
         } finally {
             setRefreshing(false);
         }
+    };
+
+    const handleCloseVerificationModal = () => {
+        if (user?.email) {
+            sessionStorage.setItem(`platform_usernameCheck_${user.email}`, 'true');
+        }
+        setShowVerificationModal(false);
     };
 
     if (loading) {
@@ -150,13 +277,19 @@ const UserProfile = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-gray-900 to-purple">
+            {showVerificationModal && (
+                <PlatformVerificationModal
+                    user={user}
+                    onClose={handleCloseVerificationModal}
+                />
+            )}
             <div className="max-w-7xl mx-auto p-4 md:p-8">
                 <div className="mb-8">
                     <ProfileHeader user={user} />
                 </div>
                 <div className="mt-8 mb-6">
                     <h1 className="text-3xl font-bold text-white">Welcome, {user.fullName}!</h1>
-                    <p className="text-gray-400 mt-2">Here are your coding details and activity stats:</p>
+                    <p className="text-gray-400 mt-2">Below are your coding details and activity statistics. Click the &apos;Refresh Data&apos; button to retrieve the most recent updates.</p>
                 </div>
                 <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div className="flex flex-wrap gap-4">

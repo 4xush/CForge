@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { MoreVertical, LogOut, X, Settings, Info } from "lucide-react";
+import { MoreVertical, LogOut, X, Settings, Info, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import CenteredRoomDetailsModal from "./CenteredRoomDetailsModal";
@@ -115,6 +115,69 @@ const TopBar = ({ roomId }) => {
     return `${currentRoomDetails?.members?.length || 0} Members`;
   };
 
+  const formatLastUpdated = (date) => {
+    if (!date) return "Never";
+    const now = new Date();
+    const lastUpdate = new Date(date);
+    const diffInDays = Math.floor((now - lastUpdate) / (1000 * 60 * 60 * 24));
+    
+    if (diffInDays === 0) {
+      const diffInHours = Math.floor((now - lastUpdate) / (1000 * 60 * 60));
+      if (diffInHours === 0) {
+        const diffInMinutes = Math.floor((now - lastUpdate) / (1000 * 60));
+        return `${diffInMinutes}m ago`;
+      }
+      return `${diffInHours}h ago`;
+    }
+    return `${diffInDays}d ago`;
+  };
+
+  const getPlatformUpdateStatus = () => {
+    if (currentRoomLoading) return null;
+    if (currentRoomError) return null;
+    
+    const leetcodeUpdate = currentRoomDetails?.platformStats?.leetcode;
+    const codeforcesUpdate = currentRoomDetails?.platformStats?.codeforces;
+    
+    const getStatusBadge = (status) => {
+      switch (status) {
+        case 'updating':
+          return <span className="text-yellow-400 text-[10px] bg-yellow-400/10 px-1.5 py-0.5 rounded">Updating</span>;
+        case 'failed':
+          return <span className="text-red-400 text-[10px] bg-red-400/10 px-1.5 py-0.5 rounded">Failed</span>;
+        case 'idle':
+          return <span className="text-green-400 text-[10px] bg-green-400/10 px-1.5 py-0.5 rounded">Idle</span>;
+        default:
+          return null;
+      }
+    };
+    
+    return (
+      <div className="flex items-center space-x-3 text-xs">
+        <div className="flex items-center text-gray-400">
+          <Clock size={12} className="mr-1" />
+          <span className="mr-1">Last updated :</span>
+          <div className="flex items-center space-x-2">
+            <div className="flex items-center">
+              <span className="text-blue-400 mr-1">LC:</span>
+              <span className={leetcodeUpdate?.updateStatus === 'failed' ? 'text-red-400' : ''}>
+                {formatLastUpdated(leetcodeUpdate?.lastUpdated)}
+              </span>
+              {getStatusBadge(leetcodeUpdate?.updateStatus)}
+            </div>
+            <div className="flex items-center">
+              <span className="text-orange-400 mr-1">CF:</span>
+              <span className={codeforcesUpdate?.updateStatus === 'failed' ? 'text-red-400' : ''}>
+                {formatLastUpdated(codeforcesUpdate?.lastUpdated)}
+              </span>
+              {getStatusBadge(codeforcesUpdate?.updateStatus)}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <div
@@ -129,9 +192,12 @@ const TopBar = ({ roomId }) => {
           >
             {getRoomName()}
           </h2>
-          <p className="text-xs text-gray-500">
-            {getMemberCountText()}
-          </p>
+          <div className="flex items-center space-x-4">
+            <p className="text-xs text-gray-500">
+              {getMemberCountText()}
+            </p>
+            {getPlatformUpdateStatus()}
+          </div>
         </div>
 
         {!activeComponent && (

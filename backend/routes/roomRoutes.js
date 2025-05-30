@@ -6,7 +6,8 @@ const {
   getRoomDetails,
   sendJoinRequest,
   leaveRoom,
-  updateRoomMembersLeetCodeStats
+  updateRoomMembersLeetCodeStats,
+  updateRoomMembersCodeforcesStats
 } = require("../controllers/roomController");
 const { protect } = require("../middleware/authMiddleware");
 const {
@@ -48,5 +49,6 @@ router.get('/invite/:inviteCode/verify', verifyRoomInvite);
 router.post('/invite/:inviteCode/join', protect, joinRoomByInvite);
 
 router.post('/:roomId/update-leetcode-stats', protect, updateRoomMembersLeetCodeStats);
+router.post('/:roomId/update-codeforces-stats', protect, updateRoomMembersCodeforcesStats);
 
 module.exports = router;
