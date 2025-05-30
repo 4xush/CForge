@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Code, Github, Twitter } from 'lucide-react';
+import { Code, ExternalLink} from 'lucide-react';
 
 // Reusable Components
 const Header = () => (
@@ -53,7 +53,7 @@ const DeveloperResources = () => (
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
                     className="px-8 py-3 text-lg font-medium rounded-full bg-transparent border-2 border-purple-500 text-purple-400 hover:bg-purple-500/20 transition-all duration-300"
-                    onClick={() => window.open('https://github.com/4xush/CForge', '_blank')}
+                    onClick={() => window.open('https://github.com/4xush/CForge/blob/master/README.md', '_blank')}
                 >
                     Read Developer Docs
                 </motion.button>
@@ -64,18 +64,21 @@ const DeveloperResources = () => (
 
 const Footer = () => (
     <footer className="bg-[#0A0F23]/90 backdrop-blur-md py-10 px-6 border-t border-purple-900/20">
-        <div className="container mx-auto text-center text-gray-400 text-lg">
-            <div className="flex justify-center gap-6">
-                <a href="https://github.com/cforge" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-purple-400 hover:scale-125 transition-all duration-300">
-                    <Github className="h-6 w-6" />
-                </a>
-                <a href="https://twitter.com/cforgeai" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-purple-400 hover:scale-125 transition-all duration-300">
-                    <Twitter className="h-6 w-6" />
-                </a>
-            </div>
-            <p className="mt-4">© 2024 CForge. All rights reserved.</p>
-        </div>
-    </footer>
+    <div className="container mx-auto text-center text-gray-400 text-lg">
+      <div className="flex justify-center">
+        <a
+          href="https://v0-ayush-kumar-portfolio.vercel.app/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-gray-400 hover:text-purple-400 hover:scale-105 transition-all duration-300 flex items-center gap-2"
+        >
+          <ExternalLink className="h-5 w-5" />
+          <span className="text-base">View Developer Profile</span>
+        </a>
+      </div>
+      <p className="mt-4 text-sm">© 2024 CForge. All rights reserved.</p>
+    </div>
+  </footer>
 );
 
 export {

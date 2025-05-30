@@ -66,7 +66,7 @@ const LeftSidebar = () => {
                             icon={SettingsIcon}
                             label="Settings"
                             isActive={isActive('/settings')}
-                            onClick={() => window.location.replace('/settings')}
+                            onClick={() => navigate('/settings')}
                             className="w-full transition-all duration-300 hover:bg-gray-700"
                         />
                         <DashboardButton

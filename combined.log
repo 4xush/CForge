@@ -8293,3 +8293,177 @@
 {"level":"info","message":"User already in room, reconnecting","roomId":"67f0acdcb93239893e4a7be1","socketId":"yrcU5HMVtS6pz0haAAAV","timestamp":"2025-05-29T21:28:58.352Z","userId":"67f0ac8fb93239893e4a7baf"}
 {"currentUser":{"_id":"67f0ac8fb93239893e4a7baf","email":"ayush@iiitg.ac","username":"ayush"},"level":"info","message":"Join room request:","roomId":"67f0acdcb93239893e4a7be1","socketId":"yrcU5HMVtS6pz0haAAAV","timestamp":"2025-05-29T21:28:58.352Z","userId":"67f0ac8fb93239893e4a7baf"}
 {"level":"info","message":"User already in room, reconnecting","roomId":"67f0acdcb93239893e4a7be1","socketId":"yrcU5HMVtS6pz0haAAAV","timestamp":"2025-05-29T21:28:58.352Z","userId":"67f0ac8fb93239893e4a7baf"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-29T22:25:50.852Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-29T22:25:50.840Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-29T22:25:50.853Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-29T22:25:50.857Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-29T22:25:50.858Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-29T22:25:50.898Z"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-30T05:35:49.261Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-30T05:35:49.257Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-30T05:35:49.262Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-30T05:35:49.264Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-30T05:35:49.264Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-30T05:35:49.289Z"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-30T06:09:15.465Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-30T06:09:15.462Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-30T06:09:15.466Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-30T06:09:15.467Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-30T06:09:15.467Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-30T06:09:15.493Z"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-30T06:09:18.276Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-30T06:09:18.272Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-30T06:09:18.276Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-30T06:09:18.278Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-30T06:09:18.278Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-30T06:09:18.305Z"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-30T06:33:02.385Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-30T06:33:02.378Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-30T06:33:02.386Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-30T06:33:02.388Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-30T06:33:02.389Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-30T06:33:02.431Z"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-30T06:33:06.248Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-30T06:33:06.244Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-30T06:33:06.249Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-30T06:33:06.250Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-30T06:33:06.250Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-30T06:33:06.273Z"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-30T06:33:07.487Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-30T06:33:07.480Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-30T06:33:07.488Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-30T06:33:07.491Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-30T06:33:07.491Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-30T06:33:07.520Z"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-30T06:33:39.745Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-30T06:33:39.738Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-30T06:33:39.746Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-30T06:33:39.749Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-30T06:33:39.749Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-30T06:33:39.792Z"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-30T06:33:43.600Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-30T06:33:43.593Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-30T06:33:43.601Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-30T06:33:43.604Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-30T06:33:43.604Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-30T06:33:43.688Z"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-30T06:36:51.020Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-30T06:36:51.015Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-30T06:36:51.021Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-30T06:36:51.023Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-30T06:36:51.023Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-30T06:36:51.060Z"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-30T06:36:52.386Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-30T06:36:52.381Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-30T06:36:52.387Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-30T06:36:52.390Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-30T06:36:52.390Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-30T06:36:52.411Z"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-30T06:36:54.820Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-30T06:36:54.816Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-30T06:36:54.820Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-30T06:36:54.822Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-30T06:36:54.823Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-30T06:36:54.845Z"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-30T06:37:37.706Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-30T06:37:37.702Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-30T06:37:37.707Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-30T06:37:37.709Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-30T06:37:37.709Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-30T06:37:37.742Z"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-30T06:38:11.959Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-30T06:38:11.953Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-30T06:38:11.960Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-30T06:38:11.963Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-30T06:38:11.964Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-30T06:38:12.000Z"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-30T06:38:13.265Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-30T06:38:13.261Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-30T06:38:13.265Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-30T06:38:13.267Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-30T06:38:13.267Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-30T06:38:13.287Z"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-30T06:38:44.814Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-30T06:38:44.808Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-30T06:38:44.814Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-30T06:38:44.816Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-30T06:38:44.817Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-30T06:38:44.844Z"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-30T06:38:46.118Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-30T06:38:46.114Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-30T06:38:46.119Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-30T06:38:46.120Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-30T06:38:46.121Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-30T06:38:46.142Z"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-30T06:47:01.765Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-30T06:47:01.758Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-30T06:47:01.765Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-30T06:47:01.769Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-30T06:47:01.769Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-30T06:47:01.859Z"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-30T06:47:05.536Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-30T06:47:05.531Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-30T06:47:05.537Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-30T06:47:05.540Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-30T06:47:05.541Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-30T06:47:05.569Z"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-30T06:47:12.990Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-30T06:47:12.985Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-30T06:47:12.991Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-30T06:47:12.993Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-30T06:47:12.993Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-30T06:47:13.026Z"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-30T06:47:18.738Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-30T06:47:18.731Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-30T06:47:18.739Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-30T06:47:18.741Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-30T06:47:18.741Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-30T06:47:18.770Z"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-30T06:48:05.628Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-30T06:48:05.625Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-30T06:48:05.628Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-30T06:48:05.630Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-30T06:48:05.630Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-30T06:48:05.647Z"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-30T06:49:04.045Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-30T06:49:04.042Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-30T06:49:04.045Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-30T06:49:04.047Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-30T06:49:04.047Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-30T06:49:04.065Z"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-30T06:51:51.418Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-30T06:51:51.412Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-30T06:51:51.418Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-30T06:51:51.421Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-30T06:51:51.421Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-30T06:51:51.507Z"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-30T10:22:15.923Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-30T10:22:15.919Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-30T10:22:15.923Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-30T10:22:15.925Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-30T10:22:15.925Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-30T10:22:15.941Z"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-30T10:33:28.173Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-30T10:33:28.169Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-30T10:33:28.174Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-30T10:33:28.175Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-30T10:33:28.176Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-30T10:33:28.194Z"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-30T12:43:18.486Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-30T12:43:18.482Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-30T12:43:18.487Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-30T12:43:18.489Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-30T12:43:18.490Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-30T12:43:18.535Z"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-30T12:51:56.999Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-30T12:51:56.995Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-30T12:51:56.999Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-30T12:51:57.003Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-30T12:51:57.003Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-30T12:51:57.045Z"}
+{"level":"info","message":"Socket.IO instance created successfully","timestamp":"2025-05-30T17:30:58.571Z"}
+{"level":"info","message":"Initializing WebSocket service...","timestamp":"2025-05-30T17:30:58.568Z"}
+{"level":"info","message":"WebSocket service initialized successfully","timestamp":"2025-05-30T17:30:58.572Z"}
+{"level":"info","message":"Server running on port 5000 in development mode","timestamp":"2025-05-30T17:30:58.574Z"}
+{"level":"info","message":"WebSocket server available at ws://localhost:5000","timestamp":"2025-05-30T17:30:58.575Z"}
+{"level":"info","message":"MongoDB connected successfully","timestamp":"2025-05-30T17:30:58.600Z"}

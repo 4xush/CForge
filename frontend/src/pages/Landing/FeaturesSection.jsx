@@ -64,7 +64,7 @@ const FeaturesSection = () => {
     const [selectedFeature, setSelectedFeature] = useState(null);
 
     return (
-        <div className="container mx-auto py-16 px-4">
+        <div id="feature" className="container mx-auto py-16 px-4">
             <h2 className="text-4xl md:text-5xl font-extrabold text-center mb-16 tracking-tight bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
                 Why Choose CForge?
             </h2>

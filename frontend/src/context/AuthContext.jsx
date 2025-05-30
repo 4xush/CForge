@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { login, register, googleLogin } from "../api/authApi";
 import { validateUserData } from "@/lib/utils/validation";
+import ApiService from "../services/ApiService";
+import PropTypes from 'prop-types';
 
 export const AuthContext = createContext();
 
@@ -26,6 +28,20 @@ export const AuthProvider = ({ children }) => {
     return false;
   };
 
+  const refreshPlatformData = async () => {
+    try {
+      const response = await ApiService.put('users/platform/refresh');
+      if (response.data && response.data.user) {
+        // Update both state and localStorage with the refreshed data
+        setAuthUser(response.data.user);
+        localStorage.setItem("app-user", JSON.stringify(response.data.user));
+        setError(null);
+      }
+    } catch (error) {
+      console.error("Failed to refresh platform data:", error);
+    }
+  };
+
   useEffect(() => {
     const initializeAuth = async () => {
       try {
@@ -44,7 +60,10 @@ export const AuthProvider = ({ children }) => {
               throw new Error("Token expired");
             }
             setAuthUser(userData);
-          } catch (tokenError) {
+            // Refresh platform data on initial load
+            await refreshPlatformData();
+          } catch (error) {
+            console.error("Token validation error:", error);
             throw new Error("Invalid token format");
           }
         }
@@ -80,6 +99,9 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem("app-token");
         throw new Error("Received invalid user data from server");
       }
+
+      // Refresh platform data after successful login
+      await refreshPlatformData();
 
       return user;
     } catch (error) {
@@ -159,7 +181,12 @@ export const AuthProvider = ({ children }) => {
       ...authUser,
       platforms: { ...authUser.platforms, [platformName]: platformData }
     }),
+    refreshPlatformData, // Expose the refresh function
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+AuthProvider.propTypes = {
+  children: PropTypes.node.isRequired
 };

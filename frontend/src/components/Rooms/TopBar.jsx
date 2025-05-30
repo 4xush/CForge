@@ -115,11 +115,6 @@ const TopBar = ({ roomId }) => {
     return `${currentRoomDetails?.members?.length || 0} Members`;
   };
 
-  // Debug code - uncomment if needed to debug state issues
-  // const roomDetailsId = currentRoomDetails?._id || currentRoomDetails?.id || 'none';
-  // const roomDetailsAdminCount = currentRoomDetails?.admins?.length || 0;
-  // console.log(`TopBar rendering for room: ${roomId}, details: ${roomDetailsId}, admins: ${roomDetailsAdminCount}`);
-
   return (
     <>
       <div

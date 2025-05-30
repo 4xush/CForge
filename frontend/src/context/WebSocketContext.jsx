@@ -18,10 +18,10 @@ export const WebSocketProvider = ({ children }) => {
     useEffect(() => {
         if (activeUser) {
             // Use the exact same origin as the current page to avoid CORS issues
-            const origin = window.location.hostname === 'localhost' ? 
-                'http://localhost:5000' : 
+            const origin = window.location.hostname === 'localhost' ?
+                'http://localhost:5000' :
                 window.location.origin;
-        
+
             // Extract token from localStorage if not directly available in the user object
             let token = null;
             if (activeUser.token) {
@@ -47,7 +47,7 @@ export const WebSocketProvider = ({ children }) => {
                     email: activeUser.email
                 }
             });
-            
+
             try {
                 const newSocket = io(origin, {
                     withCredentials: true,
@@ -71,12 +71,12 @@ export const WebSocketProvider = ({ children }) => {
                     });
                     setIsConnected(true);
                     setConnectionAttempts(0);
-                    
+
                     // If there was a pending room join, execute it now
                     if (pendingRoomJoin) {
-                        newSocket.emit('join_room', { 
-                            roomId: pendingRoomJoin, 
-                            userId: activeUser._id 
+                        newSocket.emit('join_room', {
+                            roomId: pendingRoomJoin,
+                            userId: activeUser._id
                         });
                         setPendingRoomJoin(null);
                     }
@@ -87,7 +87,7 @@ export const WebSocketProvider = ({ children }) => {
                     setIsConnected(false);
                     setConnectionAttempts(prev => prev + 1);
                 });
-                
+
                 newSocket.on('disconnect', () => {
                     console.log('Socket disconnected, attempting to reconnect...');
                     setIsConnected(false);
@@ -97,7 +97,7 @@ export const WebSocketProvider = ({ children }) => {
                     console.log('Socket reconnected after', attemptNumber, 'attempts');
                     setIsConnected(true);
                     setConnectionAttempts(0);
-                    
+
                     // Rejoin the current room after reconnection
                     if (currentRoomDetails?._id) {
                         newSocket.emit('join_room', {
@@ -132,7 +132,7 @@ export const WebSocketProvider = ({ children }) => {
     // Use useCallback to memoize these functions
     const joinRoom = useCallback((roomId) => {
         if (!roomId) return;
-        
+
         if (socket && isConnected && activeUser) {
             console.log('Joining room:', { roomId, userId: activeUser._id });
             socket.emit('join_room', { roomId, userId: activeUser._id });
@@ -144,7 +144,7 @@ export const WebSocketProvider = ({ children }) => {
 
     const leaveRoom = useCallback((roomId) => {
         if (!roomId) return;
-        
+
         if (socket && isConnected) {
             console.log('Leaving room:', roomId);
             socket.emit('leave_room', { roomId });
@@ -192,7 +192,7 @@ export const WebSocketProvider = ({ children }) => {
             const handleMessageUpdated = (updatedMessage) => {
                 // Emit acknowledgment
                 socket.emit('message_update_received', updatedMessage);
-                
+
                 // Update the message in the local state through MessageContext
                 if (window.messageContext) {
                     window.messageContext.updateMessage(updatedMessage);
@@ -238,10 +238,10 @@ export const WebSocketProvider = ({ children }) => {
     }, [socket]);
 
     return (
-        <WebSocketContext.Provider value={{ 
-            socket, 
-            joinRoom, 
-            leaveRoom, 
+        <WebSocketContext.Provider value={{
+            socket,
+            joinRoom,
+            leaveRoom,
             sendMessage,
             editMessage,
             connected: isConnected

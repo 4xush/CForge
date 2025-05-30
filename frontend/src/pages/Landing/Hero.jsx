@@ -71,24 +71,24 @@ const Hero = () => {
                     CFORGE
                 </h1>
                 <p className="text-2xl md:text-3xl text-gray-300 mt-6 mb-12 max-w-3xl mx-auto font-light tracking-wide">
-                    Improve coding skills and track progress with your peers.
+                    Track your coding progress and grow with your peers.
                 </p>
                 <div className="flex justify-center gap-6">
                     <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.95 }}
                         className="px-8 py-3 text-lg font-medium rounded-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-lg shadow-purple-500/20"
-                        onClick={() => window.open('https://github.com/4xush/CForge', '_blank')}
+                        onClick={() => window.open('/signup', '_blank')}
                     >
-                        Learn More
+                        Sign Up
                     </motion.button>
                     <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.95 }}
                         className="px-8 py-3 text-lg font-medium rounded-full bg-transparent border-2 border-purple-500 text-purple-400 hover:bg-purple-500/20 transition-all duration-300"
-                        onClick={() => window.open('/dashboard', '_blank', 'noopener,noreferrer')}
+                        onClick={() => window.open('/login', '_blank', 'noopener,noreferrer')}
                     >
-                        Try Now
+                        Login
                     </motion.button>
                 </div>
             </motion.div>

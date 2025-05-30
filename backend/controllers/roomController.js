@@ -121,7 +121,6 @@ exports.searchPublicRooms = async (req, res) => {
       .exec();
 
     const count = await Room.countDocuments(query);
-
     res.json({
       rooms,
       totalPages: Math.ceil(count / limit),

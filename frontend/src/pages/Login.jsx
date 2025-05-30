@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import AuthLayout from './AuthPage';
 import { GoogleLogin } from '@react-oauth/google';
 import { useNavigate, useLocation } from 'react-router-dom';
+import ApiService from '../services/ApiService';
 
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -46,12 +47,20 @@ const Login = () => {
             await loginUser(formData.email, formData.password);
             toast.success('Login successful!');
 
+            
             // Check for pending invite code in sessionStorage
             const pendingInviteCode = sessionStorage.getItem('app-pendingInviteCode');
             if (pendingInviteCode) {
                 sessionStorage.removeItem('app-pendingInviteCode');
                 navigate(`/rooms/join/${pendingInviteCode}`);
                 return;
+            }
+            // Perform initial platform data refresh
+            try {
+                await ApiService.put('users/platform/refresh');
+            } catch (refreshError) {
+                console.error('Initial refresh error:', refreshError);
+                // Don't show error to user, just log it
             }
 
             // Default redirect
@@ -67,6 +76,14 @@ const Login = () => {
             // Send the ID token to your backend to verify and create a session
             await loginUser(null, null, credentialResponse.credential);
             toast.success('Google login successful!');
+
+            // Perform initial platform data refresh
+            try {
+                await ApiService.put('users/platform/refresh');
+            } catch (refreshError) {
+                console.error('Initial refresh error:', refreshError);
+                // Don't show error to user, just log it
+            }
 
             // Check for pending invite code in sessionStorage
             const pendingInviteCode = sessionStorage.getItem('app-pendingInviteCode');
