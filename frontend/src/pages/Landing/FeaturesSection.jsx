@@ -30,7 +30,7 @@ const features = [
     },
     {
         title: "Multi-Platform Profile Integration",
-        description: "Track and showcase stats from LeetCode, Codeforces, and GitHub with real-time updates.",
+        description: "Track and showcase stats from LeetCode, Codeforces, and GitHub with updates.",
         details: "Users can link their LeetCode, Codeforces, and GitHub profiles to get real-time updates on their contest ratings, solved problems, and repository contributions.",
         icon: Globe,
     },

@@ -47,13 +47,19 @@ const CforgeLanding = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                             {[
                                 { src: "user detailed dashboard.png", title: "User Dashboard", desc: "A personalized dashboard displaying all user stats." },
-                                { src: "room leaderboard.png", title: "Room Leaderboard", desc: "Compare performance within a specific room." },
-                                { src: "leaderboard user profile.png", title: "Room Leaderboard details", desc: "Track your ranking against other users." },
-                                { src: "room chat.png", title: "Room Chat", desc: "Engage in discussions with other room members." },
-                                { src: "room.png", title: "Room Management", desc: "Create and manage rooms efficiently." },
+                                { src: "verify-platform-usernames-modal.png", title: "Verify Platform Usernames", desc: "Ensure your coding platform usernames are up-to-date for accurate stats." },
+                                { src: "room-leaderboard-leetcode.png", title: "Room Leaderboard - Leetcode", desc: "View Leetcode stats and rankings within your room." },
+                                { src: "room-leaderboard-codeforces.png", title: "Room Leaderboard - Codeforces", desc: "View Codeforces stats and rankings within your room." },
                                 { src: "detailed analysis.png", title: "Detailed Analysis", desc: "Get in-depth performance analytics." },
+                                { src: "active-heatmap.png", title: "Active Heatmap", desc: "Visualize your coding activity across platforms with an interactive heatmap." },
+                                { src: "room.png", title: "Room Management", desc: "Create and manage rooms efficiently." },
+                                { src: "room chat.png", title: "Room Chat", desc: "Engage in discussions with other room members." },
+                                { src: "room-settings.png", title: "Room Settings", desc: "Manage room details, members, and permissions easily." },
+                                { src: "room-management-modal.png", title: "Room Create and Join", desc: "Easily create or join rooms with a simple modal interface." },
+                                { src: "room-invite-link-modal.png", title: "Room Invite Link", desc: "Invite friends to your room with a shareable invite link." },
                                 { src: "setting.png", title: "Settings", desc: "Customize preferences and platforms." },
                                 { src: "help and faq.png", title: "Help & FAQ", desc: "Find answers to common questions." }
+                                // Added images below
                             ].map((item, index) => (
                                 <motion.div
                                     key={index}

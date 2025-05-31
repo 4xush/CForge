@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { BookOpen, Brain, Code, RotateCw, AlertCircle, Trophy, Target, Calendar } from 'lucide-react';
-import { useLeetCodeStats } from '../../hooks/useLeetCodeStats';
+import { BookOpen, Brain, Code, RotateCw, AlertCircle } from 'lucide-react';
 
 const TabPanel = ({ children, value, index, ...other }) => {
     return (
@@ -19,13 +18,38 @@ const TabPanel = ({ children, value, index, ...other }) => {
     );
 };
 
-import LeetCodeLevelCard from "./LeetCodeLevelCard";
 const LeetCodeDashboard = ({ leetcodeData, nestedUsername }) => {
-    const username = nestedUsername;
-    const { data, loading, error, refreshStats } = useLeetCodeStats(username);
-    
+    const username = nestedUsername || "johndoe";
     const [tabValue, setTabValue] = useState(0);
-    const currentData = leetcodeData;
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    // Mock data for demonstration
+    const data = {
+        advanced: [
+            { tagName: "Dynamic Programming", problemsSolved: 45 },
+            { tagName: "Graph Theory", problemsSolved: 32 },
+            { tagName: "Backtracking", problemsSolved: 28 },
+            { tagName: "Divide & Conquer", problemsSolved: 18 }
+        ],
+        intermediate: [
+            { tagName: "Binary Search", problemsSolved: 52 },
+            { tagName: "Two Pointers", problemsSolved: 38 },
+            { tagName: "Sliding Window", problemsSolved: 31 },
+            { tagName: "Hash Table", problemsSolved: 47 }
+        ],
+        fundamental: [
+            { tagName: "Array", problemsSolved: 89 },
+            { tagName: "String", problemsSolved: 67 },
+            { tagName: "Linked List", problemsSolved: 41 },
+            { tagName: "Stack & Queue", problemsSolved: 35 }
+        ]
+    };
+
+    const refreshStats = () => {
+        setLoading(true);
+        setTimeout(() => setLoading(false), 1000);
+    };
 
     if (loading) {
         return (
@@ -48,37 +72,18 @@ const LeetCodeDashboard = ({ leetcodeData, nestedUsername }) => {
         );
     }
 
-    if (!data) {
-        return (
-            <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-                <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4 max-w-md">
-                    <div className="flex items-center gap-2 text-yellow-400">
-                        <AlertCircle size={20} />
-                        <span>No data available for this user.</span>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    // Calculate totals (matching your original logic)
+    // Calculate totals
     const totalProblems = {
-        advanced: data.advanced ? data.advanced.reduce((acc, curr) => acc + curr.problemsSolved, 0) : 0,
-        intermediate: data.intermediate ? data.intermediate.reduce((acc, curr) => acc + curr.problemsSolved, 0) : 0,
-        fundamental: data.fundamental ? data.fundamental.reduce((acc, curr) => acc + curr.problemsSolved, 0) : 0
+        advanced: data.advanced.reduce((acc, curr) => acc + curr.problemsSolved, 0),
+        intermediate: data.intermediate.reduce((acc, curr) => acc + curr.problemsSolved, 0),
+        fundamental: data.fundamental.reduce((acc, curr) => acc + curr.problemsSolved, 0)
     };
 
-    // Color schemes - Purple theme (matching your original structure)
+    // Color schemes - Purple theme
     const categoryColors = {
-        advanced: '#a855f7',    // purple-500 (was #3b82f6)
-        intermediate: '#8b5cf6', // violet-500 (was #10b981)
-        fundamental: '#c084fc'   // purple-400 (was #f59e0b)
-    };
-
-    const difficultyColors = {
-        easy: '#10b981',    // green-500
-        medium: '#f59e0b',  // amber-500
-        hard: '#ef4444'     // red-500
+        advanced: '#a855f7',    // purple-500
+        intermediate: '#8b5cf6', // violet-500  
+        fundamental: '#c084fc'   // purple-400
     };
 
     const getCategoryIcon = (category) => {
@@ -91,7 +96,7 @@ const LeetCodeDashboard = ({ leetcodeData, nestedUsername }) => {
         }
     };
 
-    // Prepare chart data (matching your original logic)
+    // Prepare chart data
     const chartData = Object.entries(data).flatMap(([category, tags]) =>
         tags.map(tag => ({
             ...tag,
@@ -107,14 +112,9 @@ const LeetCodeDashboard = ({ leetcodeData, nestedUsername }) => {
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-3xl font-light text-gray-100 mb-1">
-                            {username}'s LeetCode Progress
+                            {username}
                         </h1>
-                        <p className="text-gray-400 font-light">Progress Dashboard</p>
-                        {currentData?.lastValidationCheck && (
-                            <p className="text-xs text-gray-500 mt-1">
-                                Last updated: {new Date(currentData.lastValidationCheck).toLocaleDateString()}
-                            </p>
-                        )}
+                        <p className="text-gray-400 font-light">LeetCode Progress Dashboard</p>
                     </div>
                     <button
                         onClick={refreshStats}
@@ -125,9 +125,7 @@ const LeetCodeDashboard = ({ leetcodeData, nestedUsername }) => {
                     </button>
                 </div>
 
-               
-
-                {/* Summary Cards (matching your original structure) */}
+                {/* Summary Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {Object.entries(totalProblems).map(([category, total]) => (
                         <div 
@@ -144,7 +142,7 @@ const LeetCodeDashboard = ({ leetcodeData, nestedUsername }) => {
                                 {total}
                             </div>
                             <p className="text-sm text-gray-500">
-                                Concepts Included
+                                Problems Solved
                             </p>
                         </div>
                     ))}
@@ -175,7 +173,7 @@ const LeetCodeDashboard = ({ leetcodeData, nestedUsername }) => {
                     <TabPanel value={tabValue} index={0}>
                         <div className="p-6">
                             <h3 className="text-xl font-light text-gray-200 mb-6">
-                                Problem Solving Distribution
+                                Problem Distribution
                             </h3>
                             <div className="h-96 bg-gray-900/30 rounded-lg p-4">
                                 <ResponsiveContainer width="100%" height="100%">
@@ -215,13 +213,13 @@ const LeetCodeDashboard = ({ leetcodeData, nestedUsername }) => {
                                     <thead>
                                         <tr className="border-b border-gray-700">
                                             <th className="text-left py-4 px-2 font-light text-gray-300">Category</th>
-                                            <th className="text-left py-4 px-2 font-light text-gray-300">Tag</th>
-                                            <th className="text-right py-4 px-2 font-light text-gray-300">Concepts Included</th>
+                                            <th className="text-left py-4 px-2 font-light text-gray-300">Topic</th>
+                                            <th className="text-right py-4 px-2 font-light text-gray-300">Problems Solved</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {Object.entries(data).flatMap(([category, tags]) =>
-                                            tags.map((tag) => (
+                                            tags.map((tag, index) => (
                                                 <tr 
                                                     key={`${category}-${tag.tagName}`}
                                                     className="border-b border-gray-800/50 hover:bg-gray-900/30 transition-colors"
@@ -244,7 +242,33 @@ const LeetCodeDashboard = ({ leetcodeData, nestedUsername }) => {
                         </div>
                     </TabPanel>
                 </div>
-                < LeetCodeLevelCard leetcodeData={currentData} />
+
+                {/* Additional Stats Card */}
+                <div className="bg-gray-900/30 border border-gray-800 rounded-xl p-6">
+                    <h3 className="text-xl font-light text-gray-200 mb-4">
+                        Progress Summary
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="text-center">
+                            <div className="text-2xl font-light text-purple-400 mb-1">
+                                {Object.values(totalProblems).reduce((a, b) => a + b, 0)}
+                            </div>
+                            <p className="text-sm text-gray-500">Total Problems</p>
+                        </div>
+                        <div className="text-center">
+                            <div className="text-2xl font-light text-purple-400 mb-1">
+                                {Object.keys(data).reduce((acc, cat) => acc + data[cat].length, 0)}
+                            </div>
+                            <p className="text-sm text-gray-500">Topics Covered</p>
+                        </div>
+                        <div className="text-center">
+                            <div className="text-2xl font-light text-purple-400 mb-1">
+                                {Math.max(...Object.entries(data).flatMap(([_, tags]) => tags.map(t => t.problemsSolved)))}
+                            </div>
+                            <p className="text-sm text-gray-500">Best Topic Score</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );

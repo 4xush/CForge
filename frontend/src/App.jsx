@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { RoomProvider } from './context/RoomContext';
 import { AuthProvider } from './context/AuthContext';
@@ -24,6 +24,16 @@ const NotFoundPage = React.lazy(() => import('./pages/Error404'));
 const Settings = React.lazy(() => import('./pages/Settings'));
 
 const App = () => {
+  // Simple logout component
+  const Logout = () => {
+    useEffect(() => {
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.replace('/login');
+    }, []);
+    return null;
+  };
+
   return (
     <ErrorBoundary>
       <Router>
@@ -52,6 +62,7 @@ const App = () => {
                   {/* Public routes */}
                   <Route path="/signup" element={<SignupPage />} />
                   <Route path="/login" element={<LoginPage />} />
+                  <Route path="/logout" element={<Logout />} />
                   <Route path="/" element={<WelcomePage />} />
                   <Route path="/404" element={<NotFoundPage />} />
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Code, ExternalLink} from 'lucide-react';
+import { Code, ExternalLink } from 'lucide-react';
 
 // Reusable Components
 const Header = () => (
@@ -15,7 +15,7 @@ const Header = () => (
             <nav className="hidden md:flex items-center gap-8">
                 <a href="#feature" className="text-lg font-medium hover:text-purple-400 transition-colors duration-300">Feature</a>
                 <a href="#preview" className="text-lg font-medium hover:text-purple-400 transition-colors duration-300">Preview</a>
-                <a href="#api" className="text-lg font-medium hover:text-purple-400 transition-colors duration-300">API</a>
+                <a href="#docs" className="text-lg font-medium hover:text-purple-400 transition-colors duration-300">Docs</a>
             </nav>
         </div>
     </header>
@@ -40,7 +40,7 @@ const PreviewCard = ({ item, onHover, onLeave }) => (
 
 
 const DeveloperResources = () => (
-    <section id="api" className="py-24 px-6 bg-gradient-to-b from-[#141B3F] to-[#0A0F23]">
+    <section id="docs" className="py-24 px-6 bg-gradient-to-b from-[#141B3F] to-[#0A0F23]">
         <div className="container mx-auto text-center">
             <h2 className="text-4xl md:text-5xl font-extrabold mb-12 tracking-tight bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
                 Developer Resources
@@ -64,21 +64,21 @@ const DeveloperResources = () => (
 
 const Footer = () => (
     <footer className="bg-[#0A0F23]/90 backdrop-blur-md py-10 px-6 border-t border-purple-900/20">
-    <div className="container mx-auto text-center text-gray-400 text-lg">
-      <div className="flex justify-center">
-        <a
-          href="https://v0-ayush-kumar-portfolio.vercel.app/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-gray-400 hover:text-purple-400 hover:scale-105 transition-all duration-300 flex items-center gap-2"
-        >
-          <ExternalLink className="h-5 w-5" />
-          <span className="text-base">View Developer Profile</span>
-        </a>
-      </div>
-      <p className="mt-4 text-sm">© 2024 CForge. All rights reserved.</p>
-    </div>
-  </footer>
+        <div className="container mx-auto text-center text-gray-400 text-lg">
+            <div className="flex justify-center">
+                <a
+                    href="https://v0-ayush-kumar-portfolio.vercel.app/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-purple-400 hover:scale-105 transition-all duration-300 flex items-center gap-2"
+                >
+                    <ExternalLink className="h-5 w-5" />
+                    <span className="text-base">View Developer Profile</span>
+                </a>
+            </div>
+            <p className="mt-4 text-sm">© 2024 CForge. All rights reserved.</p>
+        </div>
+    </footer>
 );
 
 export {

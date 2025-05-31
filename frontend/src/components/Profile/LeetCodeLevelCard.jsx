@@ -28,23 +28,6 @@ const UserLevelCard = ({ leetcodeData }) => {
         weightedPoints >= level.min && weightedPoints <= level.max
     );
 
-    const getLevelProgress = () => {
-        // Special handling for Master level
-        if (currentLevel.name === 'Master') {
-            return hard >= 50 ? 100 : (hard / 50) * 100;
-        }
-
-        const levelIndex = levels.indexOf(currentLevel);
-        const prevLevelMax = levelIndex > 0 ? levels[levelIndex - 1].max : 0;
-        const totalLevelRange = currentLevel.max - prevLevelMax;
-
-        // Precise calculation of progress within the current level
-        const progressPoints = weightedPoints - prevLevelMax;
-        const progressPercentage = (progressPoints / totalLevelRange) * 100;
-
-        return Math.min(Math.max(progressPercentage, 0), 100);
-    };
-
     const renderLevelProgression = () => {
         return levels.map((level, index) => {
             let progress = 0;
@@ -161,7 +144,7 @@ const UserLevelCard = ({ leetcodeData }) => {
     const totalStats = calculateTotalStats();
 
     return (
-        <div className="max-w-4xl mx-auto bg-white shadow-2xl rounded-2xl overflow-hidden grid grid-cols-3 gap-0">
+        <div className="max-w-4xl mx-auto bg-purple-100 shadow-2xl rounded-2xl overflow-hidden grid grid-cols-3 gap-0">
             <div className="col-span-2 p-6">
                 <div className="flex justify-between items-center mb-6">
                     <div>
@@ -207,15 +190,15 @@ const UserLevelCard = ({ leetcodeData }) => {
                         </div>
 
                         <div className="grid grid-cols-3 gap-4 text-center">
-                            <div className="bg-green-100 p-3 rounded-lg">
+                            <div className="bg-green-200 p-3 rounded-lg">
                                 <p className="text-green-600 font-bold">Easy</p>
                                 <p className="text-xl">{easy}</p>
                             </div>
-                            <div className="bg-yellow-100 p-3 rounded-lg">
+                            <div className="bg-yellow-200 p-3 rounded-lg">
                                 <p className="text-yellow-600 font-bold">Medium</p>
                                 <p className="text-xl">{medium}</p>
                             </div>
-                            <div className="bg-red-100 p-3 rounded-lg">
+                            <div className="bg-red-200 p-3 rounded-lg">
                                 <p className="text-red-600 font-bold">Hard</p>
                                 <p className="text-xl">{hard}</p>
                             </div>

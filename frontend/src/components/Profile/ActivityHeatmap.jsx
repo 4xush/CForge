@@ -115,7 +115,7 @@ const ActivityHeatmap = ({ data, platform }) => {
     }, [data]);
 
     return (
-        <Card className="w-full max-w-4xl bg-gray-900 text-gray-100">
+        <Card className="w-full max-w-5xl bg-gray-900 text-gray-100">
             <CardHeader>
                 <CardTitle className="text-lg">
                     {platform.charAt(0).toUpperCase() + platform.slice(1)} Activity
