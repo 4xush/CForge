@@ -26,8 +26,7 @@ const AboutCForge = () => {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#0A0F23] text-white overflow-hidden font-sans">
-      <Header />
+    <div className="relative min-h-screen bg-[#0A0F23] text-white overflow-hidden font-sans py-12">
       <main className="max-w-4xl mx-auto mt-12 ">
         <motion.h1
           className="text-4xl font-extrabold mb-6 text-purple-400"
@@ -61,14 +60,22 @@ const AboutCForge = () => {
             fosters community-driven learning, and transforms scattered progress into shared momentum.
           </motion.p>
           <motion.p variants={childFade}>
-            Join CForge — not just to track your coding, but to connect with like-minded peers, grow together, and stay inspired on the journey.
+            <a href="/signup" style={{ textDecoration: 'underline', color: '#2563eb' }}>
+              Join CForge
+            </a>{' '}
+            — not just to track your coding, but to connect with like-minded peers, grow together, and stay inspired on the journey.
           </motion.p>
-          <motion.div variants={childFade} className="mt-8">
+
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="pt-4 mt-10">
             <a
               href="https://v0-ayush-kumar-portfolio.vercel.app/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block bg-purple-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors duration-300"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full text-white font-medium shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300"
+
             >
               Visit Developer Page
             </a>

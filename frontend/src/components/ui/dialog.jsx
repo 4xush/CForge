@@ -25,21 +25,7 @@ const DialogContent = React.forwardRef(({ className, children, ...props }, ref) 
     >
       {children}
       <DialogPrimitive.Close className="absolute right-6 top-6 rounded-full p-2 text-slate-400 transition-all duration-200 hover:text-slate-600 hover:bg-slate-100 dark:hover:text-slate-300 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 disabled:pointer-events-none">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-        <span className="sr-only">Close</span>
+        
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
   </DialogPortal>
