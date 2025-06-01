@@ -1,4 +1,6 @@
 import React from 'react';
+import { MailIcon } from 'lucide-react';
+
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -19,6 +21,16 @@ class ErrorBoundary extends React.Component {
     console.error('Error caught by boundary:', error, errorInfo);
   }
 
+  handleReportError = () => {
+    const subject = encodeURIComponent('Error Report - CForge');
+    const errorDetails = this.state.error ? this.state.error.toString() : 'Unknown error';
+    const stackTrace = this.state.errorInfo && this.state.errorInfo.componentStack
+      ? this.state.errorInfo.componentStack
+      : 'No stack trace available';
+    const body = encodeURIComponent(`Error: ${errorDetails}\n\nStack Trace:\n${stackTrace}`);
+    window.location.href = `mailto:cforge.service@gmail.com?subject=${subject}&body=${body}`;
+  };
+
   render() {
     if (this.state.hasError) {
       return (
@@ -30,7 +42,7 @@ class ErrorBoundary extends React.Component {
             <p className="text-gray-300 mb-6">
               We're sorry, but something went wrong. Our team has been notified and we're working to fix it.
             </p>
-            <div className="flex justify-center gap-4">
+            <div className="flex justify-center gap-4 mb-6">
               <button
                 onClick={() => window.location.reload()}
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
@@ -54,6 +66,16 @@ class ErrorBoundary extends React.Component {
                 </pre>
               </div>
             )}
+            <div className="border-t border-gray-700 pt-6">
+              <p className="text-gray-400 text-sm mb-4">Help us fix it by reporting the error details.</p>
+              <button
+                onClick={this.handleReportError}
+                className="flex items-center justify-center gap-2 mx-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors text-sm"
+              >
+                <MailIcon size={16} />
+                <span>Report this Error</span>
+              </button>
+            </div>
           </div>
         </div>
       );

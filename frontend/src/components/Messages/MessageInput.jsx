@@ -1,19 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRoomContext } from '../../context/RoomContext';
 import { useAuthContext } from '../../context/AuthContext';
 import { useMessageContext } from '../../context/MessageContext';
 import { useWebSocket } from '../../context/WebSocketContext';
-import { toast } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import { Send, X, WifiOff } from 'lucide-react';
 import PropTypes from 'prop-types';
 
-const MessageInput = ({ initialMessage = '', onCancel, isEditing = false, messageId = null }) => {
+const MessageInput = ({ initialMessage = '', onMessageSent, onCancel, isEditing = false, messageId = null, disabled = false }) => {
     const { currentRoomDetails } = useRoomContext();
     const { authUser } = useAuthContext();
     const { socket, sendMessage, connected } = useWebSocket();
-    const { addMessage, editMessage } = useMessageContext();
+    const { editMessage } = useMessageContext();
     const [message, setMessage] = useState(initialMessage);
     const [sending, setSending] = useState(false);
+    const lastSentRef = useRef('');
+    const sendTimeoutRef = useRef(null);
 
     useEffect(() => {
         setMessage(initialMessage);
@@ -39,59 +41,105 @@ const MessageInput = ({ initialMessage = '', onCancel, isEditing = false, messag
         const handleMessageError = (data) => {
             toast.error(data.error || 'Failed to send message');
             setSending(false);
+            
+            // Reset last sent if there was an error
+            if (data.tempId && lastSentRef.current) {
+                lastSentRef.current = '';
+            }
+        };
+
+        const handleMessageSent = (data) => {
+            setSending(false);
+            console.log('Message sent successfully:', data.messageId);
         };
 
         socket.on('message_error', handleMessageError);
-        return () => socket.off('message_error', handleMessageError);
+        socket.on('message_sent', handleMessageSent);
+        
+        return () => {
+            socket.off('message_error', handleMessageError);
+            socket.off('message_sent', handleMessageSent);
+        };
     }, [socket]);
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (sendTimeoutRef.current) {
+                clearTimeout(sendTimeoutRef.current);
+            }
+        };
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!message.trim() || !currentRoomDetails || sending) return;
+        const trimmedMessage = message.trim();
+        
+        if (!trimmedMessage || !currentRoomDetails || sending || disabled) return;
 
-        if (!connected) {
+        // Prevent duplicate submissions
+        if (trimmedMessage === lastSentRef.current) {
+            console.log('Ignoring duplicate message submission');
+            return;
+        }
+
+        if (!connected && !isEditing) {
             toast.error('Cannot send message: Not connected to the server');
             return;
         }
 
         setSending(true);
+        
+        // Clear any existing timeout
+        if (sendTimeoutRef.current) {
+            clearTimeout(sendTimeoutRef.current);
+        }
+
         try {
             if (isEditing && messageId) {
-                // Use context method instead of socket directly
-                const success = editMessage(messageId, message.trim());
-                if (!success) {
+                // Handle message editing via WebSocket
+                const success = sendMessage ? 
+                    socket?.emit('edit_message', { 
+                        roomId: currentRoomDetails._id, 
+                        messageId, 
+                        newContent: trimmedMessage 
+                    }) : 
+                    await editMessage(messageId, trimmedMessage);
+                    
+                if (!success && !socket) {
                     toast.error('Failed to edit message: Connection issue');
                 }
                 if (onCancel) onCancel();
             } else {
-                const messageObj = {
-                    content: message.trim(),
-                    roomId: currentRoomDetails._id,
-                    sender: authUser._id
-                };
+                // Handle new message sending via callback
+                if (onMessageSent) {
+                    const messageObj = {
+                        content: trimmedMessage,
+                        roomId: currentRoomDetails._id,
+                        sender: authUser._id,
+                        tempId: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+                    };
 
-                const tempMessage = {
-                    _id: `temp-${Date.now()}`,
-                    content: message.trim(),
-                    createdAt: new Date().toISOString(),
-                    sender: {
-                        _id: authUser._id,
-                        username: authUser.username,
-                        profilePicture: authUser.profilePicture || authUser.avatar
-                    },
-                    isTemporary: true
-                };
-
-                addMessage(tempMessage);
-
-                const sent = sendMessage(currentRoomDetails._id, messageObj);
-
-                if (!sent) {
-                    toast.error('Failed to send message: Connection issue');
+                    lastSentRef.current = trimmedMessage;
+                    onMessageSent(messageObj);
+                    
+                    // Send via WebSocket
+                    const sent = sendMessage(currentRoomDetails._id, messageObj);
+                    if (!sent) {
+                        toast.error('Failed to send message: Connection issue');
+                    }
+                } else {
+                    toast.error('Message handler not available');
                 }
             }
 
             setMessage('');
+            
+            // Reset the last sent reference after a delay to allow similar messages later
+            sendTimeoutRef.current = setTimeout(() => {
+                lastSentRef.current = '';
+            }, 3000);
+            
         } catch (error) {
             console.error("Error sending message:", error);
             toast.error('Failed to send message');
@@ -116,7 +164,7 @@ const MessageInput = ({ initialMessage = '', onCancel, isEditing = false, messag
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
-                disabled={(!currentRoomDetails && !isEditing) || sending || !connected}
+                disabled={(!currentRoomDetails && !isEditing) || sending || (!connected && !isEditing) || disabled}
             />
 
             {!connected && (
@@ -136,7 +184,7 @@ const MessageInput = ({ initialMessage = '', onCancel, isEditing = false, messag
                     rounded-md
                 `}
                 onClick={handleSubmit}
-                disabled={!message.trim() || sending || !connected}
+                disabled={!message.trim() || sending || (!connected && !isEditing) || disabled}
             >
                 <Send
                     size={16}
@@ -157,9 +205,11 @@ const MessageInput = ({ initialMessage = '', onCancel, isEditing = false, messag
 
 MessageInput.propTypes = {
     initialMessage: PropTypes.string,
+    onMessageSent: PropTypes.func,
     onCancel: PropTypes.func,
     isEditing: PropTypes.bool,
-    messageId: PropTypes.string
+    messageId: PropTypes.string,
+    disabled: PropTypes.bool
 };
 
 export default MessageInput;

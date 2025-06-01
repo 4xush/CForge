@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useCallback, useRef } from "react"
+import { createContext, useContext, useState, useCallback, useRef } from "react"
+import PropTypes from 'prop-types'
 import api from "../services/ApiService.js"
 import { useAuthContext } from "./AuthContext"
 import { useRoomContext } from "./RoomContext"
@@ -61,34 +62,73 @@ export const MessageProvider = ({ children }) => {
 
     const addMessage = useCallback(
         (newMessage) => {
-            // console.log("Adding message to context:", newMessage);
+            console.log("Adding message to context:", newMessage._id || newMessage.tempId);
             
-            // If the message already has sender info, use it directly
-            if (newMessage.sender && typeof newMessage.sender === 'object') {
-                setMessages((prevMessages) => [...prevMessages, newMessage]);
-                return;
-            }
-            
-            // Otherwise, construct a full message object
-            setMessages((prevMessages) => [
-                ...prevMessages,
-                {
-                    ...newMessage,
-                    sender: {
-                        _id: authUser._id,
-                        username: authUser.username,
-                        profilePicture: authUser.profilePicture,
-                    },
-                    createdAt: newMessage.createdAt || new Date().toISOString(),
-                },
-            ])
+            setMessages((prevMessages) => {
+                // Check for exact duplicates by ID or tempId
+                const isDuplicateById = prevMessages.some(msg => 
+                    (newMessage._id && msg._id === newMessage._id) ||
+                    (newMessage.tempId && msg.tempId === newMessage.tempId)
+                );
+                
+                if (isDuplicateById) {
+                    console.log("Ignoring duplicate message by ID:", newMessage._id || newMessage.tempId);
+                    return prevMessages;
+                }
+                
+                // Check for similar temporary messages (same content, sender, within 5 seconds)
+                if (newMessage.isTemporary) {
+                    const hasSimilarTemp = prevMessages.some(msg => 
+                        msg.isTemporary &&
+                        msg.content === newMessage.content &&
+                        msg.sender._id === newMessage.sender._id &&
+                        Math.abs(new Date(msg.createdAt).getTime() - new Date(newMessage.createdAt).getTime()) < 5000
+                    );
+                    
+                    if (hasSimilarTemp) {
+                        console.log("Ignoring similar temporary message:", newMessage.content.substring(0, 20));
+                        return prevMessages;
+                    }
+                }
+                
+                // Create the message object
+                let messageToAdd;
+                
+                // If the message already has sender info, use it directly
+                if (newMessage.sender && typeof newMessage.sender === 'object') {
+                    messageToAdd = {
+                        ...newMessage,
+                        createdAt: newMessage.createdAt || new Date().toISOString()
+                    };
+                } else {
+                    // Otherwise, construct a full message object
+                    messageToAdd = {
+                        ...newMessage,
+                        sender: {
+                            _id: authUser._id,
+                            username: authUser.username,
+                            profilePicture: authUser.profilePicture,
+                        },
+                        createdAt: newMessage.createdAt || new Date().toISOString(),
+                    };
+                }
+                
+                console.log("Successfully adding message:", messageToAdd._id || messageToAdd.tempId);
+                return [...prevMessages, messageToAdd];
+            });
         },
         [authUser],
     )
 
     const updateMessage = useCallback((messageId, updatedMessage) => {
         setMessages(prevMessages => 
-            prevMessages.map(msg => msg._id === messageId ? updatedMessage : msg)
+            prevMessages.map(msg => {
+                if (msg._id === messageId) {
+                    console.log("Updating message:", messageId);
+                    return { ...msg, ...updatedMessage };
+                }
+                return msg;
+            })
         );
     }, []);
 
@@ -132,7 +172,6 @@ export const MessageProvider = ({ children }) => {
         </MessageContext.Provider>
     )
 }
-
 export const useMessageContext = () => {
     const context = useContext(MessageContext)
     if (!context) {
@@ -141,3 +180,6 @@ export const useMessageContext = () => {
     return context
 }
 
+MessageProvider.propTypes = {
+    children: PropTypes.node.isRequired
+}

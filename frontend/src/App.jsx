@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { RoomProvider } from './context/RoomContext';
 import { AuthProvider } from './context/AuthContext';
 import { MessageProvider } from './context/MessageContext';
+import { WebSocketProvider } from './context/WebSocketContext';
 import { Toaster } from 'react-hot-toast';
 import Layout from './components/Layout';
 import PrivateRoute from './components/PrivateRoute.jsx';
@@ -39,7 +40,6 @@ const App = () => {
       <Router>
         <AuthProvider>
           <RoomProvider>
-            <MessageProvider>
               <Toaster
                 position="top-right"
                 reverseOrder={false}
@@ -107,15 +107,19 @@ const App = () => {
                       }
                     />
                     <Route
-                      path="/rooms/:roomId/chat"
-                      element={
-                        <PrivateRoute>
-                          <ErrorBoundary>
-                            <RoomChat />
-                          </ErrorBoundary>
-                        </PrivateRoute>
-                      }
-                    />
+                        path="/rooms/:roomId/chat"
+                        element={
+                          <PrivateRoute>
+                            <ErrorBoundary>
+                              <MessageProvider>
+                                <WebSocketProvider>
+                                  <RoomChat />
+                                </WebSocketProvider>
+                              </MessageProvider>
+                            </ErrorBoundary>
+                          </PrivateRoute>
+                        }
+                      />
                     <Route
                       path="/settings"
                       element={
@@ -152,7 +156,6 @@ const App = () => {
                   <Route path="*" element={<Navigate to="/404" replace />} />
                 </Routes>
               </Suspense>
-            </MessageProvider>
           </RoomProvider>
         </AuthProvider>
       </Router>

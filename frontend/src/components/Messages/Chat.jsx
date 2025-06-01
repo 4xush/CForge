@@ -10,12 +10,12 @@ import PublicUserProfileModal from "../../components/PublicUserProfileModal";
 import { format, isToday, isYesterday, isSameYear } from "date-fns";
 import { AlertCircle, RefreshCw, ChevronDown } from "lucide-react";
 import { Spinner } from "../ui/Spinner";
-import { toast } from "react-hot-toast";
+import toast from 'react-hot-toast';
 
 const Chat = () => {
     const { currentRoomDetails } = useRoomContext();
     const { authUser } = useAuthContext();
-    const { socket, joinRoom, leaveRoom } = useWebSocket();
+    const { socket, connected, addEventListener, removeEventListener } = useWebSocket();
     const {
         messages,
         loading,
@@ -52,70 +52,70 @@ const Chat = () => {
         }
     }, [currentRoomDetails, currentRoomDetails?._id, fetchMessages]);
 
-    // Join room when selected room changes - more stable implementation
-    useEffect(() => {
-        if (!currentRoomDetails?._id) return;
-
-        let hasJoined = false;
-
-        if (socket?.connected) {
-            joinRoom(currentRoomDetails._id);
-            hasJoined = true;
-        }
-
-        let attempts = 0;
-        const MAX_ATTEMPTS = 5;
-        const RETRY_INTERVAL = 5000;
-
-        const intervalId = setInterval(() => {
-            if (socket?.connected && !hasJoined && attempts < MAX_ATTEMPTS) {
-                joinRoom(currentRoomDetails._id);
-                hasJoined = true;
-            } else if (attempts >= MAX_ATTEMPTS && !hasJoined) {
-                console.warn(`Failed to join room ${currentRoomDetails._id} after ${MAX_ATTEMPTS} attempts`);
-                clearInterval(intervalId);
-            }
-            attempts++;
-        }, RETRY_INTERVAL);
-
-        return () => {
-            clearInterval(intervalId);
-            if (hasJoined) {
-                leaveRoom(currentRoomDetails._id);
-            }
-        };
-    }, [currentRoomDetails?._id, joinRoom, leaveRoom, socket]);
-
+    // Room joining is now handled by the ChatManager component in ChatWithWebSocket.jsx
     // Listen for real-time messages
     useEffect(() => {
         if (!socket) return;
 
         const handleNewMessage = (message) => {
-            const isReplacingTemp = messages.some(msg =>
-                msg.isTemporary &&
-                msg.content === message.content &&
-                msg.sender._id.toString() === message.sender._id.toString()
-            );
+            console.log('Received new message:', message._id);
+            
+            setMessages(prevMessages => {
+                // Check if this message already exists (prevent duplicates)
+                const existsById = prevMessages.some(msg => msg._id === message._id);
+                if (existsById) {
+                    console.log('Ignoring duplicate message:', message._id);
+                    return prevMessages;
+                }
+                
+                // Check if this is replacing a temporary message
+                const tempIndex = prevMessages.findIndex(msg =>
+                    msg.isTemporary &&
+                    msg.content === message.content &&
+                    msg.sender._id.toString() === message.sender._id.toString() &&
+                    Math.abs(new Date(msg.createdAt).getTime() - new Date(message.createdAt).getTime()) < 10000 // Within 10 seconds
+                );
 
-            if (isReplacingTemp) {
-                setMessages(prevMessages => prevMessages.map(msg =>
-                    (msg.isTemporary &&
-                        msg.content === message.content &&
-                        msg.sender._id.toString() === message.sender._id.toString())
-                        ? message
-                        : msg
-                ));
-            } else {
-                addMessage(message);
+                if (tempIndex !== -1) {
+                    console.log('Replacing temporary message with confirmed message');
+                    const newMessages = [...prevMessages];
+                    newMessages[tempIndex] = { ...message, isTemporary: false };
+                    return newMessages;
+                } else {
+                    console.log('Adding new message to state:', message._id);
+                    return [...prevMessages, message];
+                }
+            });
+        };
+
+        const handleMessageSent = (data) => {
+            console.log('Message sent confirmation:', data);
+            // You could update the UI here to show the message was delivered
+            if (data.messageId) {
+                toast.success('Message sent successfully', { duration: 1000 });
             }
         };
-
-        socket.on('receive_message', handleNewMessage);
+        
+        const handleMessageError = (error) => {
+            console.error('Error sending message:', error);
+            toast.error('Failed to send message. Please try again.');
+        };
+        
+        console.log('Setting up real-time message listeners');
+        
+        // Use addEventListener from our context
+        addEventListener('receive_message', handleNewMessage);
+        addEventListener('message_sent', handleMessageSent);
+        addEventListener('message_error', handleMessageError);
 
         return () => {
-            socket.off('receive_message', handleNewMessage);
+            console.log('Cleaning up real-time message listeners');
+            // Clean up event listeners
+            removeEventListener('receive_message', handleNewMessage);
+            removeEventListener('message_sent', handleMessageSent);
+            removeEventListener('message_error', handleMessageError);
         };
-    }, [socket, addMessage, messages, setMessages]);
+    }, [socket, addMessage, messages, setMessages, addEventListener, removeEventListener]);
 
     // Scroll position handler
     const handleScroll = useCallback(() => {
@@ -256,7 +256,38 @@ const Chat = () => {
     // Handle message editing
     const handleEditMessage = async (messageId, newContent) => {
         try {
-            await editMessage(messageId, newContent);
+            // Try to edit via WebSocket for real-time updates
+            if (connected && currentRoomDetails) {
+                console.log(`Editing message ${messageId} via WebSocket`);
+                
+                // Optimistically update the UI
+                setMessages(prevMessages => prevMessages.map(msg => 
+                    msg._id === messageId 
+                        ? {
+                            ...msg,
+                            content: newContent,
+                            isEdited: true,
+                            editedAt: new Date().toISOString()
+                          } 
+                        : msg
+                ));
+                
+                // Send the edit through WebSocket
+                editMessage(messageId, newContent);
+                
+                // Also update via API for persistence
+                try {
+                    await editMessage(messageId, newContent);
+                } catch (apiError) {
+                    console.error("API edit error:", apiError);
+                    // WebSocket should still work even if API fails
+                }
+            } else {
+                // If WebSocket is not connected, use only REST API
+                console.log(`Editing message ${messageId} via REST API only`);
+                await editMessage(messageId, newContent);
+            }
+            
             setEditingMessage(null);
         } catch (error) {
             console.error("Edit error:", error);
@@ -281,6 +312,7 @@ const Chat = () => {
         if (!socket) return;
 
         const handleMessageUpdated = (updatedMessage) => {
+            console.log('Message updated event received:', updatedMessage._id);
             setMessages(prevMessages =>
                 prevMessages.map(msg =>
                     msg._id === updatedMessage._id
@@ -293,14 +325,30 @@ const Chat = () => {
                         : msg
                 )
             );
+            // Notify the user about the update if it's not their own message
+            if (updatedMessage.sender._id !== authUser._id) {
+                toast('A message was edited', { duration: 2000 });
+            }
         };
-
-        socket.on('message_updated', handleMessageUpdated);
+        
+        const handleEditSuccess = (data) => {
+            console.log('Message edited successfully:', data);
+            if (data.messageId) {
+                toast.success('Message edited successfully', { duration: 1000 });
+            }
+        };
+        
+        console.log('Setting up message update listeners');
+        
+        addEventListener('message_updated', handleMessageUpdated);
+        addEventListener('edit_success', handleEditSuccess);
 
         return () => {
-            socket.off('message_updated', handleMessageUpdated);
+            console.log('Cleaning up message update listeners');
+            removeEventListener('message_updated', handleMessageUpdated);
+            removeEventListener('edit_success', handleEditSuccess);
         };
-    }, [socket]);
+    }, [socket, setMessages, addEventListener, removeEventListener, authUser]);
 
     // Format message date
     const formatMessageDate = (date) => {
@@ -387,7 +435,7 @@ const Chat = () => {
             >
                 {loadingMore && (
                     <div className="text-center py-2">
-                        <Spinner size="small" />
+                        <Spinner size="sm" />
                     </div>
                 )}
 
@@ -396,8 +444,8 @@ const Chat = () => {
                         <div className="text-center text-xs text-gray-500 my-2 sticky top-0 bg-gray-900/80 backdrop-blur-sm py-1">
                             {date}
                         </div>
-                        {msgs.map((msg) => (
-                            <div key={`${msg._id}-${msg.isEdited ? 'edited' : 'original'}`} className="relative group">
+                        {msgs.map((msg, index) => (
+                            <div key={`${msg._id || msg.tempId || `temp-${index}`}-${msg.isEdited ? 'edited' : 'original'}-${msg.editedAt || msg.createdAt}`} className="relative group">
                                 {editingMessage?._id === msg._id ? (
                                     <div className="px-4 py-2">
                                         <MessageInput
@@ -462,8 +510,47 @@ const Chat = () => {
             <div className="px-4 py-2 border-t border-gray-800">
                 <MessageInput
                     onMessageSent={(message) => {
-                        addMessage(message);
-                        scrollToBottom();
+                        // Only add temporary message if connected, otherwise just send
+                        if (connected) {
+                            // Add message optimistically with temporary ID and status
+                            const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                            const tempMessage = {
+                                ...message,
+                                isTemporary: true,
+                                _id: tempId,
+                                tempId: tempId,
+                                createdAt: new Date().toISOString(),
+                                sender: {
+                                    _id: authUser._id,
+                                    username: authUser.username,
+                                    profilePicture: authUser.profilePicture,
+                                }
+                            };
+                            
+                            console.log('Adding temporary message while sending:', tempId);
+                            
+                            // Use setMessages directly to avoid double-adding through context
+                            setMessages(prevMessages => {
+                                // Check if we already have a similar temporary message
+                                const hasSimilarTemp = prevMessages.some(msg => 
+                                    msg.isTemporary && 
+                                    msg.content === message.content &&
+                                    msg.sender._id === authUser._id &&
+                                    Math.abs(new Date().getTime() - new Date(msg.createdAt).getTime()) < 5000
+                                );
+                                
+                                if (hasSimilarTemp) {
+                                    console.log('Similar temporary message already exists, not adding duplicate');
+                                    return prevMessages;
+                                }
+                                
+                                return [...prevMessages, tempMessage];
+                            });
+                            
+                            scrollToBottom();
+                        } else {
+                            toast('Trying to reconnect...', { id: 'connection-toast' });
+                        }
                     }}
                     disabled={!currentRoomDetails}
                 />
