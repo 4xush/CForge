@@ -12,14 +12,16 @@ class WebSocketService {
   }
 
   // Get the WebSocket server URL
+  // Get the WebSocket server URL
   getServerUrl() {
-    if (process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost') {
-      return process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    if (import.meta.env.MODE === 'development' || window.location.hostname === 'localhost') {
+      return import.meta.env.VITE_API_URL || 'http://localhost:5000';
     }
-    
+
     const protocol = window.location.protocol === 'https:' ? 'https' : 'http';
     return `${protocol}://${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}`;
   }
+
 
   // Connect with authentication
   connect(token, userId) {
@@ -43,7 +45,7 @@ class WebSocketService {
     try {
       const serverUrl = this.getServerUrl();
       console.log(`Connecting to WebSocket server at ${serverUrl}`);
-      
+
       this.socket = io(serverUrl, {
         withCredentials: true,
         transports: ['polling', 'websocket'],
@@ -52,14 +54,14 @@ class WebSocketService {
         forceNew: true,
         auth: { token }
       });
-      
+
       this.socket.on('connect', () => {
         console.log('WebSocket connected successfully');
         this.isConnected = true;
-        
+
         // Register stored event handlers after connection
         this.registerStoredEventHandlers();
-        
+
         // Rejoin active rooms
         if (this.activeRooms.size > 0) {
           setTimeout(() => {
@@ -77,12 +79,12 @@ class WebSocketService {
         console.error('WebSocket connection error:', error);
         this.isConnected = false;
       });
-      
+
       this.socket.on('disconnect', (reason) => {
         console.log(`WebSocket disconnected: ${reason}`);
         this.isConnected = false;
       });
-      
+
     } catch (error) {
       console.error('Error creating socket:', error);
       this.isConnected = false;
@@ -93,7 +95,7 @@ class WebSocketService {
   disconnect() {
     if (this.socket) {
       console.log('Disconnecting WebSocket');
-      
+
       try {
         // Leave all active rooms before disconnecting
         if (this.isConnected) {
@@ -101,7 +103,7 @@ class WebSocketService {
             this.socket.emit('leave_room', { roomId });
           });
         }
-        
+
         this.socket.removeAllListeners();
         this.socket.disconnect();
         this.socket = null;
@@ -109,24 +111,24 @@ class WebSocketService {
         console.error('Error during disconnect:', error);
         this.socket = null;
       }
-      
+
       this.isConnected = false;
       this.activeRooms.clear();
     }
   }
 
 
-  
+
   // Join a room
   joinRoom(roomId) {
     if (!roomId || !this.userId) {
       console.warn('Cannot join room: Missing room ID or user ID');
       return false;
     }
-    
+
     // Always add to active rooms for reconnection scenarios
     this.activeRooms.add(roomId);
-    
+
     if (this.socket && this.isConnected) {
       console.log(`Joining room ${roomId}`);
       try {
@@ -141,17 +143,17 @@ class WebSocketService {
       return false;
     }
   }
-  
+
   // Leave a room
   leaveRoom(roomId) {
     if (!roomId) {
       console.warn('Cannot leave room: Missing room ID');
       return false;
     }
-    
+
     // Remove from active rooms
     this.activeRooms.delete(roomId);
-    
+
     if (this.socket && this.isConnected) {
       console.log(`Leaving room ${roomId}`);
       try {
@@ -166,14 +168,14 @@ class WebSocketService {
       return false;
     }
   }
-  
+
   // Send a message to a room
   sendMessage(roomId, message) {
     if (!roomId || !message) {
       console.warn('Cannot send message: Missing room ID or message');
       return false;
     }
-    
+
     if (this.socket && this.isConnected) {
       console.log(`Sending message to room ${roomId}`);
       try {
@@ -188,14 +190,14 @@ class WebSocketService {
       return false;
     }
   }
-  
+
   // Edit a message
   editMessage(roomId, messageId, newContent) {
     if (!roomId || !messageId || !newContent) {
       console.warn('Cannot edit message: Missing parameters');
       return false;
     }
-    
+
     if (this.socket && this.isConnected) {
       console.log(`Editing message ${messageId} in room ${roomId}`);
       try {
@@ -210,42 +212,42 @@ class WebSocketService {
       return false;
     }
   }
-  
+
   // Register an event handler
   on(event, callback) {
     if (!event || typeof callback !== 'function') {
       console.warn('Invalid event or callback');
       return false;
     }
-    
+
     // Store the handler for future reconnections
     if (!this.eventHandlers.has(event)) {
       this.eventHandlers.set(event, []);
     }
-    
+
     const handlers = this.eventHandlers.get(event);
     // Only add if not already present
     if (!handlers.includes(callback)) {
       handlers.push(callback);
     }
-    
+
     // Register the handler if socket exists and is connected
     if (this.socket && this.isConnected) {
       this.socket.on(event, callback);
       console.log(`Registered handler for event: ${event}`);
       return true;
     }
-    
+
     return false;
   }
-  
+
   // Remove an event handler
   off(event, callback) {
     if (!event) {
       console.warn('Invalid event');
       return false;
     }
-    
+
     // Remove from stored handlers
     if (this.eventHandlers.has(event)) {
       if (callback) {
@@ -264,7 +266,7 @@ class WebSocketService {
         console.log(`Removed all stored handlers for event: ${event}`);
       }
     }
-    
+
     // Remove from socket if it exists
     if (this.socket) {
       try {
@@ -279,16 +281,16 @@ class WebSocketService {
         console.error(`Error removing socket listener for ${event}:`, error);
       }
     }
-    
+
     return false;
   }
-  
+
   // Register stored event handlers to a new socket
   registerStoredEventHandlers() {
     if (!this.socket) return;
-    
+
     console.log(`Registering stored event handlers for ${this.eventHandlers.size} events`);
-    
+
     this.eventHandlers.forEach((callbacks, event) => {
       callbacks.forEach(callback => {
         try {
@@ -300,12 +302,12 @@ class WebSocketService {
       });
     });
   }
-  
+
   // Check if connected to WebSocket server
   isSocketConnected() {
     return this.isConnected && this.socket?.connected === true;
   }
-  
+
   // Force cleanup and reset
   forceReset() {
     console.log('Force resetting WebSocket service');
@@ -320,12 +322,12 @@ class WebSocketService {
     this.eventHandlers.clear();
     this.activeRooms.clear();
   }
-  
+
   // Get list of active rooms
   getActiveRooms() {
     return Array.from(this.activeRooms);
   }
-  
+
   // Clear event handlers
   clearEventHandlers() {
     console.log('Clearing all event handlers');

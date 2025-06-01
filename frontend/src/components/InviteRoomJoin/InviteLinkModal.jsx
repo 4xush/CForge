@@ -32,7 +32,7 @@ const InviteLinkModal = ({ inviteData, onClose }) => {
     const handleShare = (platform) => {
         let url;
         const encodedLink = encodeURIComponent(inviteData.inviteLink);
-        const message = encodeURIComponent('Join my coding room on C-Forge!');
+        const message = encodeURIComponent('Join my coding room on CForge!');
 
         switch (platform) {
             case 'email':

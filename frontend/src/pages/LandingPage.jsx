@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import ParticleBackground from './element/ParticleBackground';
 import Hero from './Landing/Hero';
@@ -7,6 +7,7 @@ import FeaturesSection from './Landing/FeaturesSection';
 const CforgeLanding = () => {
 
     const [selectedPreview, setSelectedPreview] = useState(null); // State to track the selected preview item
+    const [scrollPosition, setScrollPosition] = useState(0);
 
     useEffect(() => {
         const handleScroll = () => setScrollPosition(window.scrollY);
@@ -24,7 +25,8 @@ const CforgeLanding = () => {
         <div className="relative min-h-screen bg-[#0A0F23] text-white overflow-hidden font-sans">
             <ParticleBackground />
             <div className="relative z-10">
-                <Header />
+                <Header isScrolled={scrollPosition > 100} />
+
                 <Hero />
                 <FeaturesSection />
                 {/* 4. Preview Section */}
@@ -53,7 +55,7 @@ const CforgeLanding = () => {
                                 { src: "detailed analysis.png", title: "Detailed Analysis", desc: "Get in-depth performance analytics." },
                                 { src: "active-heatmap.png", title: "Active Heatmap", desc: "Visualize your coding activity across platforms with an interactive heatmap." },
                                 { src: "room.png", title: "Room Management", desc: "Create and manage rooms efficiently." },
-                                { src: "room chat.png", title: "Room Chat", desc: "Engage in discussions with other room members." },
+                                { src: "room chat.png", title: "Real-Time Chat", desc: "Instantly communicate with room members through live chat messaging." },
                                 { src: "room-settings.png", title: "Room Settings", desc: "Manage room details, members, and permissions easily." },
                                 { src: "room-management-modal.png", title: "Room Create and Join", desc: "Easily create or join rooms with a simple modal interface." },
                                 { src: "room-invite-link-modal.png", title: "Room Invite Link", desc: "Invite friends to your room with a shareable invite link." },

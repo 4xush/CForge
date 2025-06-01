@@ -21,9 +21,8 @@ const Chat = () => {
         loading,
         hasMore,
         error,
-        fetchMessages,
-        addMessage,
-        deleteMessage,
+        fetchMessages, // This should be called WITHOUT roomId parameter - context handles it
+        addMessage, // Keep this for optimistic updates
         editMessage,
         setMessages
     } = useMessageContext();
@@ -32,92 +31,135 @@ const Chat = () => {
     const [editingMessage, setEditingMessage] = useState(null);
     const [loadingMore, setLoadingMore] = useState(false);
     const [profileModal, setProfileModal] = useState({ isOpen: false, username: null });
-    const [scrollBehavior, setScrollBehavior] = useState("smooth");
     const [showScrollButton, setShowScrollButton] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
     const [isNearBottom, setIsNearBottom] = useState(true);
+
     const messagesEndRef = useRef(null);
     const contextMenuRef = useRef(null);
     const messagesContainerRef = useRef(null);
-    const lastMessageCountRef = useRef(0);
     const isInitialLoadRef = useRef(true);
-    const lastScrollPositionRef = useRef(0);
+    const lastScrollTopRef = useRef(0);
     const observerRef = useRef(null);
 
-    // Fetch messages when room changes
+    // Fetch messages when room changes - FIXED: Don't pass roomId, context handles it
     useEffect(() => {
         if (currentRoomDetails) {
+            console.log(`Chat: Room changed to ${currentRoomDetails._id}. Fetching messages.`);
             isInitialLoadRef.current = true;
-            fetchMessages();
+            fetchMessages(); // FIXED: Call without parameters like original
         }
     }, [currentRoomDetails, currentRoomDetails?._id, fetchMessages]);
 
-    // Room joining is now handled by the ChatManager component in ChatWithWebSocket.jsx
-    // Listen for real-time messages
+    // Handle new messages from WebSocket
+    const handleNewMessage = useCallback((message) => {
+        console.log('Chat: Received new message:', message._id);
+        setMessages(prevMessages => {
+            const existsById = prevMessages.some(msg => msg._id === message._id);
+            if (existsById) {
+                console.log('Chat: Ignoring duplicate new message:', message._id);
+                return prevMessages;
+            }
+
+            // Check for temporary message replacement
+            const tempIndex = prevMessages.findIndex(msg =>
+                msg.isTemporary &&
+                msg.content === message.content &&
+                msg.sender._id.toString() === message.sender._id.toString() &&
+                Math.abs(new Date(msg.createdAt).getTime() - new Date(message.createdAt).getTime()) < 10000
+            );
+
+            if (tempIndex !== -1) {
+                console.log('Chat: Replacing temporary message with confirmed message');
+                const newMessages = [...prevMessages];
+                newMessages[tempIndex] = { ...message, isTemporary: false };
+                return newMessages;
+            }
+
+            console.log('Chat: Adding new message to state:', message._id);
+            return [...prevMessages, message];
+        });
+    }, [setMessages]);
+
+    const handleMessageSent = useCallback((data) => {
+        console.log('Chat: Message sent confirmation:', data);
+        if (data.messageId) {
+            toast.success('Message sent successfully', { duration: 1000 });
+        }
+    }, []);
+
+    const handleMessageError = useCallback((error) => {
+        console.error('Chat: Error sending message:', error);
+        toast.error('Failed to send message. Please try again.');
+    }, []);
+
+    // Setup WebSocket listeners
     useEffect(() => {
         if (!socket) return;
 
-        const handleNewMessage = (message) => {
-            console.log('Received new message:', message._id);
-            
-            setMessages(prevMessages => {
-                // Check if this message already exists (prevent duplicates)
-                const existsById = prevMessages.some(msg => msg._id === message._id);
-                if (existsById) {
-                    console.log('Ignoring duplicate message:', message._id);
-                    return prevMessages;
-                }
-                
-                // Check if this is replacing a temporary message
-                const tempIndex = prevMessages.findIndex(msg =>
-                    msg.isTemporary &&
-                    msg.content === message.content &&
-                    msg.sender._id.toString() === message.sender._id.toString() &&
-                    Math.abs(new Date(msg.createdAt).getTime() - new Date(message.createdAt).getTime()) < 10000 // Within 10 seconds
-                );
-
-                if (tempIndex !== -1) {
-                    console.log('Replacing temporary message with confirmed message');
-                    const newMessages = [...prevMessages];
-                    newMessages[tempIndex] = { ...message, isTemporary: false };
-                    return newMessages;
-                } else {
-                    console.log('Adding new message to state:', message._id);
-                    return [...prevMessages, message];
-                }
-            });
-        };
-
-        const handleMessageSent = (data) => {
-            console.log('Message sent confirmation:', data);
-            // You could update the UI here to show the message was delivered
-            if (data.messageId) {
-                toast.success('Message sent successfully', { duration: 1000 });
-            }
-        };
-        
-        const handleMessageError = (error) => {
-            console.error('Error sending message:', error);
-            toast.error('Failed to send message. Please try again.');
-        };
-        
-        console.log('Setting up real-time message listeners');
-        
-        // Use addEventListener from our context
+        console.log('Chat: Setting up real-time message listeners');
         addEventListener('receive_message', handleNewMessage);
         addEventListener('message_sent', handleMessageSent);
         addEventListener('message_error', handleMessageError);
 
         return () => {
-            console.log('Cleaning up real-time message listeners');
-            // Clean up event listeners
+            console.log('Chat: Cleaning up real-time message listeners');
             removeEventListener('receive_message', handleNewMessage);
             removeEventListener('message_sent', handleMessageSent);
             removeEventListener('message_error', handleMessageError);
         };
-    }, [socket, addMessage, messages, setMessages, addEventListener, removeEventListener]);
+    }, [socket, addEventListener, removeEventListener, handleNewMessage, handleMessageSent, handleMessageError]);
 
-    // Scroll position handler
+    // Message edit listeners
+    const handleMessageUpdated = useCallback((updatedMessage) => {
+        console.log('Chat: Message updated event received:', updatedMessage._id);
+        setMessages(prevMessages =>
+            prevMessages.map(msg =>
+                msg._id === updatedMessage._id
+                    ? {
+                        ...msg,
+                        content: updatedMessage.content,
+                        isEdited: true,
+                        editedAt: updatedMessage.editedAt
+                    }
+                    : msg
+            )
+        );
+        if (updatedMessage.sender._id !== authUser._id) {
+            toast('A message was edited', { duration: 2000 });
+        }
+    }, [setMessages, authUser?._id]);
+
+    const handleEditSuccess = useCallback((data) => {
+        console.log('Chat: Message edited successfully:', data);
+        if (data.messageId) {
+            toast.success('Message edited successfully', { duration: 1000 });
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!socket) return;
+
+        console.log('Chat: Setting up message update listeners');
+        addEventListener('message_updated', handleMessageUpdated);
+        addEventListener('edit_success', handleEditSuccess);
+
+        return () => {
+            console.log('Chat: Cleaning up message update listeners');
+            removeEventListener('message_updated', handleMessageUpdated);
+            removeEventListener('edit_success', handleEditSuccess);
+        };
+    }, [socket, addEventListener, removeEventListener, handleMessageUpdated, handleEditSuccess]);
+
+    // Scroll handling
+    const scrollToBottom = useCallback((behavior = "smooth") => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior });
+            setUnreadCount(0);
+            setShowScrollButton(false);
+        }
+    }, []);
+
     const handleScroll = useCallback(() => {
         if (!messagesContainerRef.current) return;
 
@@ -128,23 +170,47 @@ const Chat = () => {
         setShowScrollButton(!isBottom);
         setIsNearBottom(isBottom);
 
-        if (!isBottom && scrollTop < lastScrollPositionRef.current) {
+        if (!isBottom && scrollTop < lastScrollTopRef.current) {
             setUnreadCount(prev => prev + 1);
         }
 
-        lastScrollPositionRef.current = scrollTop;
+        lastScrollTopRef.current = scrollTop;
     }, []);
 
-    // Scroll to bottom
-    const scrollToBottom = useCallback((behavior = "smooth") => {
-        if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior });
-            setUnreadCount(0);
-            setShowScrollButton(false);
+    // Auto-scroll effect
+    useEffect(() => {
+        if (!messagesContainerRef.current) return;
+
+        const shouldAutoScroll = isNearBottom || isInitialLoadRef.current;
+
+        if (shouldAutoScroll) {
+            scrollToBottom(isInitialLoadRef.current ? "auto" : "smooth");
+            isInitialLoadRef.current = false;
+        } else if (!loadingMore) {
+            setUnreadCount(prev => prev + 1);
         }
-    }, []);
 
-    // Intersection Observer for load more trigger
+        const container = messagesContainerRef.current;
+        container.addEventListener('scroll', handleScroll);
+        return () => container.removeEventListener('scroll', handleScroll);
+    }, [messages, isNearBottom, loadingMore, handleScroll, scrollToBottom]);
+
+    // Load older messages - FIXED: Call fetchMessages with oldestMessageId only
+    const loadOlderMessages = useCallback(async () => {
+        if (!hasMore || loadingMore || messages.length === 0) return;
+
+        setLoadingMore(true);
+        try {
+            const oldestMessage = messages[0];
+            await fetchMessages(oldestMessage._id); // FIXED: Pass only the message ID like original
+        } catch (error) {
+            console.error("Chat: Error loading older messages:", error);
+        } finally {
+            setLoadingMore(false);
+        }
+    }, [hasMore, loadingMore, messages, fetchMessages]);
+
+    // Intersection Observer for loading older messages
     useEffect(() => {
         if (!messagesContainerRef.current) return;
 
@@ -167,27 +233,9 @@ const Chat = () => {
         }
 
         return () => observerRef.current?.disconnect();
-    }, [hasMore, loadingMore, messages]);
+    }, [hasMore, loadingMore, messages, loadOlderMessages]);
 
-    // Auto-scroll handling
-    useEffect(() => {
-        if (!messagesContainerRef.current) return;
-
-        const shouldAutoScroll = isNearBottom || isInitialLoadRef.current;
-
-        if (shouldAutoScroll) {
-            scrollToBottom(isInitialLoadRef.current ? "auto" : "smooth");
-            isInitialLoadRef.current = false;
-        } else if (!loadingMore) {
-            setUnreadCount(prev => prev + 1);
-        }
-
-        const container = messagesContainerRef.current;
-        container.addEventListener('scroll', handleScroll);
-        return () => container.removeEventListener('scroll', handleScroll);
-    }, [messages, isNearBottom, loadingMore, handleScroll, scrollToBottom]);
-
-    // Handle click outside context menu
+    // Context menu handling
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (contextMenuRef.current && !contextMenuRef.current.contains(event.target)) {
@@ -199,32 +247,12 @@ const Chat = () => {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // Load older messages
-    const loadOlderMessages = async () => {
-        if (!hasMore || loadingMore || !messages.length) return;
-
-        setLoadingMore(true);
-        setScrollBehavior("auto");
-
-        try {
-            const oldestMessage = messages[0];
-            await fetchMessages(oldestMessage._id);
-        } catch (error) {
-            console.error("Error loading older messages:", error);
-        } finally {
-            setLoadingMore(false);
-            setScrollBehavior("smooth");
-        }
-    };
-
-    // Check if user can modify message
     const canModifyMessage = useCallback((message) => {
         if (!authUser || !message) return false;
         if (message.sender._id === authUser._id) return true;
         return currentRoomDetails?.admins?.some((admin) => admin.toString() === authUser._id.toString());
     }, [authUser, currentRoomDetails]);
 
-    // Handle context menu
     const handleContextMenu = useCallback((e, messageId) => {
         e.preventDefault();
         const message = messages.find((msg) => msg._id === messageId);
@@ -238,148 +266,85 @@ const Chat = () => {
         }
     }, [messages, canModifyMessage]);
 
-    // Close context menu
-    const closeContextMenu = () => {
+    const closeContextMenu = useCallback(() => {
         setContextMenu({ visible: false, x: 0, y: 0, messageId: null });
-    };
+    }, []);
 
-    // Handle message deletion
-    // const handleDeleteMessage = async (messageId) => {
-    //     try {
-    //         await deleteMessage(messageId);
-    //         closeContextMenu();
-    //     } catch (error) {
-    //         console.error("Delete error:", error);
-    //     }
-    // };
-
-    // Handle message editing
-    const handleEditMessage = async (messageId, newContent) => {
+    // Message editing - FIXED: Keep original structure
+    const handleEditMessage = useCallback(async (messageId, newContent) => {
         try {
-            // Try to edit via WebSocket for real-time updates
             if (connected && currentRoomDetails) {
                 console.log(`Editing message ${messageId} via WebSocket`);
-                
-                // Optimistically update the UI
-                setMessages(prevMessages => prevMessages.map(msg => 
-                    msg._id === messageId 
+
+                // Optimistic update
+                setMessages(prevMessages => prevMessages.map(msg =>
+                    msg._id === messageId
                         ? {
                             ...msg,
                             content: newContent,
                             isEdited: true,
                             editedAt: new Date().toISOString()
-                          } 
+                        }
                         : msg
                 ));
-                
-                // Send the edit through WebSocket
+
+                // Send edit through WebSocket
                 editMessage(messageId, newContent);
-                
+
                 // Also update via API for persistence
                 try {
                     await editMessage(messageId, newContent);
                 } catch (apiError) {
                     console.error("API edit error:", apiError);
-                    // WebSocket should still work even if API fails
                 }
             } else {
-                // If WebSocket is not connected, use only REST API
                 console.log(`Editing message ${messageId} via REST API only`);
                 await editMessage(messageId, newContent);
             }
-            
+
             setEditingMessage(null);
         } catch (error) {
             console.error("Edit error:", error);
             toast.error(error.message || 'Failed to edit message');
         }
-    };
+    }, [connected, currentRoomDetails, setMessages, editMessage]);
 
-    // Start editing message
-    const startEditing = (message) => {
+    const startEditing = useCallback((message) => {
         setEditingMessage(message);
         closeContextMenu();
-    };
+    }, []);
 
-    // Cancel editing
-    const cancelEditing = () => {
+    const cancelEditing = useCallback(() => {
         setEditingMessage(null);
-        closeContextMenu();
-    };
+    }, []);
 
-    // Listen for message updates
-    useEffect(() => {
-        if (!socket) return;
-
-        const handleMessageUpdated = (updatedMessage) => {
-            console.log('Message updated event received:', updatedMessage._id);
-            setMessages(prevMessages =>
-                prevMessages.map(msg =>
-                    msg._id === updatedMessage._id
-                        ? {
-                            ...msg,
-                            content: updatedMessage.content,
-                            isEdited: true,
-                            editedAt: updatedMessage.editedAt
-                        }
-                        : msg
-                )
-            );
-            // Notify the user about the update if it's not their own message
-            if (updatedMessage.sender._id !== authUser._id) {
-                toast('A message was edited', { duration: 2000 });
-            }
-        };
-        
-        const handleEditSuccess = (data) => {
-            console.log('Message edited successfully:', data);
-            if (data.messageId) {
-                toast.success('Message edited successfully', { duration: 1000 });
-            }
-        };
-        
-        console.log('Setting up message update listeners');
-        
-        addEventListener('message_updated', handleMessageUpdated);
-        addEventListener('edit_success', handleEditSuccess);
-
-        return () => {
-            console.log('Cleaning up message update listeners');
-            removeEventListener('message_updated', handleMessageUpdated);
-            removeEventListener('edit_success', handleEditSuccess);
-        };
-    }, [socket, setMessages, addEventListener, removeEventListener, authUser]);
-
-    // Format message date
-    const formatMessageDate = (date) => {
+    // Format date headers
+    const formatMessageDate = useCallback((date) => {
         const messageDate = new Date(date);
         if (isToday(messageDate)) return "Today";
         if (isYesterday(messageDate)) return "Yesterday";
         if (isSameYear(messageDate, new Date())) return format(messageDate, "MMMM d");
         return format(messageDate, "MMMM d, yyyy");
-    };
+    }, []);
 
-    // Handle avatar click
-    const handleAvatarClick = (username) => {
+    const handleAvatarClick = useCallback((username) => {
         setProfileModal({
             isOpen: true,
             username: username
         });
-    };
+    }, []);
 
-    // Close profile modal
-    const closeProfileModal = () => {
+    const closeProfileModal = useCallback(() => {
         setProfileModal({ isOpen: false, username: null });
-    };
+    }, []);
 
-    // Retry loading messages
-    const handleRetry = () => {
+    const handleRetry = useCallback(() => {
         if (currentRoomDetails) {
             fetchMessages();
         }
-    };
+    }, [currentRoomDetails, fetchMessages]);
 
-    // Render loading state
+    // Render states
     if (!currentRoomDetails) {
         return (
             <div className="flex flex-col h-full items-center justify-center text-gray-500">
@@ -388,7 +353,6 @@ const Chat = () => {
         );
     }
 
-    // Render error state
     if (error && !loading) {
         return (
             <div className="flex flex-col h-full items-center justify-center">
@@ -407,7 +371,6 @@ const Chat = () => {
         );
     }
 
-    // Render loading state
     if (loading && !loadingMore && messages.length === 0) {
         return (
             <div className="flex flex-col h-full items-center justify-center">
@@ -471,7 +434,6 @@ const Chat = () => {
                                         onContextMenu={(e) => handleContextMenu(e, msg._id)}
                                         onAvatarClick={() => handleAvatarClick(msg.sender.username)}
                                         onEdit={() => startEditing(msg)}
-                                        // onDelete={() => handleDeleteMessage(msg._id)}
                                     />
                                 )}
                             </div>
@@ -510,9 +472,8 @@ const Chat = () => {
             <div className="px-4 py-2 border-t border-gray-800">
                 <MessageInput
                     onMessageSent={(message) => {
-                        // Only add temporary message if connected, otherwise just send
+                        // FIXED: Keep original optimistic update structure
                         if (connected) {
-                            // Add message optimistically with temporary ID and status
                             const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
                             const tempMessage = {
                                 ...message,
@@ -526,27 +487,25 @@ const Chat = () => {
                                     profilePicture: authUser.profilePicture,
                                 }
                             };
-                            
+
                             console.log('Adding temporary message while sending:', tempId);
-                            
-                            // Use setMessages directly to avoid double-adding through context
+
                             setMessages(prevMessages => {
-                                // Check if we already have a similar temporary message
-                                const hasSimilarTemp = prevMessages.some(msg => 
-                                    msg.isTemporary && 
+                                const hasSimilarTemp = prevMessages.some(msg =>
+                                    msg.isTemporary &&
                                     msg.content === message.content &&
                                     msg.sender._id === authUser._id &&
                                     Math.abs(new Date().getTime() - new Date(msg.createdAt).getTime()) < 5000
                                 );
-                                
+
                                 if (hasSimilarTemp) {
                                     console.log('Similar temporary message already exists, not adding duplicate');
                                     return prevMessages;
                                 }
-                                
+
                                 return [...prevMessages, tempMessage];
                             });
-                            
+
                             scrollToBottom();
                         } else {
                             toast('Trying to reconnect...', { id: 'connection-toast' });
@@ -571,7 +530,6 @@ const Chat = () => {
                             const messageToEdit = messages.find((m) => m._id === contextMenu.messageId);
                             startEditing(messageToEdit);
                         }}
-                        // onDelete={() => handleDeleteMessage(contextMenu.messageId)}
                         onCancel={closeContextMenu}
                     />
                 </div>

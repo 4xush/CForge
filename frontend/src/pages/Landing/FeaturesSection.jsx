@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -23,9 +23,9 @@ const features = [
         icon: ShieldCheck,
     },
     {
-        title: "Room Chat",
-        description: "Each room has a public chat for discussions, strategy sharing, and problem-solving.",
-        details: "Users can engage in coding discussions, share problem-solving strategies, and collaborate with fellow room members through the built-in chat feature.",
+        title: "Real-Time Chat",
+        description: "Instant messaging system for live discussions, strategy sharing, and real-time collaboration.",
+        details: "Experience seamless real-time communication with room members. Share code snippets, discuss problem-solving strategies, and get instant responses through our live chat feature powered by WebSocket technology.",
         icon: MessageCircle,
     },
     {

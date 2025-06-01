@@ -1,6 +1,6 @@
 ## Project Overview
 
-C-Forge is a collaborative platform designed for programmers to create rooms, share information, and track their progress across various coding platforms (LeetCode, GitHub, and Codeforces). The application provides features such as user authentication, room management, messaging, and platform statistics integration.
+CForge is a collaborative platform designed for programmers to create rooms, share information, and track their progress across various coding platforms (LeetCode, GitHub, and Codeforces). The application provides features such as user authentication, room management, messaging, and platform statistics integration.
 
 ## Architecture Analysis
 
@@ -135,9 +135,9 @@ The project uses three main collections:
 
 ## README.md
 
-# C-Forge
+# CForge
 
-C-Forge is a collaborative platform for programmers to track progress across coding platforms, create community rooms, and share knowledge.
+CForge is a collaborative platform for programmers to track progress across coding platforms, create community rooms, and share knowledge.
 
 ## Features
 

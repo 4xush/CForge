@@ -172,6 +172,9 @@ const TopBar = ({ roomId }) => {
               </span>
               {getStatusBadge(codeforcesUpdate?.updateStatus)}
             </div>
+            <div className="flex items-center">
+              <span className="mr-1"> Update Stats (only if last update is older than 2 days)</span>
+            </div>
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useRef } from "react"
+import { createContext, useContext, useState, useCallback, useRef, useMemo, useEffect } from "react"
 import PropTypes from 'prop-types'
 import api from "../services/ApiService.js"
 import { useAuthContext } from "./AuthContext"
@@ -14,10 +14,24 @@ export const MessageProvider = ({ children }) => {
     const { authUser } = useAuthContext()
     const { currentRoomDetails } = useRoomContext()
     const fetchIdRef = useRef(0)
+    const currentRoomIdRef = useRef(null)
+
+    // Clear messages when room changes
+    useEffect(() => {
+        const newRoomId = currentRoomDetails?._id;
+        if (currentRoomIdRef.current !== newRoomId) {
+            setMessages([]);
+            setHasMore(true);
+            setError(null);
+            setLoading(false);
+            currentRoomIdRef.current = newRoomId;
+        }
+    }, [currentRoomDetails?._id]);
 
     const fetchMessages = useCallback(
         async (lastMessageId = null) => {
-            if (!currentRoomDetails) return
+            if (!currentRoomDetails?._id) return
+
             setLoading(true)
             setError(null)
 
@@ -27,10 +41,9 @@ export const MessageProvider = ({ children }) => {
                 const query = lastMessageId ? `?lastMessageId=${lastMessageId}&limit=50` : "?limit=50"
                 const response = await api.get(`/rooms/${currentRoomDetails._id}/messages${query}`)
 
-                // Only update state if this is the latest fetch request
-                if (currentFetchId === fetchIdRef.current) {
+                // Only update state if this is the latest fetch request and we're still in the same room
+                if (currentFetchId === fetchIdRef.current && currentRoomIdRef.current === currentRoomDetails._id) {
                     setMessages((prevMessages) => {
-                        // Inside fetchMessages setMessages callback
                         const newMessages = response.data.messages;
 
                         if (!lastMessageId) {
@@ -50,50 +63,57 @@ export const MessageProvider = ({ children }) => {
                 }
             } catch (error) {
                 console.error("Error fetching messages:", error)
-                setError(error.response?.data?.message || "Failed to load messages")
+                if (currentFetchId === fetchIdRef.current && currentRoomIdRef.current === currentRoomDetails._id) {
+                    setError(error.response?.data?.message || "Failed to load messages")
+                }
             } finally {
-                if (currentFetchId === fetchIdRef.current) {
+                if (currentFetchId === fetchIdRef.current && currentRoomIdRef.current === currentRoomDetails._id) {
                     setLoading(false)
                 }
             }
         },
-        [currentRoomDetails],
+        [currentRoomDetails?._id], // Only depend on the room ID, not the entire object
     )
 
     const addMessage = useCallback(
         (newMessage) => {
+            if (!authUser?._id) {
+                console.warn("Cannot add message: user not authenticated");
+                return;
+            }
+
             console.log("Adding message to context:", newMessage._id || newMessage.tempId);
-            
+
             setMessages((prevMessages) => {
                 // Check for exact duplicates by ID or tempId
-                const isDuplicateById = prevMessages.some(msg => 
+                const isDuplicateById = prevMessages.some(msg =>
                     (newMessage._id && msg._id === newMessage._id) ||
                     (newMessage.tempId && msg.tempId === newMessage.tempId)
                 );
-                
+
                 if (isDuplicateById) {
                     console.log("Ignoring duplicate message by ID:", newMessage._id || newMessage.tempId);
                     return prevMessages;
                 }
-                
+
                 // Check for similar temporary messages (same content, sender, within 5 seconds)
                 if (newMessage.isTemporary) {
-                    const hasSimilarTemp = prevMessages.some(msg => 
+                    const hasSimilarTemp = prevMessages.some(msg =>
                         msg.isTemporary &&
                         msg.content === newMessage.content &&
-                        msg.sender._id === newMessage.sender._id &&
+                        msg.sender?._id === newMessage.sender?._id &&
                         Math.abs(new Date(msg.createdAt).getTime() - new Date(newMessage.createdAt).getTime()) < 5000
                     );
-                    
+
                     if (hasSimilarTemp) {
-                        console.log("Ignoring similar temporary message:", newMessage.content.substring(0, 20));
+                        console.log("Ignoring similar temporary message:", newMessage.content?.substring(0, 20));
                         return prevMessages;
                     }
                 }
-                
+
                 // Create the message object
                 let messageToAdd;
-                
+
                 // If the message already has sender info, use it directly
                 if (newMessage.sender && typeof newMessage.sender === 'object') {
                     messageToAdd = {
@@ -112,16 +132,21 @@ export const MessageProvider = ({ children }) => {
                         createdAt: newMessage.createdAt || new Date().toISOString(),
                     };
                 }
-                
+
                 console.log("Successfully adding message:", messageToAdd._id || messageToAdd.tempId);
                 return [...prevMessages, messageToAdd];
             });
         },
-        [authUser],
+        [authUser?._id, authUser?.username, authUser?.profilePicture], // Only depend on specific user properties
     )
 
     const updateMessage = useCallback((messageId, updatedMessage) => {
-        setMessages(prevMessages => 
+        if (!messageId) {
+            console.warn("Cannot update message: messageId is required");
+            return;
+        }
+
+        setMessages(prevMessages =>
             prevMessages.map(msg => {
                 if (msg._id === messageId) {
                     console.log("Updating message:", messageId);
@@ -133,6 +158,10 @@ export const MessageProvider = ({ children }) => {
     }, []);
 
     const deleteMessage = useCallback(async (messageId) => {
+        if (!messageId) {
+            throw new Error("Message ID is required for deletion");
+        }
+
         try {
             await api.delete(`/rooms/messages/${messageId}`)
             setMessages((prevMessages) => prevMessages.filter((msg) => msg._id !== messageId))
@@ -143,9 +172,19 @@ export const MessageProvider = ({ children }) => {
     }, [])
 
     const editMessage = useCallback(async (messageId, newContent) => {
+        if (!messageId || !newContent?.trim()) {
+            throw new Error("Message ID and content are required for editing");
+        }
+
         try {
             const response = await api.put(`/rooms/messages/${messageId}`, { content: newContent })
-            setMessages((prevMessages) => prevMessages.map((msg) => (msg._id === messageId ? response.data.message : msg)))
+
+            setMessages((prevMessages) =>
+                prevMessages.map((msg) =>
+                    msg._id === messageId ? response.data.message : msg
+                )
+            )
+
             return response.data.message
         } catch (error) {
             console.error("Error editing message:", error)
@@ -153,25 +192,53 @@ export const MessageProvider = ({ children }) => {
         }
     }, [])
 
+    // Stable wrapper for setMessages to prevent unnecessary re-renders in consuming components
+    const setMessagesStable = useCallback((messagesOrUpdater) => {
+        setMessages(messagesOrUpdater);
+    }, []);
+
+    // Clear messages when user logs out
+    useEffect(() => {
+        if (!authUser) {
+            setMessages([]);
+            setHasMore(true);
+            setError(null);
+            setLoading(false);
+        }
+    }, [authUser]);
+
+    // Memoize context value to prevent unnecessary re-renders
+    const contextValue = useMemo(() => ({
+        messages,
+        loading,
+        hasMore,
+        error,
+        fetchMessages,
+        addMessage,
+        updateMessage,
+        deleteMessage,
+        editMessage,
+        setMessages: setMessagesStable
+    }), [
+        messages,
+        loading,
+        hasMore,
+        error,
+        fetchMessages,
+        addMessage,
+        updateMessage,
+        deleteMessage,
+        editMessage,
+        setMessagesStable
+    ]);
+
     return (
-        <MessageContext.Provider
-            value={{
-                messages,
-                loading,
-                hasMore,
-                error,
-                fetchMessages,
-                addMessage,
-                updateMessage,
-                deleteMessage,
-                editMessage,
-                setMessages
-            }}
-        >
+        <MessageContext.Provider value={contextValue}>
             {children}
         </MessageContext.Provider>
     )
 }
+
 export const useMessageContext = () => {
     const context = useContext(MessageContext)
     if (!context) {

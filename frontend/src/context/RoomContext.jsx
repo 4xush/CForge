@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useContext, useCallback } from 'react';
+import { createContext, useState, useEffect, useContext, useCallback, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import api from '../config/api';
 import { useAuthContext } from './AuthContext';
@@ -23,6 +23,9 @@ export const RoomProvider = ({ children }) => {
     const [currentRoomError, setCurrentRoomError] = useState(null);
     const location = useLocation();
     const { authUser, isLoading: authLoading } = useAuthContext();
+
+    // Use ref to track the current room ID to avoid unnecessary re-renders
+    const currentRoomIdRef = useRef(null);
 
     const refreshRoomList = useCallback(async () => {
         const token = localStorage.getItem('app-token');
@@ -66,7 +69,7 @@ export const RoomProvider = ({ children }) => {
                     limit: 50
                 }
             });
-            
+
             if (response.data && response.data.rooms) {
                 return response.data.rooms;
             }
@@ -86,11 +89,19 @@ export const RoomProvider = ({ children }) => {
             }
             if (!roomId) {
                 setCurrentRoomDetails(null);
+                setCurrentRoomError(null);
+                currentRoomIdRef.current = null;
+                return;
+            }
+
+            // Avoid unnecessary API calls if the same room is already loaded
+            if (currentRoomIdRef.current === roomId && currentRoomDetails) {
                 return;
             }
 
             setCurrentRoomLoading(true);
             setCurrentRoomError(null);
+            currentRoomIdRef.current = roomId;
 
             try {
                 const response = await api.get(`/rooms/${roomId}`, {
@@ -99,59 +110,83 @@ export const RoomProvider = ({ children }) => {
                     },
                 });
 
-                // Set state directly with response.data as it contains the room object
-                setCurrentRoomDetails(response.data);
+                // Only update if we're still loading the same room (prevent race conditions)
+                if (currentRoomIdRef.current === roomId) {
+                    setCurrentRoomDetails(response.data);
+                }
 
             } catch (error) {
-                setCurrentRoomError(error.response?.data?.message || 'Unable to load the selected room.');
-                setCurrentRoomDetails(null);
+                // Only set error if we're still loading the same room
+                if (currentRoomIdRef.current === roomId) {
+                    setCurrentRoomError(error.response?.data?.message || 'Unable to load the selected room.');
+                    setCurrentRoomDetails(null);
+                }
             } finally {
-                setCurrentRoomLoading(false);
+                // Only update loading state if we're still loading the same room
+                if (currentRoomIdRef.current === roomId) {
+                    setCurrentRoomLoading(false);
+                }
             }
         },
-        []
+        [currentRoomDetails] // Include currentRoomDetails to make the optimization work
     );
 
+    // Clear current room details when navigating away from room routes
     useEffect(() => {
         const pathSegments = location.pathname.split('/').filter(Boolean);
-        if (pathSegments[0] !== 'rooms' || pathSegments.length < 2) {
-             if (currentRoomDetails) {
-                 setCurrentRoomDetails(null);
-                 setCurrentRoomError(null);
-             }
-        }
-    }, [location, currentRoomDetails]);
+        const isRoomRoute = pathSegments[0] === 'rooms' && pathSegments.length >= 2;
 
+        if (!isRoomRoute && currentRoomDetails) {
+            setCurrentRoomDetails(null);
+            setCurrentRoomError(null);
+            currentRoomIdRef.current = null;
+        }
+    }, [location.pathname]); // Remove currentRoomDetails from dependency array to prevent infinite loop
+
+    // Clear all room data when user logs out
     useEffect(() => {
         if (!authUser) {
             setRooms([]);
             setCurrentRoomDetails(null);
             setCurrentRoomError(null);
             setListError(null);
+            currentRoomIdRef.current = null;
         }
     }, [authUser]);
 
+    // Load room list when user is authenticated
     useEffect(() => {
         if (!authLoading && authUser) {
             refreshRoomList();
         }
     }, [authLoading, authUser, refreshRoomList]);
 
+    // Memoize the context value to prevent unnecessary re-renders
+    const contextValue = useCallback(() => ({
+        rooms,
+        currentRoomDetails,
+        setCurrentRoomDetails,
+        refreshRoomList,
+        searchPublicRooms,
+        loadCurrentRoomDetails,
+        listLoading,
+        listError,
+        currentRoomLoading,
+        currentRoomError,
+    }), [
+        rooms,
+        currentRoomDetails,
+        refreshRoomList,
+        searchPublicRooms,
+        loadCurrentRoomDetails,
+        listLoading,
+        listError,
+        currentRoomLoading,
+        currentRoomError,
+    ]);
+
     return (
-        <RoomContext.Provider
-            value={{
-                rooms,
-                currentRoomDetails,
-                setCurrentRoomDetails,
-                refreshRoomList,
-                searchPublicRooms,
-                loadCurrentRoomDetails,
-                listLoading,
-                listError,
-                currentRoomLoading,
-                currentRoomError,
-            }}
-        >
+        <RoomContext.Provider value={contextValue()}>
             {children}
         </RoomContext.Provider>
     );

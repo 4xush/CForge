@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useAuthContext } from './AuthContext';
+import { useAuthContext } from './AuthContext'; // Assuming this provides stable authUser
 import webSocketService from '../services/WebSocketService';
 import toast from 'react-hot-toast';
 import PropTypes from 'prop-types';
@@ -10,428 +10,308 @@ const WebSocketContext = createContext();
 export const WebSocketProvider = ({ children }) => {
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
-  const [connectionAttempts, setConnectionAttempts] = useState(0);
-  const { authUser } = useAuthContext();
+  // const [connectionAttempts, setConnectionAttempts] = useState(0); // Managed within connectWithRetry
+
+  const { authUser } = useAuthContext(); // CRITICAL: authUser object reference should be stable
   const location = useLocation();
+
   const maxRetries = 5;
   const retryDelay = 2000;
+
   const visibilityTimeoutRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
-  const connectionLockRef = useRef(false);
-  
-  // Determine if WebSocket should be active based on current route
+  const connectionAttemptRef = useRef(0); // Tracks current attempt count for a retry sequence
+  const connectionLockRef = useRef(false); // Prevents concurrent connect attempts
+
   const isWebSocketNeeded = useCallback(() => {
     return location.pathname.includes('/rooms/') && location.pathname.includes('/chat');
   }, [location.pathname]);
-  
-  // Connection handler with retry logic
-  const connectWithRetry = useCallback(async (token, userId, attempt = 0) => {
-    // Prevent multiple simultaneous connection attempts
+
+  // Memoized handlers for direct socket events to ensure stable references for .on/.off
+  const handleDirectConnect = useCallback(() => {
+    console.log('Direct socket connect event received');
+    setConnected(true);
+    setConnecting(false);
+    connectionAttemptRef.current = 0;
+    connectionLockRef.current = false;
+    toast.success('Connected to chat server');
+  }, []); // No dependencies needed as setters are stable
+
+  const handleDirectDisconnect = useCallback((reason) => {
+    console.log('Direct socket disconnect event received:', reason);
+    if (reason !== 'io client disconnect') { // Not a manual disconnect
+      setConnected(false);
+      // connectionLockRef might be set by a new connection attempt, manage carefully
+      // setConnecting(false); // This could be true if a reconnect is in progress
+      // If disconnected unexpectedly, a reconnect attempt might be initiated by other logic
+    }
+  }, []);
+
+  const handleDirectConnectError = useCallback((error) => {
+    console.error('Direct socket connection error:', error);
+    setConnected(false);
+    setConnecting(false);
+    connectionLockRef.current = false;
+    // Retry logic will be handled by connectWithRetry
+  }, []);
+
+  const connectWithRetry = useCallback(async (token, userId) => {
     if (connectionLockRef.current) {
-      console.log('Connection attempt already in progress, skipping...');
+      console.log('Connection attempt already in progress, skipping ConnectWithRetry call.');
       return;
     }
 
-    // Check if already connected
     if (webSocketService.isSocketConnected()) {
-      console.log('WebSocket already connected, skipping connection attempt');
-      setConnected(true);
-      setConnecting(false);
-      setConnectionAttempts(0);
-      return;
-    }
-
-    if (attempt >= maxRetries) {
-      console.error('Max WebSocket connection attempts reached');
-      setConnecting(false);
-      connectionLockRef.current = false;
-      toast.error('Failed to connect to chat server after multiple attempts');
+      console.log('WebSocket already connected, ensuring state is correct.');
+      if (!connected) setConnected(true);
+      if (connecting) setConnecting(false);
+      connectionAttemptRef.current = 0;
       return;
     }
 
     connectionLockRef.current = true;
     setConnecting(true);
-    setConnectionAttempts(attempt + 1);
-    
+
+    console.log(`WebSocket connection attempt ${connectionAttemptRef.current + 1}/${maxRetries}`);
+
     try {
-      console.log(`WebSocket connection attempt ${attempt + 1}/${maxRetries}`);
-      
-      // Clean up any existing connection first
+      // Ensure clean state before new connection
       webSocketService.forceReset();
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Clear any existing listeners before adding new ones
-      const socket = webSocketService.socket;
-      if (socket) {
-        socket.removeAllListeners('connect');
-        socket.removeAllListeners('disconnect');
-        socket.removeAllListeners('connect_error');
+      // Optional delay for cleanup if forceReset is async or has side effects
+      // await new Promise(resolve => setTimeout(resolve, 100)); // Short delay
+
+      // Setup direct socket event listeners BEFORE connect call
+      // Ensure old listeners are removed if socket instance persists across forceReset,
+      // or ensure forceReset gives a fresh socket instance.
+      // Assuming webSocketService.connect re-initializes or uses a new socket.
+      if (webSocketService.socket) {
+        webSocketService.socket.removeAllListeners('connect');
+        webSocketService.socket.removeAllListeners('disconnect');
+        webSocketService.socket.removeAllListeners('connect_error');
       }
-      
-      // Setup direct socket event listeners before connecting
-      const handleDirectConnect = () => {
-        console.log('Direct socket connect event received');
-        setConnected(true);
-        setConnecting(false);
-        setConnectionAttempts(0);
-        connectionLockRef.current = false;
-        toast.success('Connected to chat server');
-      };
-      
-      const handleDirectDisconnect = (reason) => {
-        console.log('Direct socket disconnect event received:', reason);
-        // Only update state if disconnect wasn't client-initiated
-        if (reason !== 'io client disconnect') {
-          setConnected(false);
-          connectionLockRef.current = false;
-        }
-      };
-      
-      const handleDirectConnectError = (error) => {
-        console.error('Direct socket connection error:', error);
-        setConnected(false);
-        setConnecting(false);
-        connectionLockRef.current = false;
-      };
-      
-      // Connect with fresh socket
-      webSocketService.connect(token, userId);
-      
-      // Add direct listeners to the socket
+
+      webSocketService.connect(token, userId); // This should create/get the socket
+
       if (webSocketService.socket) {
         webSocketService.socket.once('connect', handleDirectConnect);
-        webSocketService.socket.on('disconnect', handleDirectDisconnect);
-        webSocketService.socket.on('connect_error', handleDirectConnectError);
+        webSocketService.socket.on('disconnect', handleDirectDisconnect); // Persistent for unexpected disconnects
+        webSocketService.socket.on('connect_error', handleDirectConnectError); // Persistent for connection errors
       } else {
-        // If socket wasn't created, release the lock
-        console.error('Failed to create socket');
-        connectionLockRef.current = false;
-        setConnecting(false);
+        throw new Error('Socket instance not available after connect call.');
       }
-      
+      // Success is handled by 'connect' event (handleDirectConnect)
     } catch (error) {
-      console.error(`WebSocket connection attempt ${attempt + 1} failed:`, error);
-      connectionLockRef.current = false;
-      
-      if (attempt < maxRetries - 1) {
-        const delay = retryDelay * Math.pow(1.5, attempt);
+      console.error(`WebSocket connection attempt ${connectionAttemptRef.current + 1} failed:`, error);
+      connectionLockRef.current = false; // Release lock on catch
+      setConnecting(false); // Update status
+
+      connectionAttemptRef.current += 1;
+      if (connectionAttemptRef.current < maxRetries) {
+        const delay = retryDelay * Math.pow(1.5, connectionAttemptRef.current - 1);
         console.log(`Retrying WebSocket connection in ${delay}ms...`);
-        setTimeout(() => {
-          connectWithRetry(token, authUser._id, attempt + 1);
+        // Clear previous timeout if any, though unlikely here
+        if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = setTimeout(() => {
+          // Do not pass attempt count, rely on the ref for current attempt
+          connectWithRetry(token, userId);
         }, delay);
       } else {
-        setConnecting(false);
-        toast.error('Failed to connect to chat server');
+        console.error('Max WebSocket connection attempts reached.');
+        toast.error('Failed to connect to chat server after multiple attempts.');
+        connectionAttemptRef.current = 0; // Reset for future manual retries
       }
     }
-  }, [maxRetries, retryDelay]);
-  
-  // Initialize WebSocket connection when auth user is available
+  }, [connected, connecting, handleDirectConnect, handleDirectDisconnect, handleDirectConnectError, maxRetries, retryDelay]);
+
+
+  // Main effect for managing WebSocket connection lifecycle
   useEffect(() => {
-    // Only connect if we're on a page that needs WebSocket and user is authenticated
-    if (isWebSocketNeeded() && authUser?._id) {
-      const token = localStorage.getItem('app-token');
-      
-      if (!token) {
-        console.error('No auth token available for WebSocket');
-        return;
+    const needsConnection = isWebSocketNeeded();
+    const token = localStorage.getItem('app-token');
+    const currentUserId = authUser?._id;
+
+    if (needsConnection && currentUserId && token) {
+      if (!connected && !connecting) { // Only if not connected and not already trying
+        console.log('Main Effect: WebSocket needed and not connected/connecting. Initiating connection.');
+        connectionAttemptRef.current = 0; // Reset attempts for a fresh sequence
+        connectWithRetry(token, currentUserId);
+      } else if (connected) {
+        console.log('Main Effect: WebSocket already connected and state is up-to-date.');
       }
-      
-      // Set up connection status handlers - these stay at context level
-      const handleServiceConnect = () => {
-        console.log('WebSocket service connected event received');
-        setConnected(true);
-        setConnecting(false);
-        setConnectionAttempts(0);
-      };
-      
-      const handleServiceDisconnect = (reason) => {
-        console.log('WebSocket service disconnected event received:', reason);
-        
-        // Only update state and reconnect for unexpected disconnections
-        if (reason !== 'io client disconnect') {
-          setConnected(false);
-          
-          // Show toast only if we're on a chat page
-          if (isWebSocketNeeded()) {
-            toast('Connection lost. Reconnecting...', { 
-              id: 'websocket-disconnect' 
-            });
-          }
-        }
-      };
-      
-      // Check if already connected first
-      if (webSocketService.isSocketConnected()) {
-        console.log('WebSocket already connected, updating state');
-        setConnected(true);
-        setConnecting(false);
-        connectionLockRef.current = false;
-      } else if (!connectionLockRef.current && !connecting) {
-        // Only initiate connection if not already connecting
-        console.log('Initiating new WebSocket connection');
-        
-        // Clean up old event handlers first to prevent duplicates
-        webSocketService.off('connect');
-        webSocketService.off('disconnect');
-        webSocketService.off('connect_error');
-        
-        // Initiate connection with a fresh socket
-        connectWithRetry(token, authUser._id);
-      }
-      
-      // Register sessionStorage to track page reloads
-      sessionStorage.setItem('websocketActive', 'true');
-      
-      // Handler for beforeunload - to detect page reload vs navigation
-      const handleBeforeUnload = () => {
-        // Set a flag that we're reloading the page (not just navigating)
-        sessionStorage.setItem('pageReloading', 'true');
-      };
-      
-      // Add beforeunload listener
-      window.addEventListener('beforeunload', handleBeforeUnload);
-      
-      // Cleanup function
-      return () => {
-        // Remove the beforeunload listener
-        window.removeEventListener('beforeunload', handleBeforeUnload);
-        
-        // Check if this is a page reload
-        const isPageReloading = sessionStorage.getItem('pageReloading') === 'true';
-        
-        // Clean up handlers in any case
-        webSocketService.off('connect');
-        webSocketService.off('disconnect');
-        webSocketService.off('connect_error');
-        
-        // Clean up direct socket listeners if they exist
-        if (webSocketService.socket) {
-          webSocketService.socket.off('connect');
-          webSocketService.socket.off('disconnect');
-          webSocketService.socket.off('connect_error');
-        }
-        
-        // Only fully disconnect if we're navigating away (not reloading)
-        // or if we're navigating away from a chat page
-        if (!isPageReloading && !isWebSocketNeeded()) {
-          console.log('Leaving chat page, cleaning up WebSocket');
-          webSocketService.disconnect();
-          setConnected(false);
-          setConnecting(false);
-          setConnectionAttempts(0);
-          connectionLockRef.current = false;
-          
-          // Clear the session storage flag
-          sessionStorage.removeItem('websocketActive');
-        }
-        
-        // Clear the reload flag
-        sessionStorage.removeItem('pageReloading');
-      };
-    } else if (!isWebSocketNeeded() && (connected || connecting)) {
-      // Disconnect if we've navigated away from a page that needs WebSocket
-      console.log('WebSocket no longer needed, disconnecting');
+    } else if (!needsConnection && (connected || connecting)) {
+      console.log('Main Effect: WebSocket no longer needed or user/token missing. Disconnecting.');
       webSocketService.disconnect();
       setConnected(false);
       setConnecting(false);
-      setConnectionAttempts(0);
       connectionLockRef.current = false;
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+      connectionAttemptRef.current = 0;
     }
-  }, [authUser, isWebSocketNeeded, connecting, connectWithRetry]);
 
-  // Handle page visibility changes
+    // Cleanup for listeners directly on webSocketService if any were set up here
+    // (Currently, connect/disconnect listeners are handled by connectWithRetry on the socket instance)
+    // The beforeunload listener should be managed carefully
+    const handleBeforeUnload = () => sessionStorage.setItem('pageReloading', 'true');
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      const isPageReloading = sessionStorage.getItem('pageReloading') === 'true';
+      sessionStorage.removeItem('pageReloading');
+
+      // If the component unmounts and it's not a page reload,
+      // and WebSocket is not needed by the new route, ensure disconnection.
+      // The primary connection logic above should handle disconnect on route change.
+      // This cleanup is more for when WebSocketProvider itself unmounts.
+      if (!isPageReloading && !isWebSocketNeeded()) { // Check again if needed on new route
+        console.log('WebSocketProvider cleanup: Disconnecting due to unmount/navigation away from needed pages.');
+        webSocketService.disconnect(); // Ensure full disconnect
+        setConnected(false);
+        setConnecting(false);
+        connectionLockRef.current = false;
+        if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+      }
+    };
+  }, [authUser?._id, isWebSocketNeeded, connected, connecting, connectWithRetry]); // Add authUser?._id
+
+  // Handle page visibility changes for potential reconnection
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!isWebSocketNeeded() || !authUser?._id) return;
 
       if (document.hidden) {
-        // Page is hidden - don't disconnect immediately, wait a bit
-        console.log('Page hidden, scheduling connection check');
-        visibilityTimeoutRef.current = setTimeout(() => {
-          if (document.hidden && webSocketService.isSocketConnected()) {
-            console.log('Page still hidden after timeout, maintaining connection but reducing activity');
-            // Keep connection but reduce ping frequency if possible
-          }
-        }, 30000); // 30 seconds
+        console.log('Page hidden. Connection maintained.');
+        if (visibilityTimeoutRef.current) clearTimeout(visibilityTimeoutRef.current);
+        // Optional: Implement a longer timeout to disconnect if page remains hidden for a very long time
+        // visibilityTimeoutRef.current = setTimeout(() => { ... }, 300000); // 5 minutes
       } else {
-        // Page is visible again
-        console.log('Page visible, ensuring WebSocket connection');
-        
-        // Clear any pending timeout
-        if (visibilityTimeoutRef.current) {
-          clearTimeout(visibilityTimeoutRef.current);
-          visibilityTimeoutRef.current = null;
-        }
-        
-        // Check if we previously had a connection
-        const wasActive = sessionStorage.getItem('websocketActive') === 'true';
-        
-        // Check connection and reconnect if needed
-        if (wasActive && !webSocketService.isSocketConnected() && !connecting && !connectionLockRef.current) {
+        console.log('Page visible. Ensuring WebSocket connection.');
+        if (visibilityTimeoutRef.current) clearTimeout(visibilityTimeoutRef.current);
+
+        if (!connected && !connecting) { // If visible and not connected/connecting
           const token = localStorage.getItem('app-token');
           if (token) {
-            console.log('Page became visible and not connected, reconnecting...');
-            // Clear any existing reconnect timeout
-            if (reconnectTimeoutRef.current) {
-              clearTimeout(reconnectTimeoutRef.current);
-              reconnectTimeoutRef.current = null;
-            }
-            
-            // Force a reset before reconnecting
-            webSocketService.forceReset();
-            
-            // Reconnect after a short delay to ensure page is fully loaded
-            reconnectTimeoutRef.current = setTimeout(() => {
-              connectionLockRef.current = false; // Reset lock to allow connection
-              connectWithRetry(token, authUser._id);
-            }, 1000);
+            console.log('Page became visible, not connected. Re-initiating connection.');
+            connectionAttemptRef.current = 0; // Reset attempts for a fresh sequence
+            connectWithRetry(token, authUser._id);
           }
         }
       }
     };
 
-    // Add event listener
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    // Also handle page focus/blur for additional reliability
-    const handleFocus = () => {
-      if (!document.hidden) {
-        handleVisibilityChange();
-      }
-    };
-    
-    const handleBlur = () => {
-      // Don't do anything on blur, let visibilitychange handle it
-    };
-    
-    window.addEventListener('focus', handleFocus);
-    window.addEventListener('blur', handleBlur);
+    window.addEventListener('focus', handleVisibilityChange); // Also check on focus
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-      window.removeEventListener('blur', handleBlur);
-      
-      if (visibilityTimeoutRef.current) {
-        clearTimeout(visibilityTimeoutRef.current);
-      }
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
+      window.removeEventListener('focus', handleVisibilityChange);
+      if (visibilityTimeoutRef.current) clearTimeout(visibilityTimeoutRef.current);
     };
-  }, [authUser, isWebSocketNeeded, connecting, connectWithRetry]);
-  
-  // Join a room
+  }, [isWebSocketNeeded, authUser?._id, connected, connecting, connectWithRetry]);
+
+
   const joinRoom = useCallback((roomId) => {
-    if (!roomId || !authUser?._id) return false;
-    
-    console.log(`Context: Joining room ${roomId}`);
-    // Force reconnection if needed before joining
-    if (!webSocketService.isSocketConnected()) {
+    if (!roomId || !authUser?._id) {
+      console.warn('Join room cancelled: Missing roomId or authUser.');
+      return false;
+    }
+    if (!connected) {
+      console.warn('Join room cancelled: WebSocket not connected. Attempting reconnect.');
       const token = localStorage.getItem('app-token');
       if (token) {
-        console.log('Reconnecting WebSocket before joining room');
-        webSocketService.connect(token, authUser._id);
+        // Don't reset connection attempts here, let connectWithRetry handle its sequence
+        connectWithRetry(token, authUser._id);
       }
+      // Indicate failure for now, room join will be attempted after connection
+      return false;
     }
-    
+    console.log(`Context: Joining room ${roomId}`);
     return webSocketService.joinRoom(roomId);
-  }, [authUser]);
-  
-  // Leave a room
+  }, [authUser?._id, connected, connectWithRetry]);
+
   const leaveRoom = useCallback((roomId) => {
     if (!roomId) return false;
     return webSocketService.leaveRoom(roomId);
   }, []);
-  
-  // Send a message to a room
+
   const sendMessage = useCallback((roomId, message) => {
-    if (!roomId || !message) return false;
-    
-    // Ensure we're connected before sending
-    if (!webSocketService.isSocketConnected()) {
-      console.log('Reconnecting before sending message');
-      const token = localStorage.getItem('app-token');
-      if (token && authUser?._id) {
-        webSocketService.connect(token, authUser._id);
-      }
+    if (!roomId || !message || !authUser?._id) {
+      console.warn('Send message cancelled: Missing parameters or authUser.');
+      return false;
     }
-    
-    // Always try to make sure we're in the room before sending
-    webSocketService.joinRoom(roomId);
-    
+    if (!connected) {
+      console.warn('Send message cancelled: WebSocket not connected. Attempting reconnect.');
+      toast.error("Not connected. Trying to send after reconnecting.");
+      const token = localStorage.getItem('app-token');
+      if (token) {
+        connectWithRetry(token, authUser._id);
+      }
+      return false; // Indicate failure, message not sent yet
+    }
+    // It's often good practice to ensure the user is in the room before sending.
+    // webSocketService.joinRoom(roomId); // This might be redundant if already joined.
     return webSocketService.sendMessage(roomId, message);
-  }, [authUser]);
-  
-  // Edit a message
+  }, [authUser?._id, connected, connectWithRetry]);
+
   const editMessage = useCallback((roomId, messageId, newContent) => {
     if (!roomId || !messageId || !newContent) return false;
+    if (!connected) {
+      toast.error("Not connected. Cannot edit message now.");
+      return false;
+    }
     return webSocketService.editMessage(roomId, messageId, newContent);
-  }, []);
-  
-  // Register event listener
+  }, [connected]);
+
+  // Event listener management:
+  // Relies on calling components to pass memoized callbacks.
   const addEventListener = useCallback((event, callback) => {
-    console.log(`Registering event listener for: ${event}`);
-    // Remove any existing listener for this event first to prevent duplicates
-    webSocketService.off(event, callback);
-    // Make sure the event is registered even if we reconnect later
-    const wrappedCallback = (...args) => {
-      console.log(`Event received: ${event}`, args[0] ? args[0].constructor.name : 'no data');
-      try {
-        callback(...args);
-      } catch (error) {
-        console.error(`Error in ${event} event handler:`, error);
-        toast.error('Error processing message');
-      }
-    };
-    return webSocketService.on(event, wrappedCallback);
+    console.log(`Context: Registering event listener for: ${event}`);
+    // If WebSocketService's 'on' method handles duplicate registrations gracefully (e.g., replaces or ignores),
+    // then prior removal might not be strictly necessary, simplifying this.
+    // However, explicitly calling 'on' is standard.
+    webSocketService.on(event, callback);
   }, []);
-  
-  // Remove event listener
+
   const removeEventListener = useCallback((event, callback) => {
-    return webSocketService.off(event, callback);
+    console.log(`Context: Removing event listener for: ${event}`);
+    webSocketService.off(event, callback);
   }, []);
-  
-  const contextValue = {
+
+  const manualReconnect = useCallback(() => {
+    const token = localStorage.getItem('app-token');
+    const currentUserId = authUser?._id;
+    if (token && currentUserId) {
+      console.log('Manual reconnect triggered.');
+      if (connected) { // If already connected, force a fresh connection
+        webSocketService.disconnect();
+        setConnected(false);
+        // setConnecting(true); // connectWithRetry will set this
+      }
+      connectionLockRef.current = false; // Ensure lock is released for manual attempt
+      connectionAttemptRef.current = 0; // Reset attempts for a fresh sequence
+      connectWithRetry(token, currentUserId);
+    } else {
+      toast.error('Cannot reconnect: User or token missing.');
+    }
+  }, [authUser?._id, connected, connectWithRetry]);
+
+  const contextValue = useMemo(() => ({
     connected,
     connecting,
-    connectionAttempts,
     joinRoom,
     leaveRoom,
     sendMessage,
     editMessage,
     addEventListener,
     removeEventListener,
-    // Always provide the socket for event registration, even if not connected
-    socket: webSocketService.socket,
-    // Add new helper methods
-    isConnected: () => webSocketService.isSocketConnected(),
-    getActiveRooms: () => webSocketService.getActiveRooms(),
-    reconnect: () => {
-      const token = localStorage.getItem('app-token');
-      if (token && authUser?._id) {
-        // Clear any existing timeouts
-        if (reconnectTimeoutRef.current) {
-          clearTimeout(reconnectTimeoutRef.current);
-          reconnectTimeoutRef.current = null;
-        }
-        
-        // Force reset the service before reconnecting
-        webSocketService.forceReset();
-        
-        // Reset the connection lock
-        connectionLockRef.current = false;
-        
-        // Mark as active in session storage
-        sessionStorage.setItem('websocketActive', 'true');
-        
-        // Try to connect
-        connectWithRetry(token, authUser._id);
-      }
-    }
-  };
-  
+    socket: webSocketService.socket, // Consumers should be careful with direct socket access
+    isConnected: () => webSocketService.isSocketConnected(), // Safer accessor
+    reconnect: manualReconnect,
+  }), [
+    connected, connecting, joinRoom, leaveRoom, sendMessage, editMessage,
+    addEventListener, removeEventListener, manualReconnect
+  ]);
+
   return (
     <WebSocketContext.Provider value={contextValue}>
       {children}
@@ -451,4 +331,5 @@ export const useWebSocket = () => {
   return context;
 };
 
-export default WebSocketContext;
+// Default export is not conventional for context files, usually provider and hook are exported.
+// export default WebSocketContext; // If you need the context object itself elsewhere

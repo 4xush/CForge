@@ -10,7 +10,7 @@ const createApiClient = (options = {}) => {
     timeout: options.timeout || 10000,
     headers: {
       'Content-Type': 'application/json',
-      'User-Agent': 'C-Forge/1.0.0',
+      'User-Agent': 'CForge/1.0.0',
       ...options.headers
     }
   });

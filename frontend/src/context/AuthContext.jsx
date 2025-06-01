@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useMemo, useCallback } from "react";
 import { login, register, googleLogin } from "../api/authApi";
 import { validateUserData } from "@/lib/utils/validation";
 import ApiService from "../services/ApiService";
@@ -17,70 +17,45 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const setValidatedUser = (userData) => {
+  // Memoize authUser to ensure stable reference when content hasn't changed
+  const memoizedAuthUser = useMemo(() => {
+    return authUser;
+  }, [authUser]);
+
+  const setValidatedUser = useCallback((userData) => {
     if (validateUserData(userData)) {
-      setAuthUser(userData);
-      localStorage.setItem("app-user", JSON.stringify(userData));
-      setError(null); // Clear error on success
+      // Only update if the data has actually changed to prevent unnecessary re-renders
+      setAuthUser(prevUser => {
+        const userString = JSON.stringify(userData);
+        const prevUserString = JSON.stringify(prevUser);
+
+        if (userString === prevUserString) {
+          return prevUser; // Return same reference if data is identical
+        }
+
+        localStorage.setItem("app-user", userString);
+        setError(null); // Clear error on success
+        return userData;
+      });
       return true;
     }
     console.error("Invalid user data structure detected");
     return false;
-  };
+  }, []);
 
-  const refreshPlatformData = async () => {
+  const refreshPlatformData = useCallback(async () => {
     try {
       const response = await ApiService.put('users/platform/refresh');
       if (response.data && response.data.user) {
         // Update both state and localStorage with the refreshed data
-        setAuthUser(response.data.user);
-        localStorage.setItem("app-user", JSON.stringify(response.data.user));
-        setError(null);
+        setValidatedUser(response.data.user);
       }
     } catch (error) {
       console.error("Failed to refresh platform data:", error);
     }
-  };
+  }, [setValidatedUser]);
 
-  useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        const storedUser = localStorage.getItem("app-user");
-        const token = localStorage.getItem("app-token");
-
-        if (storedUser && token) {
-          const userData = JSON.parse(storedUser);
-          if (!validateUserData(userData)) {
-            throw new Error("Stored user data is invalid");
-          }
-
-          try {
-            const tokenData = JSON.parse(atob(token.split('.')[1]));
-            if (tokenData.exp * 1000 < Date.now()) {
-              throw new Error("Token expired");
-            }
-            setAuthUser(userData);
-            // Refresh platform data on initial load
-            await refreshPlatformData();
-          } catch (error) {
-            console.error("Token validation error:", error);
-            throw new Error("Invalid token format");
-          }
-        }
-      } catch (error) {
-        console.error("Error restoring auth state:", error);
-        setAuthUser(null);
-        localStorage.removeItem("app-user");
-        localStorage.removeItem("app-token");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initializeAuth();
-  }, []);
-
-  const loginUser = async (email, password, googleToken = null) => {
+  const loginUser = useCallback(async (email, password, googleToken = null) => {
     setError(null);
     setIsLoading(true);
     try {
@@ -122,9 +97,9 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [setValidatedUser, refreshPlatformData]);
 
-  const registerUser = async (userData) => {
+  const registerUser = useCallback(async (userData) => {
     setError(null);
     setIsLoading(true);
     try {
@@ -158,33 +133,95 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [setValidatedUser]);
 
-  // Changed to not redirect automatically
-  const logout = () => {
+  const logout = useCallback(() => {
     setAuthUser(null);
     setError(null);
     localStorage.removeItem("app-user");
     localStorage.removeItem("app-token");
     // No automatic redirect - let component handle navigation
-  };
+  }, []);
 
-  const value = {
-    authUser,
+  const updateUser = useCallback((updates) => {
+    if (memoizedAuthUser) {
+      return setValidatedUser({ ...memoizedAuthUser, ...updates });
+    }
+    return false;
+  }, [memoizedAuthUser, setValidatedUser]);
+
+  const updatePlatformData = useCallback((platformName, platformData) => {
+    if (memoizedAuthUser) {
+      return setValidatedUser({
+        ...memoizedAuthUser,
+        platforms: { ...memoizedAuthUser.platforms, [platformName]: platformData }
+      });
+    }
+    return false;
+  }, [memoizedAuthUser, setValidatedUser]);
+
+  useEffect(() => {
+    const initializeAuth = async () => {
+      try {
+        const storedUser = localStorage.getItem("app-user");
+        const token = localStorage.getItem("app-token");
+
+        if (storedUser && token) {
+          const userData = JSON.parse(storedUser);
+          if (!validateUserData(userData)) {
+            throw new Error("Stored user data is invalid");
+          }
+
+          try {
+            const tokenData = JSON.parse(atob(token.split('.')[1]));
+            if (tokenData.exp * 1000 < Date.now()) {
+              throw new Error("Token expired");
+            }
+            setAuthUser(userData);
+            // Refresh platform data on initial load
+            await refreshPlatformData();
+          } catch (error) {
+            console.error("Token validation error:", error);
+            throw new Error("Invalid token format");
+          }
+        }
+      } catch (error) {
+        console.error("Error restoring auth state:", error);
+        setAuthUser(null);
+        localStorage.removeItem("app-user");
+        localStorage.removeItem("app-token");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeAuth();
+  }, [refreshPlatformData]);
+
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
+    authUser: memoizedAuthUser,
     isLoading,
     error,
     loginUser,
     registerUser,
     logout,
-    updateUser: (updates) => authUser && setValidatedUser({ ...authUser, ...updates }),
-    updatePlatformData: (platformName, platformData) => authUser && setValidatedUser({
-      ...authUser,
-      platforms: { ...authUser.platforms, [platformName]: platformData }
-    }),
-    refreshPlatformData, // Expose the refresh function
-  };
+    updateUser,
+    updatePlatformData,
+    refreshPlatformData,
+  }), [
+    memoizedAuthUser,
+    isLoading,
+    error,
+    loginUser,
+    registerUser,
+    logout,
+    updateUser,
+    updatePlatformData,
+    refreshPlatformData,
+  ]);
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 };
 
 AuthProvider.propTypes = {
