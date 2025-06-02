@@ -1,0 +1,47 @@
+/* src/components/AuthLayout.css */
+
+.terminal-bg-texture {
+    background-color: #080a10; /* A slightly darker, more "terminal" black */
+    background-image:
+        linear-gradient(rgba(100, 128, 100, 0.035) 0.5px, transparent 0.5px), /* Fainter grid lines */
+        linear-gradient(90deg, rgba(100, 128, 100, 0.035) 0.5px, transparent 0.5px);
+    background-size: 18px 18px; /* Grid cell size */
+}
+
+/* Slim scrollbar for webkit browsers (Chrome, Safari, Edge) */
+.scrollbar-thin::-webkit-scrollbar {
+    width: 6px;  /* Width of vertical scrollbar */
+    height: 6px; /* Height of horizontal scrollbar */
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+    background: rgba(31, 41, 55, 0.3); /* Track color */
+    border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgba(75, 85, 99, 0.5); /* Thumb color */
+    border-radius: 3px;
+    border: 1px solid rgba(31, 41, 55, 0.5); /* Optional: subtle border for thumb */
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(107, 114, 128, 0.6); /* Thumb color on hover */
+}
+
+/* Slim scrollbar for Firefox */
+.scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(75, 85, 99, 0.5) rgba(31, 41, 55, 0.3); /* thumb track */
+}
+
+/* Ensure html/body take full height if not already set globally (e.g., in index.css) */
+/* This helps min-h-screen work consistently. */
+/* You might already have this in your project's main CSS file. */
+/*
+html, body, #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+*/

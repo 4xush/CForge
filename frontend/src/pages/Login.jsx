@@ -47,7 +47,7 @@ const Login = () => {
             await loginUser(formData.email, formData.password);
             toast.success('Login successful!');
 
-            
+
             // Check for pending invite code in sessionStorage
             const pendingInviteCode = sessionStorage.getItem('app-pendingInviteCode');
             if (pendingInviteCode) {

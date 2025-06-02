@@ -1,15 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <!-- Character encoding -->
+    <!-- Charset & compatibility -->
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
-    <!-- Viewport settings -->
+    <!-- Viewport -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-    <!-- Favicon -->
-    <link rel="icon" href="./public/logo.png" type="image/png" />
 
     <!-- Title & Meta -->
     <title>CForge</title>
@@ -25,11 +22,31 @@
     <meta name="author" content="CForge Team" />
     <meta name="robots" content="index, follow" />
     <meta name="language" content="en" />
+    <meta name="theme-color" content="#6b46c1" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
 
-    <!-- Canonical URL -->
+    <!-- Canonical -->
     <link rel="canonical" href="https://cforge.live/" />
 
-    <!-- Open Graph / Facebook -->
+    <!-- Favicons -->
+    <link rel="icon" href="favicon/favicon.ico" />
+    <link
+      rel="icon"
+      type="image/png"
+      href="favicon/favicon-96x96.png"
+      sizes="96x96"
+    />
+    <link rel="icon" type="image/svg+xml" href="favicon/favicon.svg" />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="favicon/apple-touch-icon.png"
+    />
+
+    <!-- Manifest -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://cforge.live/" />
     <meta property="og:title" content="CForge" />
@@ -39,7 +56,7 @@
     />
     <meta property="og:image" content="https://cforge.live/og-image.png" />
 
-    <!-- Twitter Meta -->
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://cforge.live/" />
     <meta name="twitter:title" content="CForge" />
@@ -47,21 +64,23 @@
       name="twitter:description"
       content="Join CForge — your all-in-one coding companion."
     />
+    <meta name="twitter:image" content="https://cforge.live/og-image.png" />
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
       rel="stylesheet"
     />
-
-    <!-- Performance optimizations -->
-    <link rel="preload" as="script" href="/src/main.jsx" />
-    <meta name="theme-color" content="#6b46c1" />
   </head>
 
   <body
-    style="margin: 0; padding: 0; font-family: sans-serif, 'Press Start 2P'"
+    style="
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif, Roboto, 'Press Start 2P';
+    "
   >
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
