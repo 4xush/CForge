@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { protect } = require("../middleware/authMiddleware");
+const { checkSecretKey } = require("../middleware/checkSecretKey");
 
 // Controller imports
 const { refreshUserPlatforms } = require('../controllers/platformDataController');
@@ -9,7 +10,9 @@ const {
   searchUser,
   setupLeetCode,
   setupGitHub,
-  setupCodeforces
+  setupCodeforces,
+  getActiveUsers,
+  getActiveUsersCount
 } = require("../controllers/userController");
 
 
@@ -30,6 +33,10 @@ router.route("/profile")
   .delete(protect, deleteUserAccount);
 
 router.get("/search", protect, searchUser); //GET /users/search?query=johndoe
+
+// Active users routes (owner only)
+router.get("/active", checkSecretKey, getActiveUsers); //GET /users/active?days=7&secretKey=YOUR_SECRET
+router.get("/active/count", checkSecretKey, getActiveUsersCount); //GET /users/active/count?secretKey=YOUR_SECRET
 
 // User settings routes
 router.put("/update/password", protect, updatePassword);

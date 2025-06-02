@@ -29,6 +29,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false
     },
+    lastActiveAt: {
+      type: Date,
+      default: Date.now
+    },
     profilePicture: {
       type: String,
       default: "",
@@ -170,6 +174,7 @@ userSchema.index({ "platforms.codeforces.currentRating": -1 });
 userSchema.index({ "platforms.codeforces.maxRating": -1 });
 userSchema.index({ "platforms.github.publicRepos": -1 });
 userSchema.index({ "platforms.github.followers": -1 });
+userSchema.index({ lastActiveAt: -1 });
 
 const User = mongoose.model("User", userSchema);
 module.exports = User;

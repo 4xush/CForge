@@ -19,6 +19,22 @@ const protect = async (req, res, next) => {
       if (!req.user) {
         return res.status(401).json({ message: "Not authorized, user not found" });
       }
+
+      // Update lastActiveAt if more than 1 hour has passed
+      const now = new Date();
+      const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+      
+      if (!req.user.lastActiveAt || req.user.lastActiveAt < oneHourAgo) {
+        // Update in background without blocking the request
+        User.findByIdAndUpdate(
+          req.user._id,
+          { lastActiveAt: now },
+          { new: false }
+        ).catch(error => {
+          console.error('Failed to update lastActiveAt:', error);
+        });
+      }
+
       next();
     } catch (error) {
       // Token verification errors
