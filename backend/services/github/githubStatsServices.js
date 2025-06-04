@@ -13,9 +13,23 @@ const updateUserGitHubStats = async (user, throwError = false, force = false) =>
         // Check if stats update is needed (if not forced)
         if (!force) {
             const lastUpdate = user.platforms?.github?.lastUpdated;
+            // Check if we're rate limited
+            const rateLimitReset = user.platforms?.github?.rateLimitReset;
+            if (rateLimitReset && new Date(rateLimitReset) > new Date()) {
+                console.log(`GitHub rate limit in effect until ${new Date(rateLimitReset)}`);
+                return {
+                    user,
+                    error: {
+                        code: "RATE_LIMIT_ACTIVE",
+                        message: "Rate limit in effect",
+                        resetTime: rateLimitReset
+                    }
+                };
+            }
+
             const isStale = !lastUpdate || (Date.now() - lastUpdate.getTime()) > 3600000; // 1 hour
             if (!isStale) {
-                return user;
+                return { user };
             }
         }
 
@@ -39,10 +53,16 @@ const updateUserGitHubStats = async (user, throwError = false, force = false) =>
             "platforms.github.lastUpdated": new Date()
         };
 
-        // Update user document
+        // Update user document with stats and rate limit info
+        const statsWithRateLimit = {
+            ...statsToUpdate,
+            "platforms.github.rateLimitRemaining": stats.rateLimitRemaining,
+            "platforms.github.rateLimitReset": stats.rateLimitReset
+        };
+
         const updatedUser = await User.findByIdAndUpdate(
             user._id,
-            { $set: statsToUpdate },
+            { $set: statsWithRateLimit },
             { new: true, runValidators: true }
         );
 
@@ -52,7 +72,11 @@ const updateUserGitHubStats = async (user, throwError = false, force = false) =>
             throw error;
         }
 
-        return { user: updatedUser };
+        return {
+            user: updatedUser,
+            rateLimitRemaining: stats.rateLimitRemaining,
+            rateLimitReset: stats.rateLimitReset
+        };
     } catch (error) {
         console.error(`GitHub stats update failed for user ${user?._id}:`, {
             error: error.message,
@@ -63,8 +87,8 @@ const updateUserGitHubStats = async (user, throwError = false, force = false) =>
         if (throwError) {
             throw error;
         }
-        
-        return { 
+
+        return {
             user,
             error: {
                 code: error.code || "UNKNOWN_ERROR",

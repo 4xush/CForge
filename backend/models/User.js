@@ -33,6 +33,23 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: Date.now
     },
+    rateLimitInfo: {
+      lastPlatformRefresh: {
+        type: Date
+      },
+      platformRefreshCount: {
+        type: Number,
+        default: 0
+      },
+      dailyApiCalls: {
+        type: Number,
+        default: 0
+      },
+      lastApiCallReset: {
+        type: Date,
+        default: Date.now
+      }
+    },
     profilePicture: {
       type: String,
       default: "",
@@ -88,6 +105,12 @@ const userSchema = new mongoose.Schema(
           type: Number,
           default: 0,
         },
+        lastUpdated: {
+          type: Date
+        },
+        lastRefreshAttempt: {
+          type: Date
+        },
       },
       github: {
         username: {
@@ -112,6 +135,18 @@ const userSchema = new mongoose.Schema(
         following: {
           type: Number,
           default: 0,
+        },
+        lastUpdated: {
+          type: Date
+        },
+        lastRefreshAttempt: {
+          type: Date
+        },
+        rateLimitRemaining: {
+          type: Number
+        },
+        rateLimitReset: {
+          type: Date
         },
       },
       leetcode: {
@@ -142,6 +177,12 @@ const userSchema = new mongoose.Schema(
         contestRating: {
           type: Number,
           default: 0,
+        },
+        lastUpdated: {
+          type: Date
+        },
+        lastRefreshAttempt: {
+          type: Date
         },
       },
     },
@@ -175,6 +216,10 @@ userSchema.index({ "platforms.codeforces.maxRating": -1 });
 userSchema.index({ "platforms.github.publicRepos": -1 });
 userSchema.index({ "platforms.github.followers": -1 });
 userSchema.index({ lastActiveAt: -1 });
+userSchema.index({ "platforms.leetcode.lastUpdated": -1 });
+userSchema.index({ "platforms.github.lastUpdated": -1 });
+userSchema.index({ "platforms.codeforces.lastUpdated": -1 });
+userSchema.index({ "rateLimitInfo.lastPlatformRefresh": -1 });
 
 const User = mongoose.model("User", userSchema);
 module.exports = User;

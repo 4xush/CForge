@@ -49,11 +49,66 @@ const roomSchema = new mongoose.Schema(
     platformStats: {
       leetcode: {
         lastUpdated: { type: Date, default: null },
-        updateStatus: { type: String, enum: ['idle', 'updating', 'failed'], default: 'idle' }
+        lastUpdateStarted: { type: Date, default: null },
+        updateStatus: { type: String, enum: ['idle', 'updating', 'completed', 'failed'], default: 'idle' },
+        lastResults: {
+          total: { type: Number, default: 0 },
+          processed: { type: Number, default: 0 },
+          successful: { type: Number, default: 0 },
+          failed: { type: Number, default: 0 },
+          skipped: { type: Number, default: 0 },
+          fromCache: { type: Number, default: 0 },
+          processingTime: { type: Number, default: 0 },
+          warnings: [{ type: String }]
+        },
+        lastError: { type: String, default: null },
+        updateCount: { type: Number, default: 0 },
+        rateLimitInfo: {
+          lastRefresh: { type: Date, default: null },
+          nextAllowedRefresh: { type: Date, default: null }
+        }
       },
       codeforces: {
         lastUpdated: { type: Date, default: null },
-        updateStatus: { type: String, enum: ['idle', 'updating', 'failed'], default: 'idle' }
+        lastUpdateStarted: { type: Date, default: null },
+        updateStatus: { type: String, enum: ['idle', 'updating', 'completed', 'failed'], default: 'idle' },
+        lastResults: {
+          total: { type: Number, default: 0 },
+          processed: { type: Number, default: 0 },
+          successful: { type: Number, default: 0 },
+          failed: { type: Number, default: 0 },
+          skipped: { type: Number, default: 0 },
+          fromCache: { type: Number, default: 0 },
+          processingTime: { type: Number, default: 0 },
+          warnings: [{ type: String }]
+        },
+        lastError: { type: String, default: null },
+        updateCount: { type: Number, default: 0 },
+        rateLimitInfo: {
+          lastRefresh: { type: Date, default: null },
+          nextAllowedRefresh: { type: Date, default: null }
+        }
+      },
+      github: {
+        lastUpdated: { type: Date, default: null },
+        lastUpdateStarted: { type: Date, default: null },
+        updateStatus: { type: String, enum: ['idle', 'updating', 'completed', 'failed'], default: 'idle' },
+        lastResults: {
+          total: { type: Number, default: 0 },
+          processed: { type: Number, default: 0 },
+          successful: { type: Number, default: 0 },
+          failed: { type: Number, default: 0 },
+          skipped: { type: Number, default: 0 },
+          fromCache: { type: Number, default: 0 },
+          processingTime: { type: Number, default: 0 },
+          warnings: [{ type: String }]
+        },
+        lastError: { type: String, default: null },
+        updateCount: { type: Number, default: 0 },
+        rateLimitInfo: {
+          lastRefresh: { type: Date, default: null },
+          nextAllowedRefresh: { type: Date, default: null }
+        }
       }
     }
   },

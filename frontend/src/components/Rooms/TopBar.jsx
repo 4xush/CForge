@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { MoreVertical, LogOut, X, Settings, Info, Clock } from "lucide-react";
+import { MoreVertical, LogOut, X, Settings, Info, Clock, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import CenteredRoomDetailsModal from "./CenteredRoomDetailsModal";
@@ -120,7 +120,7 @@ const TopBar = ({ roomId }) => {
     const now = new Date();
     const lastUpdate = new Date(date);
     const diffInDays = Math.floor((now - lastUpdate) / (1000 * 60 * 60 * 24));
-    
+
     if (diffInDays === 0) {
       const diffInHours = Math.floor((now - lastUpdate) / (1000 * 60 * 60));
       if (diffInHours === 0) {
@@ -135,10 +135,10 @@ const TopBar = ({ roomId }) => {
   const getPlatformUpdateStatus = () => {
     if (currentRoomLoading) return null;
     if (currentRoomError) return null;
-    
+
     const leetcodeUpdate = currentRoomDetails?.platformStats?.leetcode;
     const codeforcesUpdate = currentRoomDetails?.platformStats?.codeforces;
-    
+
     const getStatusBadge = (status) => {
       switch (status) {
         case 'updating':
@@ -151,7 +151,7 @@ const TopBar = ({ roomId }) => {
           return null;
       }
     };
-    
+
     return (
       <div className="flex items-center space-x-3 text-xs">
         <div className="flex items-center text-gray-400">
@@ -172,8 +172,9 @@ const TopBar = ({ roomId }) => {
               </span>
               {getStatusBadge(codeforcesUpdate?.updateStatus)}
             </div>
-            <div className="flex items-center">
-              <span className="mr-1"> Update Stats (only if last update is older than 2 days)</span>
+            <div className="flex items-center ">
+              <AlertTriangle size={12} className="mr-1" />
+              <span className="text-red-400 mr-1">Leaderboard updates are restricted to one refresh every two days.</span>
             </div>
           </div>
         </div>

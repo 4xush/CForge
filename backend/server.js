@@ -43,6 +43,10 @@ const userRoutes = require('./routes/userRoutes');
 const roomRoutes = require('./routes/roomRoutes');
 const adminRoomRoutes = require('./routes/adminRoomRoutes');
 const publicRoutes = require('./routes/publicRoutes');
+const healthRoutes = require('./routes/healthRoutes');
+
+// Enhanced services
+const serviceInitializer = require('./services/initialization/serviceInitializer');
 
 const { checkPlatformStatus, includeMetaData } = require('./middleware/platformStatusMiddleware');
 const { initSchedulers } = require('./schedulers');
@@ -92,6 +96,16 @@ const connectWithRetry = async (retries = 5, delay = 5000) => {
     try {
       await connectDB();
       logger.info('MongoDB connected successfully');
+      
+      // Initialize enhanced services
+      logger.info('Initializing enhanced services...');
+      const servicesInitialized = await serviceInitializer.initializeServices();
+      if (!servicesInitialized) {
+        logger.warn('Some services failed to initialize, continuing with limited functionality');
+      } else {
+        logger.info('All enhanced services initialized successfully');
+      }
+      
       // Initialize schedulers
       initSchedulers();
       return;
@@ -109,6 +123,7 @@ const connectWithRetry = async (retries = 5, delay = 5000) => {
 connectWithRetry();
 
 // API routes
+app.use('/api/health', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/rooms', roomRoutes);

@@ -9,7 +9,26 @@ const {
   updateRoomMembersLeetCodeStats,
   updateRoomMembersCodeforcesStats
 } = require("../controllers/roomController");
+
+// Enhanced room controller with improved platform stats
+const {
+  updateRoomMembersLeetCodeStats: enhancedUpdateLeetCode,
+  updateRoomMembersCodeforcesStats: enhancedUpdateCodeforces,
+  updateRoomMembersGitHubStats: enhancedUpdateGitHub,
+  getRoomPlatformStatus
+} = require("../controllers/enhancedRoomController");
+
 const { protect } = require("../middleware/authMiddleware");
+
+// Rate limiting middleware
+const {
+  api: apiRateLimit,
+  roomOperations: roomOperationsRateLimit,
+  messaging: messagingRateLimit,
+  platformRefresh: platformRefreshRateLimit,
+  developmentBypass
+} = require("../middleware/rateLimiting/rateLimitMiddleware");
+
 const {
   sendMessage,
   getMessages, deleteMessage, editMessage,
@@ -21,9 +40,16 @@ const {
   verifyRoomInvite,
   joinRoomByInvite
 } = require("../controllers/roomInviteController");
+
+const { bulkRefreshPlatformStats } = require("../controllers/platformDataController");
+
 const router = express.Router();
 
-router.post("/create", protect, createRoom);
+// Apply development bypass and general API rate limiting
+router.use(developmentBypass);
+router.use(apiRateLimit);
+
+router.post("/create", protect, roomOperationsRateLimit, createRoom);
 
 router.get("/", protect, getAllRoomsForUser);
 
@@ -31,24 +57,36 @@ router.get("/search", protect, searchPublicRooms);
 
 router.get("/:roomId", protect, getRoomDetails);
 
-router.post("/:roomId/messages", protect, sendMessage);
+router.post("/:roomId/messages", protect, messagingRateLimit, sendMessage);
 
 router.get("/:roomId/leaderboard", protect, getLeaderboard);
 
 router.get("/:roomId/messages", protect, getMessages);
 
-router.delete("/messages/:messageId", protect, deleteMessage);
+router.delete("/messages/:messageId", protect, messagingRateLimit, deleteMessage);
 
-router.put('/messages/:messageId', protect, editMessage);
+router.put('/messages/:messageId', protect, messagingRateLimit, editMessage);
 
-router.post("/:roomId/join", protect, sendJoinRequest);
+router.post("/:roomId/join", protect, roomOperationsRateLimit, sendJoinRequest);
 
-router.delete('/:roomId/leave', protect, leaveRoom);
+router.delete('/:roomId/leave', protect, roomOperationsRateLimit, leaveRoom);
 
 router.get('/invite/:inviteCode/verify', verifyRoomInvite);
-router.post('/invite/:inviteCode/join', protect, joinRoomByInvite);
+router.post('/invite/:inviteCode/join', protect, roomOperationsRateLimit, joinRoomByInvite);
 
-router.post('/:roomId/update-leetcode-stats', protect, updateRoomMembersLeetCodeStats);
-router.post('/:roomId/update-codeforces-stats', protect, updateRoomMembersCodeforcesStats);
+// Enhanced platform stats update routes with rate limiting
+router.post('/:roomId/update-leetcode-stats', protect, platformRefreshRateLimit, enhancedUpdateLeetCode);
+router.post('/:roomId/update-codeforces-stats', protect, platformRefreshRateLimit, enhancedUpdateCodeforces);
+router.post('/:roomId/update-github-stats', protect, platformRefreshRateLimit, enhancedUpdateGitHub);
+
+// Bulk platform refresh endpoint
+router.post('/:roomId/bulk-refresh', protect, platformRefreshRateLimit, bulkRefreshPlatformStats);
+
+// Platform status and management
+router.get('/:roomId/platform-status', protect, getRoomPlatformStatus);
+
+// Legacy routes for backward compatibility (will use original controllers but with rate limiting)
+router.post('/:roomId/legacy/update-leetcode-stats', protect, platformRefreshRateLimit, updateRoomMembersLeetCodeStats);
+router.post('/:roomId/legacy/update-codeforces-stats', protect, platformRefreshRateLimit, updateRoomMembersCodeforcesStats);
 
 module.exports = router;

@@ -82,7 +82,7 @@ const CodingLeaderboard = () => {
             
             const result = await refreshFunction(currentRoomDetails.roomId);
             toast.success(`${selectedPlatform === 'leetcode' ? 'LeetCode' : 'Codeforces'} stats update completed successfully`);
-
+            
             if (result.results) {
                 if (result.results.success.length > 0) {
                     toast.success(`Updated stats for ${result.results.success.length} members`);
@@ -425,7 +425,7 @@ const CodingLeaderboard = () => {
                 </div>
 
                 {/* Fixed Footer */}
-                <div className="bg-gray-900 border-t border-gray-800 p-3">
+                <div className="bg-gray-900 border-t border-gray-800">
                     <Pagination
                         page={page}
                         totalCount={totalCount}
