@@ -6,7 +6,7 @@ import {
     AlertCircle, X
 } from 'lucide-react';
 import PropTypes from 'prop-types';
-import ApiService from '../services/ApiService';
+import { useAuthContext } from '../context/AuthContext';
 import { ProfileHeader } from './Profile/ProfileHeader';
 import { PlatformCard, getPlatformStats } from './Profile/PlatformCards';
 import ActivityHeatmap from './Profile/ActivityHeatmap';
@@ -160,50 +160,34 @@ PlatformVerificationModal.propTypes = {
 };
 
 const UserProfile = () => {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    // Use AuthContext instead of making separate API calls
+    const { authUser: user, isLoading: authLoading, refreshPlatformData } = useAuthContext();
+    
     const [refreshing, setRefreshing] = useState(false);
-    const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('overview');
     const [showVerificationModal, setShowVerificationModal] = useState(false);
     const navigate = useNavigate();
 
-    const fetchProfile = async () => {
-        try {
-            const response = await ApiService.get('users/profile');
-            setUser(response.data);
-            
-            // Check if we should show the verification modal
-            if (response.data?.email) {
-                const modalShown = sessionStorage.getItem(`platform_usernameCheck_${response.data.email}`);
-                if (!modalShown) {
-                    setShowVerificationModal(true);
-                }
-            }
-        } catch (err) {
-            if (err.response?.status === 404) {
-                navigate('/404');
-            } else {
-                setError('Failed to fetch user profile. Please try again later.');
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
-
+    // Check if verification modal should be shown
     useEffect(() => {
-        fetchProfile();
-    }, [navigate]);
+        if (user?.email) {
+            const modalShown = sessionStorage.getItem(`platform_usernameCheck_${user.email}`);
+            if (!modalShown) {
+                setShowVerificationModal(true);
+            }
+        }
+    }, [user?.email]);
 
     const { data: heatmapData, loading: heatmapLoading, error: heatmapError } = useHeatmapData(user?.username);
 
+    // Use AuthContext's refreshPlatformData method
     const handleRefresh = async () => {
         setRefreshing(true);
         try {
-            await ApiService.put('users/platform/refresh');
-            await fetchProfile();
+            await refreshPlatformData(true); // force refresh
         } catch (err) {
-            setError(`Failed to refresh platform data: ${err.message}`);
+            console.error('Failed to refresh platform data:', err);
+            // You might want to show a toast notification here
         } finally {
             setRefreshing(false);
         }
@@ -216,7 +200,8 @@ const UserProfile = () => {
         setShowVerificationModal(false);
     };
 
-    if (loading) {
+    // Handle auth loading state
+    if (authLoading) {
         return (
             <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-gray-900 to-purple">
                 <div className="flex flex-col items-center gap-4">
@@ -230,36 +215,25 @@ const UserProfile = () => {
         );
     }
 
-    if (error) return (
-        <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-gray-900 to-purple">
-            <div className="bg-gray-800 border border-red-500 rounded-xl p-8 max-w-lg text-center">
-                <div className="text-red-500 text-xl font-bold mb-4">Error Loading Profile</div>
-                <p className="text-gray-300">{error}</p>
-                <button
-                    onClick={() => window.location.reload()}
-                    className="mt-6 px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-xl text-white font-bold transition-all"
-                >
-                    Try Again
-                </button>
+    // Handle case where user is not authenticated
+    if (!user) {
+        return (
+            <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-gray-900 to-purple">
+                <div className="bg-gray-800 border border-gray-700 rounded-xl p-8 max-w-lg text-center">
+                    <div className="text-gray-300 text-xl font-bold mb-4">Authentication Required</div>
+                    <p className="text-gray-400">Please log in to view your profile.</p>
+                    <button
+                        onClick={() => navigate('/login')}
+                        className="mt-6 px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 rounded-xl text-white font-bold transition-all"
+                    >
+                        Go to Login
+                    </button>
+                </div>
             </div>
-        </div>
-    );
+        );
+    }
 
-    if (!user) return (
-        <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-gray-900 to-purple">
-            <div className="bg-gray-800 border border-gray-700 rounded-xl p-8 max-w-lg text-center">
-                <div className="text-gray-300 text-xl font-bold mb-4">User Not Found</div>
-                <p className="text-gray-400">The requested profile could not be located.</p>
-                <button
-                    onClick={() => navigate('/')}
-                    className="mt-6 px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-xl text-white font-bold transition-all"
-                >
-                    Return Home
-                </button>
-            </div>
-        </div>
-    );
-
+    // Handle incomplete profile
     if (!user.isProfileComplete) {
         return (
             <Dialog>
@@ -272,7 +246,7 @@ const UserProfile = () => {
         );
     }
 
-    const leetcodeData = user.platforms.leetcode;
+    const leetcodeData = user.platforms?.leetcode;
     const platformStats = getPlatformStats(user);
 
     return (

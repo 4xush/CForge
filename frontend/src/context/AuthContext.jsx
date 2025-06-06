@@ -28,11 +28,9 @@ export const AuthProvider = ({ children }) => {
       setAuthUser(prevUser => {
         const userString = JSON.stringify(userData);
         const prevUserString = JSON.stringify(prevUser);
-
         if (userString === prevUserString) {
           return prevUser; // Return same reference if data is identical
         }
-
         localStorage.setItem("app-user", userString);
         setError(null); // Clear error on success
         return userData;
@@ -43,7 +41,8 @@ export const AuthProvider = ({ children }) => {
     return false;
   }, []);
 
-  const refreshPlatformData = useCallback(async () => {
+  // OPTIMIZATION: Add a parameter to control when to refresh platform data
+  const refreshPlatformData = useCallback(async (force = false) => {
     try {
       const response = await ApiService.put('users/platform/refresh');
       if (response.data && response.data.user) {
@@ -61,50 +60,49 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = googleToken ? await googleLogin(googleToken) : await login(email, password);
       const { user, token } = response;
-
+      
       if (!user || !token) {
         throw new Error("Invalid response from server - missing user or token");
       }
 
       // Set token first
       localStorage.setItem("app-token", token);
-
+      
       // Then set user data
       if (!setValidatedUser(user)) {
         localStorage.removeItem("app-token");
         throw new Error("Received invalid user data from server");
       }
 
-      // Refresh platform data after successful login
-      await refreshPlatformData();
-
+      // OPTIMIZATION: Only refresh platform data after login if needed
+      // Remove this if backend handles it automatically
+      // await refreshPlatformData(true);
+      
       return user;
     } catch (error) {
       console.error("Login error in AuthContext:", error);
-
       // Clean up any partially set data
       localStorage.removeItem("app-user");
       localStorage.removeItem("app-token");
-
+      
       // Format error message for display
       const errorMessage =
         error.response?.data?.message ||
         error.message ||
         "Login failed. Please check your credentials and try again.";
-
       setError(errorMessage);
       throw error; // Re-throw to allow component to handle it
     } finally {
       setIsLoading(false);
     }
-  }, [setValidatedUser, refreshPlatformData]);
+  }, [setValidatedUser]); // OPTIMIZATION: Removed refreshPlatformData dependency
 
   const registerUser = useCallback(async (userData) => {
     setError(null);
     setIsLoading(true);
     try {
       const { user, token } = await register(userData);
-
+      
       if (!user || !token) {
         throw new Error("Invalid response from server - missing user or token");
       }
@@ -117,17 +115,15 @@ export const AuthProvider = ({ children }) => {
       return user;
     } catch (error) {
       console.error("Registration error in AuthContext:", error);
-
       // Clean up any partially set data
       localStorage.removeItem("app-user");
       localStorage.removeItem("app-token");
-
+      
       // Format error message for display
       const errorMessage =
         error.response?.data?.message ||
         error.message ||
         "Registration failed. Please try again.";
-
       setError(errorMessage);
       throw error; // Re-throw to allow component to handle it
     } finally {
@@ -160,26 +156,30 @@ export const AuthProvider = ({ children }) => {
     return false;
   }, [memoizedAuthUser, setValidatedUser]);
 
+  // OPTIMIZATION: Remove automatic platform refresh on page load
   useEffect(() => {
     const initializeAuth = async () => {
       try {
         const storedUser = localStorage.getItem("app-user");
         const token = localStorage.getItem("app-token");
-
+        
         if (storedUser && token) {
           const userData = JSON.parse(storedUser);
           if (!validateUserData(userData)) {
             throw new Error("Stored user data is invalid");
           }
-
+          
           try {
             const tokenData = JSON.parse(atob(token.split('.')[1]));
             if (tokenData.exp * 1000 < Date.now()) {
               throw new Error("Token expired");
             }
             setAuthUser(userData);
-            // Refresh platform data on initial load
-            await refreshPlatformData();
+            
+            // REMOVED: await refreshPlatformData();
+            // This was causing unnecessary API calls on every page refresh
+            // If backend manages platform data automatically, this is not needed
+            
           } catch (error) {
             console.error("Token validation error:", error);
             throw new Error("Invalid token format");
@@ -196,7 +196,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     initializeAuth();
-  }, [refreshPlatformData]);
+  }, []); // OPTIMIZATION: Removed refreshPlatformData dependency
 
   // Memoize the context value to prevent unnecessary re-renders
   const contextValue = useMemo(() => ({
@@ -208,7 +208,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     updateUser,
     updatePlatformData,
-    refreshPlatformData,
+    refreshPlatformData, // Keep this for manual refresh when needed
   }), [
     memoizedAuthUser,
     isLoading,
