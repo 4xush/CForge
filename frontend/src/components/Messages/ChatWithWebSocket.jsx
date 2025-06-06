@@ -1,239 +1,284 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
-import { useParams } from 'react-router-dom';
-import { useWebSocket } from '../../context/WebSocketContext';
-// CRITICAL: RoomContext must provide stable currentRoomDetails (or stable _id)
-// and stable loadCurrentRoomDetails (useCallback)
-import { useRoomContext } from '../../context/RoomContext';
-import { useAuthContext } from '../../context/AuthContext'; // Assuming stable authUser
-import { AlertCircle } from "lucide-react";
-import Chat from './Chat';
-import { Spinner } from '../ui/Spinner';
-import toast from 'react-hot-toast';
+"use client"
+
+import { useEffect, useState, useCallback, useRef } from "react"
+import { useParams } from "react-router-dom"
+import { useWebSocket } from "../../context/WebSocketContext"
+import { useRoomContext } from "../../context/RoomContext"
+import { useAuthContext } from "../../context/AuthContext"
+import { AlertCircle } from "lucide-react"
+import Chat from "./Chat"
+import { Spinner } from "../ui/Spinner"
+import toast from "react-hot-toast"
+import webSocketService from "../../services/WebSocketService" // FIXED: Direct import
 
 const ChatWithWebSocket = () => {
-  const { roomId } = useParams();
-  const { connected, connecting: wsConnecting, joinRoom, leaveRoom, addEventListener, removeEventListener, reconnect } = useWebSocket();
-  const { currentRoomDetails, loadCurrentRoomDetails, currentRoomLoading } = useRoomContext();
-  const { authUser } = useAuthContext(); // Assuming stable authUser
+  const { roomId } = useParams()
+  const {
+    connected: contextConnected,
+    connecting: wsConnecting,
+    joinRoom,
+    leaveRoom,
+    addEventListener,
+    removeEventListener,
+    reconnect,
+    socket,
+  } = useWebSocket()
+  const { currentRoomDetails, loadCurrentRoomDetails, currentRoomLoading } = useRoomContext()
+  const { authUser } = useAuthContext()
 
-  const [isJoined, setIsJoined] = useState(false);
-  const [joinAttemptCount, setJoinAttemptCount] = useState(0);
-  const maxJoinAttempts = 5;
-  const joinRetryTimeoutRef = useRef(null);
+  const [isJoined, setIsJoined] = useState(false)
+  const [joinAttemptCount, setJoinAttemptCount] = useState(0)
+  const [forceRender, setForceRender] = useState(0) // FIXED: Force re-render counter
+  const maxJoinAttempts = 5
+  const joinRetryTimeoutRef = useRef(null)
+  const connectionCheckIntervalRef = useRef(null) // FIXED: Added interval for connection checking
+  const directConnectedRef = useRef(false) // FIXED: Use ref for direct connection state
 
-  const currentRoomId = currentRoomDetails?._id; // More stable dependency if possible
+  const currentRoomId = currentRoomDetails?._id
+
+  // FIXED: Direct connection check that bypasses context
+  const checkDirectConnection = useCallback(() => {
+    const isDirectlyConnected = webSocketService.isSocketConnected()
+    if (isDirectlyConnected !== directConnectedRef.current) {
+      directConnectedRef.current = isDirectlyConnected
+      console.log(`ChatWithWebSocket: Direct connection check - connected: ${isDirectlyConnected}`)
+      // Force re-render when connection state changes
+      setForceRender((prev) => prev + 1)
+    }
+    return isDirectlyConnected
+  }, [])
+
+  // FIXED: Setup interval to check connection directly
+  useEffect(() => {
+    // Initial check
+    checkDirectConnection()
+
+    // Setup interval for continuous checking
+    connectionCheckIntervalRef.current = setInterval(() => {
+      checkDirectConnection()
+    }, 1000)
+
+    return () => {
+      if (connectionCheckIntervalRef.current) {
+        clearInterval(connectionCheckIntervalRef.current)
+      }
+    }
+  }, [checkDirectConnection])
 
   // Load room details
   useEffect(() => {
     if (roomId) {
-      console.log(`ChatWithWebSocket: Room ID changed to ${roomId}. Loading details.`);
-      loadCurrentRoomDetails(roomId);
-      setIsJoined(false); // Reset join status for new room
-      setJoinAttemptCount(0); // Reset join attempts
+      console.log(`ChatWithWebSocket: Room ID changed to ${roomId}. Loading details.`)
+      loadCurrentRoomDetails(roomId)
+      setIsJoined(false)
+      setJoinAttemptCount(0)
       if (joinRetryTimeoutRef.current) {
-        clearTimeout(joinRetryTimeoutRef.current);
+        clearTimeout(joinRetryTimeoutRef.current)
       }
     }
-  }, [roomId, loadCurrentRoomDetails]); // loadCurrentRoomDetails should be stable from context
+  }, [roomId, loadCurrentRoomDetails])
 
   // Memoized handlers for room events
-  const handleRoomJoined = useCallback((data) => {
-    console.log('ChatWithWebSocket: Room joined event received:', data);
-    if (data.roomId === currentRoomId) {
-      console.log(`ChatWithWebSocket: Successfully joined room: ${data.roomId}`);
-      setIsJoined(true);
-      setJoinAttemptCount(0); // Reset attempts on successful join
-      if (joinRetryTimeoutRef.current) {
-        clearTimeout(joinRetryTimeoutRef.current);
+  const handleRoomJoined = useCallback(
+    (data) => {
+      console.log("ChatWithWebSocket: Room joined event received:", data)
+      if (data.roomId === currentRoomId) {
+        console.log(`ChatWithWebSocket: Successfully joined room: ${data.roomId}`)
+        setIsJoined(true)
+        setJoinAttemptCount(0)
+        if (joinRetryTimeoutRef.current) {
+          clearTimeout(joinRetryTimeoutRef.current)
+        }
       }
-      // toast.success(`Joined ${currentRoomDetails?.name || 'chat room'}`); // Consider room name
-    }
-  }, [currentRoomId, /* currentRoomDetails?.name */]);
+    },
+    [currentRoomId],
+  )
 
-  const handleRoomError = useCallback((error) => {
-    console.error('ChatWithWebSocket: Room error event:', error);
-    // This event might be generic, or specific to a join attempt.
-    // If it's related to a failed join for the current room:
-    if (error.roomId === currentRoomId) {
-      toast.error(`Error with room ${currentRoomId}: ${error.message}`);
-      // setIsJoined(false); // Ensure not marked as joined
-      // Retry logic is handled by the joinRoom effect.
-    }
-  }, [currentRoomId]);
+  const handleRoomError = useCallback(
+    (error) => {
+      console.error("ChatWithWebSocket: Room error event:", error)
+      if (error.roomId === currentRoomId) {
+        toast.error(`Error with room ${currentRoomId}: ${error.message}`)
+      }
+    },
+    [currentRoomId],
+  )
 
   // Effect for setting up room-specific WebSocket event listeners
   useEffect(() => {
-    if (!currentRoomId) { // Don't set up listeners if no specific room context
-      return;
+    if (!currentRoomId) {
+      return
     }
-    console.log(`ChatWithWebSocket: Setting up listeners for room ${currentRoomId}`);
-    addEventListener('room_joined', handleRoomJoined);
-    addEventListener('room_error', handleRoomError);
+    console.log(`ChatWithWebSocket: Setting up listeners for room ${currentRoomId}`)
+    addEventListener("room_joined", handleRoomJoined)
+    addEventListener("room_error", handleRoomError)
 
     return () => {
-      console.log(`ChatWithWebSocket: Cleaning up listeners for room ${currentRoomId}`);
-      removeEventListener('room_joined', handleRoomJoined);
-      removeEventListener('room_error', handleRoomError);
-    };
-  }, [addEventListener, removeEventListener, handleRoomJoined, handleRoomError, currentRoomId]);
+      console.log(`ChatWithWebSocket: Cleaning up listeners for room ${currentRoomId}`)
+      removeEventListener("room_joined", handleRoomJoined)
+      removeEventListener("room_error", handleRoomError)
+    }
+  }, [addEventListener, removeEventListener, handleRoomJoined, handleRoomError, currentRoomId])
 
+  // FIXED: Use direct connection check for rendering and logic
+  const isConnected = directConnectedRef.current || contextConnected
 
-  // Effect for attempting to join the room
+  // FIXED: Effect to attempt joining room when connection is established
   useEffect(() => {
-    if (joinRetryTimeoutRef.current) { // Clear any pending retry if dependencies change
-      clearTimeout(joinRetryTimeoutRef.current);
+    if (joinRetryTimeoutRef.current) {
+      clearTimeout(joinRetryTimeoutRef.current)
+      joinRetryTimeoutRef.current = null
     }
 
-    if (!currentRoomId || !authUser?._id || currentRoomLoading) {
-      console.log('ChatWithWebSocket: Join prerequisites not met (no room ID, authUser, or room loading).');
-      return;
+    if (!currentRoomId || !authUser?._id || currentRoomLoading || isJoined) {
+      return
     }
 
-    if (isJoined) {
-      console.log(`ChatWithWebSocket: Already joined room ${currentRoomId}.`);
-      return;
+    // FIXED: Use direct connection check
+    const directlyConnected = checkDirectConnection()
+
+    if (!directlyConnected) {
+      console.log(`ChatWithWebSocket: WebSocket not directly connected. Cannot join room ${currentRoomId} yet.`)
+      return
     }
 
-    if (!connected) {
-      console.log(`ChatWithWebSocket: WebSocket not connected. Cannot join room ${currentRoomId} yet.`);
-      // Optional: trigger a reconnect if not already connecting
-      // if (!wsConnecting) reconnect(); // useWebSocket's reconnect
-      return; // Wait for connection
-    }
+    console.log(`ChatWithWebSocket: WebSocket is directly connected. Attempting to join room ${currentRoomId}`)
 
     if (joinAttemptCount >= maxJoinAttempts) {
-      console.error(`ChatWithWebSocket: Max join attempts reached for room ${currentRoomId}.`);
-      toast.error(`Failed to join ${currentRoomDetails?.name || 'room'} after multiple attempts.`);
-      return;
+      console.error(`ChatWithWebSocket: Max join attempts reached for room ${currentRoomId}.`)
+      toast.error(`Failed to join ${currentRoomDetails?.name || "room"} after multiple attempts.`)
+      return
     }
 
-    console.log(`ChatWithWebSocket: Attempting to join room ${currentRoomId} (Attempt: ${joinAttemptCount + 1})`);
-    const success = joinRoom(currentRoomId); // joinRoom from useWebSocket
+    // Small delay to ensure connection is stable
+    setTimeout(() => {
+      if (checkDirectConnection() && !isJoined) {
+        console.log(`ChatWithWebSocket: Attempting to join room ${currentRoomId} (Attempt: ${joinAttemptCount + 1})`)
+        const success = joinRoom(currentRoomId)
 
-    if (!success && joinAttemptCount < maxJoinAttempts) { // If joinRoom call itself failed synchronously
-      console.warn(`ChatWithWebSocket: joinRoom call for ${currentRoomId} failed synchronously. Retrying...`);
-      const nextAttempt = joinAttemptCount + 1;
-      setJoinAttemptCount(nextAttempt); // This will re-trigger the effect for next attempt
-      // joinRetryTimeoutRef.current = setTimeout(() => {
-      //     setJoinAttemptCount(prev => prev + 1);
-      // }, 2000 * Math.pow(1.5, joinAttemptCount));
-    } else if (success) {
-      // If joinRoom call was successful, we wait for 'room_joined' event.
-      // Incrementing joinAttemptCount here might be too eager if the event is just delayed.
-      // It's better to rely on 'room_joined' to reset attempts.
-      // However, if 'room_joined' never comes, we need a timeout based retry.
-      console.log(`ChatWithWebSocket: joinRoom called for ${currentRoomId}. Waiting for confirmation event.`);
-      // This timeout handles cases where 'room_joined' isn't received after a successful call to joinRoom
-      joinRetryTimeoutRef.current = setTimeout(() => {
-        if (!isJoined) { // If still not joined after a delay
-          console.warn(`ChatWithWebSocket: No room_joined event for ${currentRoomId} after timeout. Retrying join.`);
-          setJoinAttemptCount(prev => prev + 1); // Trigger retry
+        if (!success && joinAttemptCount < maxJoinAttempts) {
+          console.warn(`ChatWithWebSocket: joinRoom call for ${currentRoomId} failed synchronously. Retrying...`)
+          const nextAttempt = joinAttemptCount + 1
+          setJoinAttemptCount(nextAttempt)
+        } else if (success) {
+          console.log(`ChatWithWebSocket: joinRoom called for ${currentRoomId}. Waiting for confirmation event.`)
+          joinRetryTimeoutRef.current = setTimeout(
+            () => {
+              if (!isJoined) {
+                console.warn(
+                  `ChatWithWebSocket: No room_joined event for ${currentRoomId} after timeout. Retrying join.`,
+                )
+                setJoinAttemptCount((prev) => prev + 1)
+              }
+            },
+            5000 + 2000 * joinAttemptCount,
+          )
         }
-      }, 5000 + (2000 * joinAttemptCount)); // Increased timeout for event
-    }
+      }
+    }, 300)
 
     return () => {
       if (joinRetryTimeoutRef.current) {
-        clearTimeout(joinRetryTimeoutRef.current);
+        clearTimeout(joinRetryTimeoutRef.current)
       }
-    };
+    }
   }, [
     currentRoomId,
     authUser?._id,
-    connected, // wsConnecting,
     isJoined,
     joinRoom,
     joinAttemptCount,
     maxJoinAttempts,
     currentRoomLoading,
-    // currentRoomDetails?.name // For toast
-  ]);
+    currentRoomDetails?.name,
+    checkDirectConnection,
+    forceRender, // FIXED: Re-run when forceRender changes
+  ])
 
   // Effect for leaving the room on component unmount or when roomId changes
   useEffect(() => {
-    // This effect captures the roomId at the time of its execution.
-    // When the component unmounts, it uses the roomId that was active.
-    const idToLeave = roomId; // Capture roomId for cleanup
+    const idToLeave = roomId
     return () => {
-      if (idToLeave && isJoined) { // Only leave if was joined to this specific room
-        console.log(`ChatWithWebSocket: Leaving room ${idToLeave} on unmount/roomId change.`);
-        leaveRoom(idToLeave);
-        // setIsJoined(false); // State will be reset by new room load anyway
-        // toast.info(`Left ${currentRoomDetails?.name || 'chat room'}`);
+      if (idToLeave && isJoined) {
+        console.log(`ChatWithWebSocket: Leaving room ${idToLeave} on unmount/roomId change.`)
+        leaveRoom(idToLeave)
       }
-    };
-  }, [roomId, leaveRoom, isJoined /*, currentRoomDetails?.name (for toast) */]);
+    }
+  }, [roomId, leaveRoom, isJoined])
 
+  // FIXED: Debug logging for connection state
+  useEffect(() => {
+    const directlyConnected = directConnectedRef.current
+    console.log(
+      `ChatWithWebSocket: Connection state - context:${contextConnected}, direct:${directlyConnected}, combined:${isConnected}, joined:${isJoined}`,
+    )
+  }, [contextConnected, isConnected, isJoined, forceRender])
 
-  if (currentRoomLoading && !currentRoomDetails) { // Show loading if no details yet
+  if (currentRoomLoading && !currentRoomDetails) {
     return (
       <div className="flex items-center justify-center h-full">
         <Spinner size="lg" />
         <span className="ml-2 text-gray-400">Loading room...</span>
       </div>
-    );
+    )
   }
-
-  if (!wsConnecting && !connected && joinAttemptCount < 1) { // Initial connection attempt message
-    return (
-      <div className="flex flex-col items-center justify-center h-full">
-        <Spinner size="lg" />
-        <span className="ml-2 text-gray-400">Connecting to chat server...</span>
-      </div>
-    );
-  }
-
-  if (!connected && joinAttemptCount >= 1) { // More specific message if retrying connection
-    return (
-      <div className="flex flex-col items-center justify-center h-full">
-        <Spinner size="lg" />
-        <span className="ml-2 text-gray-400">Connection failed. Retrying...</span>
-        {/* You can add specific attempt count from WebSocketContext if needed */}
-      </div>
-    );
-  }
-
-
-  if (connected && !isJoined && currentRoomId && joinAttemptCount < maxJoinAttempts) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full">
-        <Spinner size="lg" />
-        <span className="ml-2 text-gray-400">
-          Joining {currentRoomDetails?.name || 'chat room'}... (Attempt {joinAttemptCount + 1})
-        </span>
-      </div>
-    );
-  }
-
-  if (connected && !isJoined && currentRoomId && joinAttemptCount >= maxJoinAttempts) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full">
-        <AlertCircle className="h-10 w-10 text-red-500 mx-auto mb-2" />
-        <span className="ml-2 text-red-400">
-          Failed to join {currentRoomDetails?.name || 'room'}. Please check your connection or try refreshing.
-        </span>
-        <button
-          onClick={reconnect} // General WebSocket reconnect
-          className="mt-4 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-md"
-        >
-          Retry Connection
-        </button>
-      </div>
-    );
-  }
-
 
   if (!currentRoomId) {
     return (
       <div className="flex items-center justify-center h-full text-gray-500">
         Please select a room to start chatting.
       </div>
-    );
+    )
   }
 
-  // If all checks pass and we are joined (or room has no specific join needed and we are connected)
-  // The <Chat /> component should ideally only render when it has a room and is ready.
-  return <Chat />;
-};
+  // FIXED: Use direct connection check for rendering
+  if (!isConnected) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full">
+        <Spinner size="lg" />
+        <span className="ml-2 text-gray-400">
+          {wsConnecting ? "Connecting to chat server..." : "Connection failed. Retrying..."}
+        </span>
+        <div className="mt-2 text-xs text-gray-500">This may take a few moments on first connection</div>
+        {!wsConnecting && (
+          <button onClick={reconnect} className="mt-4 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-md">
+            Retry Connection
+          </button>
+        )}
+      </div>
+    )
+  }
 
-export default ChatWithWebSocket;
+  if (isConnected && !isJoined) {
+    if (joinAttemptCount < maxJoinAttempts) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full">
+          <Spinner size="lg" />
+          <span className="ml-2 text-gray-400">Joining {currentRoomDetails?.name || "chat room"}...</span>
+          {joinAttemptCount > 0 && (
+            <div className="mt-1 text-xs text-gray-500">
+              Attempt {joinAttemptCount + 1} of {maxJoinAttempts}
+            </div>
+          )}
+        </div>
+      )
+    } else {
+      return (
+        <div className="flex flex-col items-center justify-center h-full">
+          <AlertCircle className="h-10 w-10 text-red-500 mx-auto mb-2" />
+          <span className="ml-2 text-red-400">
+            Failed to join {currentRoomDetails?.name || "room"}. Please check your connection or try refreshing.
+          </span>
+          <button onClick={reconnect} className="mt-4 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-md">
+            Retry Connection
+          </button>
+        </div>
+      )
+    }
+  }
+
+  // If connected and joined, render the Chat component
+  return <Chat />
+}
+
+export default ChatWithWebSocket

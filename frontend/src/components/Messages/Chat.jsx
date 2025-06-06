@@ -1,348 +1,362 @@
-import { useEffect, useRef, useState, useCallback } from "react";
-import { useRoomContext } from "../../context/RoomContext";
-import { useAuthContext } from "../../context/AuthContext";
-import { useMessageContext } from "../../context/MessageContext";
-import { useWebSocket } from "../../context/WebSocketContext";
-import Message from "./ui/Message";
-import MessageInput from "./MessageInput";
-import ContextMenu from "./ChatContextMenu";
-import PublicUserProfileModal from "../../components/PublicUserProfileModal";
-import { format, isToday, isYesterday, isSameYear } from "date-fns";
-import { AlertCircle, RefreshCw, ChevronDown } from "lucide-react";
-import { Spinner } from "../ui/Spinner";
-import toast from 'react-hot-toast';
+"use client"
+
+import { useEffect, useRef, useState, useCallback } from "react"
+import { useRoomContext } from "../../context/RoomContext"
+import { useAuthContext } from "../../context/AuthContext"
+import { useMessageContext } from "../../context/MessageContext"
+import { useWebSocket } from "../../context/WebSocketContext"
+import Message from "./ui/Message"
+import MessageInput from "./MessageInput"
+import ContextMenu from "./ChatContextMenu"
+import PublicUserProfileModal from "../../components/PublicUserProfileModal"
+import { format, isToday, isYesterday, isSameYear } from "date-fns"
+import { AlertCircle, RefreshCw, ChevronDown } from "lucide-react"
+import { Spinner } from "../ui/Spinner"
+import toast from "react-hot-toast"
 
 const Chat = () => {
-    const { currentRoomDetails } = useRoomContext();
-    const { authUser } = useAuthContext();
-    const { socket, connected, addEventListener, removeEventListener } = useWebSocket();
-    const {
-        messages,
-        loading,
-        hasMore,
-        error,
-        fetchMessages, // This should be called WITHOUT roomId parameter - context handles it
-        addMessage, // Keep this for optimistic updates
-        editMessage,
-        setMessages
-    } = useMessageContext();
+    const { currentRoomDetails } = useRoomContext()
+    const { authUser } = useAuthContext()
+    const { socket, connected, addEventListener, removeEventListener } = useWebSocket()
+    const { messages, loading, hasMore, error, fetchMessages, addMessage, editMessage, setMessages } = useMessageContext()
 
-    const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, messageId: null });
-    const [editingMessage, setEditingMessage] = useState(null);
-    const [loadingMore, setLoadingMore] = useState(false);
-    const [profileModal, setProfileModal] = useState({ isOpen: false, username: null });
-    const [showScrollButton, setShowScrollButton] = useState(false);
-    const [unreadCount, setUnreadCount] = useState(0);
-    const [isNearBottom, setIsNearBottom] = useState(true);
+    const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, messageId: null })
+    const [editingMessage, setEditingMessage] = useState(null)
+    const [loadingMore, setLoadingMore] = useState(false)
+    const [profileModal, setProfileModal] = useState({ isOpen: false, username: null })
+    const [showScrollButton, setShowScrollButton] = useState(false)
+    const [unreadCount, setUnreadCount] = useState(0)
+    const [isNearBottom, setIsNearBottom] = useState(true)
 
-    const messagesEndRef = useRef(null);
-    const contextMenuRef = useRef(null);
-    const messagesContainerRef = useRef(null);
-    const isInitialLoadRef = useRef(true);
-    const lastScrollTopRef = useRef(0);
-    const observerRef = useRef(null);
+    const messagesEndRef = useRef(null)
+    const contextMenuRef = useRef(null)
+    const messagesContainerRef = useRef(null)
+    const isInitialLoadRef = useRef(true)
+    const lastScrollTopRef = useRef(0)
+    const observerRef = useRef(null)
 
-    // Fetch messages when room changes - FIXED: Don't pass roomId, context handles it
+    // Fetch messages when room changes
     useEffect(() => {
         if (currentRoomDetails) {
-            console.log(`Chat: Room changed to ${currentRoomDetails._id}. Fetching messages.`);
-            isInitialLoadRef.current = true;
-            fetchMessages(); // FIXED: Call without parameters like original
+            console.log(`Chat: Room changed to ${currentRoomDetails._id}. Fetching messages.`)
+            isInitialLoadRef.current = true
+            fetchMessages()
         }
-    }, [currentRoomDetails, currentRoomDetails?._id, fetchMessages]);
+    }, [currentRoomDetails, currentRoomDetails?._id, fetchMessages])
 
-    // Handle new messages from WebSocket
-    const handleNewMessage = useCallback((message) => {
-        console.log('Chat: Received new message:', message._id);
-        setMessages(prevMessages => {
-            const existsById = prevMessages.some(msg => msg._id === message._id);
-            if (existsById) {
-                console.log('Chat: Ignoring duplicate new message:', message._id);
-                return prevMessages;
-            }
+    // FIXED: Handle new messages from WebSocket - Updated for backend format
+    const handleNewMessage = useCallback(
+        (message) => {
+            console.log("Chat: Received new message:", message._id)
+            setMessages((prevMessages) => {
+                const existsById = prevMessages.some((msg) => msg._id === message._id)
+                if (existsById) {
+                    console.log("Chat: Ignoring duplicate new message:", message._id)
+                    return prevMessages
+                }
 
-            // Check for temporary message replacement
-            const tempIndex = prevMessages.findIndex(msg =>
-                msg.isTemporary &&
-                msg.content === message.content &&
-                msg.sender._id.toString() === message.sender._id.toString() &&
-                Math.abs(new Date(msg.createdAt).getTime() - new Date(message.createdAt).getTime()) < 10000
-            );
+                // Check for temporary message replacement using tempId from backend
+                const tempIndex = prevMessages.findIndex(
+                    (msg) =>
+                        msg.isTemporary &&
+                        msg.tempId &&
+                        message.tempId &&
+                        msg.tempId === message.tempId &&
+                        msg.sender._id.toString() === message.sender._id.toString(),
+                )
 
-            if (tempIndex !== -1) {
-                console.log('Chat: Replacing temporary message with confirmed message');
-                const newMessages = [...prevMessages];
-                newMessages[tempIndex] = { ...message, isTemporary: false };
-                return newMessages;
-            }
+                if (tempIndex !== -1) {
+                    console.log("Chat: Replacing temporary message with confirmed message")
+                    const newMessages = [...prevMessages]
+                    newMessages[tempIndex] = { ...message, isTemporary: false }
+                    return newMessages
+                }
 
-            console.log('Chat: Adding new message to state:', message._id);
-            return [...prevMessages, message];
-        });
-    }, [setMessages]);
+                console.log("Chat: Adding new message to state:", message._id)
+                return [...prevMessages, message]
+            })
+        },
+        [setMessages],
+    )
 
+    // FIXED: Handle message sent confirmation - Updated for backend format
     const handleMessageSent = useCallback((data) => {
-        console.log('Chat: Message sent confirmation:', data);
-        if (data.messageId) {
-            toast.success('Message sent successfully', { duration: 1000 });
+        console.log("Chat: Message sent confirmation:", data)
+        if (data.success && data.messageId) {
+            toast.success("Message sent successfully", { duration: 1000 })
         }
-    }, []);
+    }, [])
 
+    // FIXED: Handle message errors - Updated for backend format
     const handleMessageError = useCallback((error) => {
-        console.error('Chat: Error sending message:', error);
-        toast.error('Failed to send message. Please try again.');
-    }, []);
+        console.error("Chat: Error with message:", error)
+        toast.error(error.error || "Failed to send message. Please try again.")
+    }, [])
 
     // Setup WebSocket listeners
     useEffect(() => {
-        if (!socket) return;
+        if (!socket) return
 
-        console.log('Chat: Setting up real-time message listeners');
-        addEventListener('receive_message', handleNewMessage);
-        addEventListener('message_sent', handleMessageSent);
-        addEventListener('message_error', handleMessageError);
+        console.log("Chat: Setting up real-time message listeners")
+        addEventListener("receive_message", handleNewMessage)
+        addEventListener("message_sent", handleMessageSent)
+        addEventListener("message_error", handleMessageError)
 
         return () => {
-            console.log('Chat: Cleaning up real-time message listeners');
-            removeEventListener('receive_message', handleNewMessage);
-            removeEventListener('message_sent', handleMessageSent);
-            removeEventListener('message_error', handleMessageError);
-        };
-    }, [socket, addEventListener, removeEventListener, handleNewMessage, handleMessageSent, handleMessageError]);
-
-    // Message edit listeners
-    const handleMessageUpdated = useCallback((updatedMessage) => {
-        console.log('Chat: Message updated event received:', updatedMessage._id);
-        setMessages(prevMessages =>
-            prevMessages.map(msg =>
-                msg._id === updatedMessage._id
-                    ? {
-                        ...msg,
-                        content: updatedMessage.content,
-                        isEdited: true,
-                        editedAt: updatedMessage.editedAt
-                    }
-                    : msg
-            )
-        );
-        if (updatedMessage.sender._id !== authUser._id) {
-            toast('A message was edited', { duration: 2000 });
+            console.log("Chat: Cleaning up real-time message listeners")
+            removeEventListener("receive_message", handleNewMessage)
+            removeEventListener("message_sent", handleMessageSent)
+            removeEventListener("message_error", handleMessageError)
         }
-    }, [setMessages, authUser?._id]);
+    }, [socket, addEventListener, removeEventListener, handleNewMessage, handleMessageSent, handleMessageError])
+
+    // FIXED: Message edit listeners - Updated for backend format
+    const handleMessageUpdated = useCallback(
+        (updatedMessage) => {
+            console.log("Chat: Message updated event received:", updatedMessage._id)
+            setMessages((prevMessages) =>
+                prevMessages.map((msg) =>
+                    msg._id === updatedMessage._id
+                        ? {
+                            ...msg,
+                            content: updatedMessage.content,
+                            isEdited: true,
+                            editedAt: updatedMessage.editedAt,
+                        }
+                        : msg,
+                ),
+            )
+            if (updatedMessage.sender._id !== authUser._id) {
+                toast("A message was edited", { duration: 2000 })
+            }
+        },
+        [setMessages, authUser?._id],
+    )
 
     const handleEditSuccess = useCallback((data) => {
-        console.log('Chat: Message edited successfully:', data);
+        console.log("Chat: Message edited successfully:", data)
         if (data.messageId) {
-            toast.success('Message edited successfully', { duration: 1000 });
+            toast.success("Message edited successfully", { duration: 1000 })
         }
-    }, []);
+    }, [])
 
     useEffect(() => {
-        if (!socket) return;
+        if (!socket) return
 
-        console.log('Chat: Setting up message update listeners');
-        addEventListener('message_updated', handleMessageUpdated);
-        addEventListener('edit_success', handleEditSuccess);
+        console.log("Chat: Setting up message update listeners")
+        addEventListener("message_updated", handleMessageUpdated)
+        addEventListener("edit_success", handleEditSuccess)
 
         return () => {
-            console.log('Chat: Cleaning up message update listeners');
-            removeEventListener('message_updated', handleMessageUpdated);
-            removeEventListener('edit_success', handleEditSuccess);
-        };
-    }, [socket, addEventListener, removeEventListener, handleMessageUpdated, handleEditSuccess]);
+            console.log("Chat: Cleaning up message update listeners")
+            removeEventListener("message_updated", handleMessageUpdated)
+            removeEventListener("edit_success", handleEditSuccess)
+        }
+    }, [socket, addEventListener, removeEventListener, handleMessageUpdated, handleEditSuccess])
 
     // Scroll handling
     const scrollToBottom = useCallback((behavior = "smooth") => {
         if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior });
-            setUnreadCount(0);
-            setShowScrollButton(false);
+            messagesEndRef.current.scrollIntoView({ behavior })
+            setUnreadCount(0)
+            setShowScrollButton(false)
         }
-    }, []);
+    }, [])
 
     const handleScroll = useCallback(() => {
-        if (!messagesContainerRef.current) return;
+        if (!messagesContainerRef.current) return
 
-        const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
-        const scrollPosition = scrollHeight - scrollTop - clientHeight;
-        const isBottom = scrollPosition < 100;
+        const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current
+        const scrollPosition = scrollHeight - scrollTop - clientHeight
+        const isBottom = scrollPosition < 100
 
-        setShowScrollButton(!isBottom);
-        setIsNearBottom(isBottom);
+        setShowScrollButton(!isBottom)
+        setIsNearBottom(isBottom)
 
         if (!isBottom && scrollTop < lastScrollTopRef.current) {
-            setUnreadCount(prev => prev + 1);
+            setUnreadCount((prev) => prev + 1)
         }
 
-        lastScrollTopRef.current = scrollTop;
-    }, []);
+        lastScrollTopRef.current = scrollTop
+    }, [])
 
     // Auto-scroll effect
     useEffect(() => {
-        if (!messagesContainerRef.current) return;
+        if (!messagesContainerRef.current) return
 
-        const shouldAutoScroll = isNearBottom || isInitialLoadRef.current;
+        const shouldAutoScroll = isNearBottom || isInitialLoadRef.current
 
         if (shouldAutoScroll) {
-            scrollToBottom(isInitialLoadRef.current ? "auto" : "smooth");
-            isInitialLoadRef.current = false;
+            scrollToBottom(isInitialLoadRef.current ? "auto" : "smooth")
+            isInitialLoadRef.current = false
         } else if (!loadingMore) {
-            setUnreadCount(prev => prev + 1);
+            setUnreadCount((prev) => prev + 1)
         }
 
-        const container = messagesContainerRef.current;
-        container.addEventListener('scroll', handleScroll);
-        return () => container.removeEventListener('scroll', handleScroll);
-    }, [messages, isNearBottom, loadingMore, handleScroll, scrollToBottom]);
+        const container = messagesContainerRef.current
+        container.addEventListener("scroll", handleScroll)
+        return () => container.removeEventListener("scroll", handleScroll)
+    }, [messages, isNearBottom, loadingMore, handleScroll, scrollToBottom])
 
-    // Load older messages - FIXED: Call fetchMessages with oldestMessageId only
+    // Load older messages
     const loadOlderMessages = useCallback(async () => {
-        if (!hasMore || loadingMore || messages.length === 0) return;
+        if (!hasMore || loadingMore || messages.length === 0) return
 
-        setLoadingMore(true);
+        setLoadingMore(true)
         try {
-            const oldestMessage = messages[0];
-            await fetchMessages(oldestMessage._id); // FIXED: Pass only the message ID like original
+            const oldestMessage = messages[0]
+            await fetchMessages(oldestMessage._id)
         } catch (error) {
-            console.error("Chat: Error loading older messages:", error);
+            console.error("Chat: Error loading older messages:", error)
         } finally {
-            setLoadingMore(false);
+            setLoadingMore(false)
         }
-    }, [hasMore, loadingMore, messages, fetchMessages]);
+    }, [hasMore, loadingMore, messages, fetchMessages])
 
     // Intersection Observer for loading older messages
     useEffect(() => {
-        if (!messagesContainerRef.current) return;
+        if (!messagesContainerRef.current) return
 
         const options = {
             root: messagesContainerRef.current,
             threshold: 0.1,
-        };
+        }
 
         const handleIntersect = (entries) => {
             if (entries[0].isIntersecting && hasMore && !loadingMore) {
-                loadOlderMessages();
+                loadOlderMessages()
             }
-        };
-
-        observerRef.current = new IntersectionObserver(handleIntersect, options);
-
-        const firstMessage = messagesContainerRef.current.firstElementChild;
-        if (firstMessage) {
-            observerRef.current.observe(firstMessage);
         }
 
-        return () => observerRef.current?.disconnect();
-    }, [hasMore, loadingMore, messages, loadOlderMessages]);
+        observerRef.current = new IntersectionObserver(handleIntersect, options)
+
+        const firstMessage = messagesContainerRef.current.firstElementChild
+        if (firstMessage) {
+            observerRef.current.observe(firstMessage)
+        }
+
+        return () => observerRef.current?.disconnect()
+    }, [hasMore, loadingMore, messages, loadOlderMessages])
 
     // Context menu handling
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (contextMenuRef.current && !contextMenuRef.current.contains(event.target)) {
-                closeContextMenu();
+                closeContextMenu()
             }
-        };
-
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    const canModifyMessage = useCallback((message) => {
-        if (!authUser || !message) return false;
-        if (message.sender._id === authUser._id) return true;
-        return currentRoomDetails?.admins?.some((admin) => admin.toString() === authUser._id.toString());
-    }, [authUser, currentRoomDetails]);
-
-    const handleContextMenu = useCallback((e, messageId) => {
-        e.preventDefault();
-        const message = messages.find((msg) => msg._id === messageId);
-        if (canModifyMessage(message)) {
-            setContextMenu({
-                visible: true,
-                x: Math.min(e.clientX, window.innerWidth - 200),
-                y: Math.min(e.clientY, window.innerHeight - 150),
-                messageId,
-            });
         }
-    }, [messages, canModifyMessage]);
+
+        document.addEventListener("mousedown", handleClickOutside)
+        return () => document.removeEventListener("mousedown", handleClickOutside)
+    }, [])
+
+    const canModifyMessage = useCallback(
+        (message) => {
+            if (!authUser || !message) return false
+            if (message.sender._id === authUser._id) return true
+            return currentRoomDetails?.admins?.some((admin) => admin.toString() === authUser._id.toString())
+        },
+        [authUser, currentRoomDetails],
+    )
+
+    const handleContextMenu = useCallback(
+        (e, messageId) => {
+            e.preventDefault()
+            const message = messages.find((msg) => msg._id === messageId)
+            if (canModifyMessage(message)) {
+                setContextMenu({
+                    visible: true,
+                    x: Math.min(e.clientX, window.innerWidth - 200),
+                    y: Math.min(e.clientY, window.innerHeight - 150),
+                    messageId,
+                })
+            }
+        },
+        [messages, canModifyMessage],
+    )
 
     const closeContextMenu = useCallback(() => {
-        setContextMenu({ visible: false, x: 0, y: 0, messageId: null });
-    }, []);
+        setContextMenu({ visible: false, x: 0, y: 0, messageId: null })
+    }, [])
 
-    // Message editing - FIXED: Keep original structure
-    const handleEditMessage = useCallback(async (messageId, newContent) => {
-        try {
-            if (connected && currentRoomDetails) {
-                console.log(`Editing message ${messageId} via WebSocket`);
+    // FIXED: Message editing - Updated for backend format
+    const handleEditMessage = useCallback(
+        async (messageId, newContent) => {
+            try {
+                if (connected && currentRoomDetails) {
+                    console.log(`Editing message ${messageId} via WebSocket`)
 
-                // Optimistic update
-                setMessages(prevMessages => prevMessages.map(msg =>
-                    msg._id === messageId
-                        ? {
-                            ...msg,
-                            content: newContent,
-                            isEdited: true,
-                            editedAt: new Date().toISOString()
-                        }
-                        : msg
-                ));
+                    // Optimistic update
+                    setMessages((prevMessages) =>
+                        prevMessages.map((msg) =>
+                            msg._id === messageId
+                                ? {
+                                    ...msg,
+                                    content: newContent,
+                                    isEdited: true,
+                                    editedAt: new Date().toISOString(),
+                                }
+                                : msg,
+                        ),
+                    )
 
-                // Send edit through WebSocket
-                editMessage(messageId, newContent);
+                    // Send edit through WebSocket with backend expected format
+                    editMessage(currentRoomDetails._id, messageId, newContent)
 
-                // Also update via API for persistence
-                try {
-                    await editMessage(messageId, newContent);
-                } catch (apiError) {
-                    console.error("API edit error:", apiError);
+                    // Also update via API for persistence
+                    try {
+                        await editMessage(messageId, newContent)
+                    } catch (apiError) {
+                        console.error("API edit error:", apiError)
+                    }
+                } else {
+                    console.log(`Editing message ${messageId} via REST API only`)
+                    await editMessage(messageId, newContent)
                 }
-            } else {
-                console.log(`Editing message ${messageId} via REST API only`);
-                await editMessage(messageId, newContent);
-            }
 
-            setEditingMessage(null);
-        } catch (error) {
-            console.error("Edit error:", error);
-            toast.error(error.message || 'Failed to edit message');
-        }
-    }, [connected, currentRoomDetails, setMessages, editMessage]);
+                setEditingMessage(null)
+            } catch (error) {
+                console.error("Edit error:", error)
+                toast.error(error.message || "Failed to edit message")
+            }
+        },
+        [connected, currentRoomDetails, setMessages, editMessage],
+    )
 
     const startEditing = useCallback((message) => {
-        setEditingMessage(message);
-        closeContextMenu();
-    }, []);
+        setEditingMessage(message)
+        closeContextMenu()
+    }, [])
 
     const cancelEditing = useCallback(() => {
-        setEditingMessage(null);
-    }, []);
+        setEditingMessage(null)
+    }, [])
 
     // Format date headers
     const formatMessageDate = useCallback((date) => {
-        const messageDate = new Date(date);
-        if (isToday(messageDate)) return "Today";
-        if (isYesterday(messageDate)) return "Yesterday";
-        if (isSameYear(messageDate, new Date())) return format(messageDate, "MMMM d");
-        return format(messageDate, "MMMM d, yyyy");
-    }, []);
+        const messageDate = new Date(date)
+        if (isToday(messageDate)) return "Today"
+        if (isYesterday(messageDate)) return "Yesterday"
+        if (isSameYear(messageDate, new Date())) return format(messageDate, "MMMM d")
+        return format(messageDate, "MMMM d, yyyy")
+    }, [])
 
     const handleAvatarClick = useCallback((username) => {
         setProfileModal({
             isOpen: true,
-            username: username
-        });
-    }, []);
+            username: username,
+        })
+    }, [])
 
     const closeProfileModal = useCallback(() => {
-        setProfileModal({ isOpen: false, username: null });
-    }, []);
+        setProfileModal({ isOpen: false, username: null })
+    }, [])
 
     const handleRetry = useCallback(() => {
         if (currentRoomDetails) {
-            fetchMessages();
+            fetchMessages()
         }
-    }, [currentRoomDetails, fetchMessages]);
+    }, [currentRoomDetails, fetchMessages])
 
     // Render states
     if (!currentRoomDetails) {
@@ -350,7 +364,7 @@ const Chat = () => {
             <div className="flex flex-col h-full items-center justify-center text-gray-500">
                 <p>Select a room to view messages</p>
             </div>
-        );
+        )
     }
 
     if (error && !loading) {
@@ -368,7 +382,7 @@ const Chat = () => {
                     </button>
                 </div>
             </div>
-        );
+        )
     }
 
     if (loading && !loadingMore && messages.length === 0) {
@@ -377,18 +391,18 @@ const Chat = () => {
                 <Spinner size="lg" />
                 <p className="text-gray-500 mt-4">Loading messages...</p>
             </div>
-        );
+        )
     }
 
     // Group messages by date
     const groupedMessages = messages.reduce((groups, message) => {
-        const date = formatMessageDate(message.createdAt);
+        const date = formatMessageDate(message.createdAt)
         if (!groups[date]) {
-            groups[date] = [];
+            groups[date] = []
         }
-        groups[date].push(message);
-        return groups;
-    }, {});
+        groups[date].push(message)
+        return groups
+    }, {})
 
     return (
         <div className="flex flex-col h-full relative">
@@ -408,7 +422,11 @@ const Chat = () => {
                             {date}
                         </div>
                         {msgs.map((msg, index) => (
-                            <div key={`${msg._id || msg.tempId || `temp-${index}`}-${msg.isEdited ? 'edited' : 'original'}-${msg.editedAt || msg.createdAt}`} className="relative group">
+                            <div
+                                key={`${msg._id || msg.tempId || `temp-${index}`}-${msg.isEdited ? "edited" : "original"}-${msg.editedAt || msg.createdAt
+                                    }`}
+                                className="relative group"
+                            >
                                 {editingMessage?._id === msg._id ? (
                                     <div className="px-4 py-2">
                                         <MessageInput
@@ -445,9 +463,7 @@ const Chat = () => {
                     <div className="flex flex-col items-center justify-center h-full p-4">
                         <div className="bg-gray-800/50 rounded-lg p-6 text-center max-w-md">
                             <h3 className="text-lg font-medium text-gray-300 mb-2">No messages yet</h3>
-                            <p className="text-gray-500">
-                                Be the first to start a conversation in this room!
-                            </p>
+                            <p className="text-gray-500">Be the first to start a conversation in this room!</p>
                         </div>
                     </div>
                 )}
@@ -462,21 +478,19 @@ const Chat = () => {
                 >
                     <ChevronDown size={20} />
                     {unreadCount > 0 && (
-                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                            {unreadCount}
-                        </span>
+                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">{unreadCount}</span>
                     )}
                 </button>
             )}
 
             <div className="px-4 py-2 border-t border-gray-800">
                 <MessageInput
-                    onMessageSent={(message) => {
-                        // FIXED: Keep original optimistic update structure
+                    onMessageSent={(messageContent) => {
+                        // FIXED: Updated for backend format - just pass the content string
                         if (connected) {
-                            const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                            const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
                             const tempMessage = {
-                                ...message,
+                                content: messageContent,
                                 isTemporary: true,
                                 _id: tempId,
                                 tempId: tempId,
@@ -485,30 +499,31 @@ const Chat = () => {
                                     _id: authUser._id,
                                     username: authUser.username,
                                     profilePicture: authUser.profilePicture,
-                                }
-                            };
+                                },
+                            }
 
-                            console.log('Adding temporary message while sending:', tempId);
+                            console.log("Adding temporary message while sending:", tempId)
 
-                            setMessages(prevMessages => {
-                                const hasSimilarTemp = prevMessages.some(msg =>
-                                    msg.isTemporary &&
-                                    msg.content === message.content &&
-                                    msg.sender._id === authUser._id &&
-                                    Math.abs(new Date().getTime() - new Date(msg.createdAt).getTime()) < 5000
-                                );
+                            setMessages((prevMessages) => {
+                                const hasSimilarTemp = prevMessages.some(
+                                    (msg) =>
+                                        msg.isTemporary &&
+                                        msg.content === messageContent &&
+                                        msg.sender._id === authUser._id &&
+                                        Math.abs(new Date().getTime() - new Date(msg.createdAt).getTime()) < 5000,
+                                )
 
                                 if (hasSimilarTemp) {
-                                    console.log('Similar temporary message already exists, not adding duplicate');
-                                    return prevMessages;
+                                    console.log("Similar temporary message already exists, not adding duplicate")
+                                    return prevMessages
                                 }
 
-                                return [...prevMessages, tempMessage];
-                            });
+                                return [...prevMessages, tempMessage]
+                            })
 
-                            scrollToBottom();
+                            scrollToBottom()
                         } else {
-                            toast('Trying to reconnect...', { id: 'connection-toast' });
+                            toast("Trying to reconnect...", { id: "connection-toast" })
                         }
                     }}
                     disabled={!currentRoomDetails}
@@ -527,8 +542,8 @@ const Chat = () => {
                 >
                     <ContextMenu
                         onEdit={() => {
-                            const messageToEdit = messages.find((m) => m._id === contextMenu.messageId);
-                            startEditing(messageToEdit);
+                            const messageToEdit = messages.find((m) => m._id === contextMenu.messageId)
+                            startEditing(messageToEdit)
                         }}
                         onCancel={closeContextMenu}
                     />
@@ -541,7 +556,7 @@ const Chat = () => {
                 onClose={closeProfileModal}
             />
         </div>
-    );
-};
+    )
+}
 
-export default Chat;
+export default Chat
