@@ -1,4 +1,3 @@
-// WebSocketService.js
 import { io } from "socket.io-client"
 
 class WebSocketService {
@@ -9,7 +8,8 @@ class WebSocketService {
     this.userId = null
     this.eventHandlers = new Map()
     this.activeRooms = new Set()
-    this.connectionListeners = new Set() // FIXED: Added connection listeners
+    this.connectionListeners = new Set()
+    this.pendingMessages = new Map() // FIXED: Track pending messages to prevent duplicates
   }
 
   // FIXED: Add connection listener
@@ -66,7 +66,7 @@ class WebSocketService {
       this.socket.disconnect()
       this.socket = null
       this.isConnected = false
-      this.notifyConnectionListeners(false) // FIXED: Notify listeners
+      this.notifyConnectionListeners(false)
     }
 
     try {
@@ -91,7 +91,7 @@ class WebSocketService {
       this.socket.on("connect", () => {
         console.log("WebSocket connected successfully")
         this.isConnected = true
-        this.notifyConnectionListeners(true) // FIXED: Notify listeners
+        this.notifyConnectionListeners(true)
 
         // Register stored event handlers after connection
         this.registerStoredEventHandlers()
@@ -112,13 +112,13 @@ class WebSocketService {
       this.socket.on("connect_error", (error) => {
         console.error("WebSocket connection error:", error)
         this.isConnected = false
-        this.notifyConnectionListeners(false) // FIXED: Notify listeners
+        this.notifyConnectionListeners(false)
       })
 
       this.socket.on("disconnect", (reason) => {
         console.log(`WebSocket disconnected: ${reason}`)
         this.isConnected = false
-        this.notifyConnectionListeners(false) // FIXED: Notify listeners
+        this.notifyConnectionListeners(false)
       })
 
       // FIXED: Add backend-specific error handlers
@@ -134,13 +134,13 @@ class WebSocketService {
       if (this.socket.connected) {
         console.log("Socket already connected immediately after setup")
         this.isConnected = true
-        this.notifyConnectionListeners(true) // FIXED: Notify listeners
+        this.notifyConnectionListeners(true)
         this.registerStoredEventHandlers()
       }
     } catch (error) {
       console.error("Error creating socket:", error)
       this.isConnected = false
-      this.notifyConnectionListeners(false) // FIXED: Notify listeners
+      this.notifyConnectionListeners(false)
     }
   }
 
@@ -166,8 +166,9 @@ class WebSocketService {
       }
 
       this.isConnected = false
-      this.notifyConnectionListeners(false) // FIXED: Notify listeners
+      this.notifyConnectionListeners(false)
       this.activeRooms.clear()
+      this.pendingMessages.clear() // FIXED: Clear pending messages
     }
   }
 
@@ -225,28 +226,56 @@ class WebSocketService {
     }
   }
 
-  // Send a message to a room - Updated to match backend expectations
+  // FIXED: Send a message to a room with duplicate prevention
   sendMessage(roomId, messageContent) {
     if (!roomId || !messageContent || !this.userId) {
       console.warn("Cannot send message: Missing room ID, message content, or user ID")
       return false
     }
 
+    // FIXED: Validate message content is a string
+    if (typeof messageContent !== "string") {
+      console.error("Invalid message format: message content must be a string, received:", typeof messageContent)
+      return false
+    }
+
+    // FIXED: Generate tempId for tracking
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+
+    // FIXED: Check for duplicate pending messages
+    const messageKey = `${roomId}-${messageContent}-${this.userId}`
+    if (this.pendingMessages.has(messageKey)) {
+      console.log("Duplicate message detected, ignoring:", messageKey)
+      return false
+    }
+
     // FIXED: More robust connection check
     if (this.socket && this.socket.connected && this.isConnected) {
-      console.log(`Sending message to room ${roomId}`)
+      console.log(`Sending message to room ${roomId} with tempId: ${tempId}`)
       try {
-        // Match backend expected message format exactly
-        const message = {
-          content: messageContent,
-          sender: this.userId,
-          tempId: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Generate temp ID for tracking
-        }
+        // FIXED: Track pending message to prevent duplicates
+        this.pendingMessages.set(messageKey, tempId)
 
-        this.socket.emit("send_message", { roomId, message })
-        return true
+        // FIXED: Send message in the format expected by backend
+        this.socket.emit("send_message", {
+          roomId,
+          message: {
+            content: messageContent,
+            sender: this.userId,
+            tempId: tempId,
+          },
+        })
+
+        // FIXED: Clear pending message after a timeout
+        setTimeout(() => {
+          this.pendingMessages.delete(messageKey)
+        }, 10000) // 10 seconds timeout
+
+        // FIXED: Return the tempId so the caller can track it
+        return { success: true, tempId }
       } catch (error) {
         console.error("Error sending message:", error)
+        this.pendingMessages.delete(messageKey)
         return false
       }
     } else {
@@ -384,7 +413,8 @@ class WebSocketService {
       this.socket = null
     }
     this.isConnected = false
-    this.notifyConnectionListeners(false) // FIXED: Notify listeners
+    this.notifyConnectionListeners(false)
+    this.pendingMessages.clear() // FIXED: Clear pending messages
     // Don't clear token and userId to allow reconnection
     // Don't clear event handlers to preserve them for reconnection
     // Don't clear active rooms to allow rejoining

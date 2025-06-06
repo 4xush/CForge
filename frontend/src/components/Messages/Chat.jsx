@@ -1,5 +1,3 @@
-"use client"
-
 import { useEffect, useRef, useState, useCallback } from "react"
 import { useRoomContext } from "../../context/RoomContext"
 import { useAuthContext } from "../../context/AuthContext"
@@ -17,23 +15,24 @@ import toast from "react-hot-toast"
 const Chat = () => {
     const { currentRoomDetails } = useRoomContext()
     const { authUser } = useAuthContext()
-    const { socket, connected, addEventListener, removeEventListener } = useWebSocket()
-    const { messages, loading, hasMore, error, fetchMessages, addMessage, editMessage, setMessages } = useMessageContext()
+    const { socket, connected, addEventListener, removeEventListener, sendMessage } = useWebSocket()
+    const { messages, loading, hasMore, error, fetchMessages, editMessage, setMessages } = useMessageContext()
 
     const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, messageId: null })
     const [editingMessage, setEditingMessage] = useState(null)
     const [loadingMore, setLoadingMore] = useState(false)
     const [profileModal, setProfileModal] = useState({ isOpen: false, username: null })
+    const isInitialLoadRef = useRef(true)
     const [showScrollButton, setShowScrollButton] = useState(false)
     const [unreadCount, setUnreadCount] = useState(0)
-    const [isNearBottom, setIsNearBottom] = useState(true)
+    const [isNearBottom, setIsNearBottom] = useState(isInitialLoadRef.current)
 
     const messagesEndRef = useRef(null)
     const contextMenuRef = useRef(null)
     const messagesContainerRef = useRef(null)
-    const isInitialLoadRef = useRef(true)
     const lastScrollTopRef = useRef(0)
     const observerRef = useRef(null)
+    const eventListenersSetupRef = useRef(false) // FIXED: Prevent duplicate listeners
 
     // Fetch messages when room changes
     useEffect(() => {
@@ -44,66 +43,137 @@ const Chat = () => {
         }
     }, [currentRoomDetails, currentRoomDetails?._id, fetchMessages])
 
-    // FIXED: Handle new messages from WebSocket - Updated for backend format
+    // FIXED: Improved message deduplication and replacement logic
     const handleNewMessage = useCallback(
         (message) => {
-            console.log("Chat: Received new message:", message._id)
+            console.log("Chat: Received new message:", message._id, "tempId:", message.tempId)
+
+            // FIXED: Validate message structure
+            if (!message || typeof message !== "object") {
+                console.error("Chat: Invalid message received:", message)
+                return
+            }
+
             setMessages((prevMessages) => {
+                // FIXED: Check for existing message by ID first
                 const existsById = prevMessages.some((msg) => msg._id === message._id)
                 if (existsById) {
-                    console.log("Chat: Ignoring duplicate new message:", message._id)
+                    console.log("Chat: Ignoring duplicate message by ID:", message._id)
                     return prevMessages
                 }
 
-                // Check for temporary message replacement using tempId from backend
-                const tempIndex = prevMessages.findIndex(
-                    (msg) =>
-                        msg.isTemporary &&
-                        msg.tempId &&
-                        message.tempId &&
-                        msg.tempId === message.tempId &&
-                        msg.sender._id.toString() === message.sender._id.toString(),
-                )
+                // FIXED: Improved temporary message replacement logic
+                let tempIndex = -1
+                if (message.tempId) {
+                    // Look for temporary message with matching tempId
+                    tempIndex = prevMessages.findIndex((msg) => msg.isTemporary && msg.tempId === message.tempId)
+                }
 
                 if (tempIndex !== -1) {
-                    console.log("Chat: Replacing temporary message with confirmed message")
+                    console.log("Chat: Replacing temporary message with confirmed message:", message.tempId)
                     const newMessages = [...prevMessages]
                     newMessages[tempIndex] = { ...message, isTemporary: false }
                     return newMessages
+                }
+
+                // FIXED: If no tempId match, check if this message is from current user and similar content
+                if (message.sender._id === authUser._id) {
+                    const similarTempIndex = prevMessages.findIndex(
+                        (msg) =>
+                            msg.isTemporary &&
+                            msg.content === message.content &&
+                            msg.sender._id === message.sender._id &&
+                            Math.abs(new Date(message.createdAt).getTime() - new Date(msg.createdAt).getTime()) < 10000, // 10 seconds window
+                    )
+
+                    if (similarTempIndex !== -1) {
+                        console.log("Chat: Replacing similar temporary message with confirmed message")
+                        const newMessages = [...prevMessages]
+                        newMessages[similarTempIndex] = { ...message, isTemporary: false }
+                        return newMessages
+                    }
+                }
+
+                // FIXED: Check if this is a duplicate of an existing non-temporary message
+                const duplicateExists = prevMessages.some(
+                    (msg) =>
+                        !msg.isTemporary &&
+                        msg.content === message.content &&
+                        msg.sender._id === message.sender._id &&
+                        Math.abs(new Date(msg.createdAt).getTime() - new Date(message.createdAt).getTime()) < 5000,
+                )
+
+                if (duplicateExists) {
+                    console.log("Chat: Ignoring duplicate message by content and timing")
+                    return prevMessages
                 }
 
                 console.log("Chat: Adding new message to state:", message._id)
                 return [...prevMessages, message]
             })
         },
+        [setMessages, authUser?._id],
+    )
+
+    // FIXED: Handle message sent confirmation
+    const handleMessageSent = useCallback(
+        (data) => {
+            console.log("Chat: Message sent confirmation:", data)
+
+            // FIXED: Remove temporary message when we get confirmation
+            if (data.tempId) {
+                setMessages((prevMessages) => {
+                    const tempIndex = prevMessages.findIndex((msg) => msg.tempId === data.tempId)
+                    if (tempIndex !== -1) {
+                        console.log("Chat: Removing temporary message after confirmation:", data.tempId)
+                        const newMessages = [...prevMessages]
+                        newMessages.splice(tempIndex, 1)
+                        return newMessages
+                    }
+                    return prevMessages
+                })
+            }
+
+            if (data.success) {
+                toast.success("Message sent successfully", { duration: 1000 })
+            }
+        },
         [setMessages],
     )
 
-    // FIXED: Handle message sent confirmation - Updated for backend format
-    const handleMessageSent = useCallback((data) => {
-        console.log("Chat: Message sent confirmation:", data)
-        if (data.success && data.messageId) {
-            toast.success("Message sent successfully", { duration: 1000 })
-        }
-    }, [])
+    // FIXED: Handle message errors
+    const handleMessageError = useCallback(
+        (error) => {
+            console.error("Chat: Error with message:", error)
 
-    // FIXED: Handle message errors - Updated for backend format
-    const handleMessageError = useCallback((error) => {
-        console.error("Chat: Error with message:", error)
-        toast.error(error.error || "Failed to send message. Please try again.")
-    }, [])
+            // FIXED: Remove temporary message if it failed to send
+            if (error.tempId) {
+                setMessages((prevMessages) => {
+                    const filtered = prevMessages.filter((msg) => msg.tempId !== error.tempId)
+                    console.log("Chat: Removed failed temporary message:", error.tempId)
+                    return filtered
+                })
+            }
 
-    // Setup WebSocket listeners
+            toast.error(error.error || "Failed to send message. Please try again.")
+        },
+        [setMessages],
+    )
+
+    // FIXED: Setup WebSocket listeners with deduplication
     useEffect(() => {
-        if (!socket) return
+        if (!socket || eventListenersSetupRef.current) return
 
         console.log("Chat: Setting up real-time message listeners")
+        eventListenersSetupRef.current = true
+
         addEventListener("receive_message", handleNewMessage)
         addEventListener("message_sent", handleMessageSent)
         addEventListener("message_error", handleMessageError)
 
         return () => {
             console.log("Chat: Cleaning up real-time message listeners")
+            eventListenersSetupRef.current = false
             removeEventListener("receive_message", handleNewMessage)
             removeEventListener("message_sent", handleMessageSent)
             removeEventListener("message_error", handleMessageError)
@@ -114,6 +184,13 @@ const Chat = () => {
     const handleMessageUpdated = useCallback(
         (updatedMessage) => {
             console.log("Chat: Message updated event received:", updatedMessage._id)
+
+            // FIXED: Validate updated message structure
+            if (!updatedMessage || typeof updatedMessage !== "object") {
+                console.error("Chat: Invalid updated message received:", updatedMessage)
+                return
+            }
+
             setMessages((prevMessages) =>
                 prevMessages.map((msg) =>
                     msg._id === updatedMessage._id
@@ -358,6 +435,52 @@ const Chat = () => {
         }
     }, [currentRoomDetails, fetchMessages])
 
+    // FIXED: Validate message structure before rendering
+    const validateMessage = useCallback((msg) => {
+        if (!msg || typeof msg !== "object") {
+            console.error("Invalid message structure:", msg)
+            return false
+        }
+
+        // Ensure required fields exist
+        if (!msg._id && !msg.tempId) {
+            console.error("Message missing ID:", msg)
+            return false
+        }
+
+        if (!msg.sender || typeof msg.sender !== "object") {
+            console.error("Message missing sender:", msg)
+            return false
+        }
+
+        if (!msg.content && msg.content !== "") {
+            console.error("Message missing content:", msg)
+            return false
+        }
+
+        return true
+    }, [])
+
+    // FIXED: Improved message deduplication
+    const deduplicateMessages = useCallback((msgs) => {
+        const seen = new Set()
+        const deduped = []
+
+        for (const msg of msgs) {
+            // Create a unique key for each message
+            const key = msg._id || `${msg.tempId}-${msg.content}-${msg.sender._id}-${msg.createdAt}`
+
+            if (!seen.has(key)) {
+                seen.add(key)
+                deduped.push(msg)
+            } else {
+                console.log("Chat: Removing duplicate message:", key)
+            }
+        }
+
+        return deduped
+    }, [])
+
     // Render states
     if (!currentRoomDetails) {
         return (
@@ -394,8 +517,11 @@ const Chat = () => {
         )
     }
 
+    // FIXED: Filter, validate and deduplicate messages before grouping
+    const validMessages = deduplicateMessages(messages.filter(validateMessage))
+
     // Group messages by date
-    const groupedMessages = messages.reduce((groups, message) => {
+    const groupedMessages = validMessages.reduce((groups, message) => {
         const date = formatMessageDate(message.createdAt)
         if (!groups[date]) {
             groups[date] = []
@@ -421,45 +547,53 @@ const Chat = () => {
                         <div className="text-center text-xs text-gray-500 my-2 sticky top-0 bg-gray-900/80 backdrop-blur-sm py-1">
                             {date}
                         </div>
-                        {msgs.map((msg, index) => (
-                            <div
-                                key={`${msg._id || msg.tempId || `temp-${index}`}-${msg.isEdited ? "edited" : "original"}-${msg.editedAt || msg.createdAt
-                                    }`}
-                                className="relative group"
-                            >
-                                {editingMessage?._id === msg._id ? (
-                                    <div className="px-4 py-2">
-                                        <MessageInput
-                                            initialMessage={msg.content}
-                                            onMessageSent={(content) => handleEditMessage(msg._id, content)}
-                                            onCancel={cancelEditing}
-                                            isEditing={true}
-                                            messageId={msg._id}
+                        {msgs.map((msg, index) => {
+                            // FIXED: Additional validation before rendering each message
+                            if (!validateMessage(msg)) {
+                                console.error("Skipping invalid message:", msg)
+                                return null
+                            }
+
+                            return (
+                                <div
+                                    key={`${msg._id || msg.tempId || `temp-${index}`}-${msg.isEdited ? "edited" : "original"}-${msg.editedAt || msg.createdAt
+                                        }`}
+                                    className="relative group"
+                                >
+                                    {editingMessage?._id === msg._id ? (
+                                        <div className="px-4 py-2">
+                                            <MessageInput
+                                                initialMessage={msg.content}
+                                                onMessageSent={(content) => handleEditMessage(msg._id, content)}
+                                                onCancel={cancelEditing}
+                                                isEditing={true}
+                                                messageId={msg._id}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <Message
+                                            avatar={
+                                                msg.sender.profilePicture ||
+                                                `https://ui-avatars.com/api/?background=random&name=${encodeURIComponent(msg.sender.username || "User")}`
+                                            }
+                                            senderName={msg.sender.username || "Unknown User"}
+                                            time={format(new Date(msg.createdAt), "HH:mm")}
+                                            message={msg.content}
+                                            isEdited={msg.isEdited}
+                                            isCurrentUser={msg.sender._id === authUser?._id}
+                                            canModify={canModifyMessage(msg)}
+                                            onContextMenu={(e) => handleContextMenu(e, msg._id)}
+                                            onAvatarClick={() => handleAvatarClick(msg.sender.username)}
+                                            onEdit={() => startEditing(msg)}
                                         />
-                                    </div>
-                                ) : (
-                                    <Message
-                                        avatar={
-                                            msg.sender.profilePicture ||
-                                            `https://ui-avatars.com/api/?background=random&name=${encodeURIComponent(msg.sender.username)}`
-                                        }
-                                        senderName={msg.sender.username}
-                                        time={format(new Date(msg.createdAt), "HH:mm")}
-                                        message={msg.content}
-                                        isEdited={msg.isEdited}
-                                        isCurrentUser={msg.sender._id === authUser?._id}
-                                        canModify={canModifyMessage(msg)}
-                                        onContextMenu={(e) => handleContextMenu(e, msg._id)}
-                                        onAvatarClick={() => handleAvatarClick(msg.sender.username)}
-                                        onEdit={() => startEditing(msg)}
-                                    />
-                                )}
-                            </div>
-                        ))}
+                                    )}
+                                </div>
+                            )
+                        })}
                     </div>
                 ))}
 
-                {messages.length === 0 && !loading && (
+                {validMessages.length === 0 && !loading && (
                     <div className="flex flex-col items-center justify-center h-full p-4">
                         <div className="bg-gray-800/50 rounded-lg p-6 text-center max-w-md">
                             <h3 className="text-lg font-medium text-gray-300 mb-2">No messages yet</h3>
@@ -486,9 +620,24 @@ const Chat = () => {
             <div className="px-4 py-2 border-t border-gray-800">
                 <MessageInput
                     onMessageSent={(messageContent) => {
-                        // FIXED: Updated for backend format - just pass the content string
-                        if (connected) {
+                        // FIXED: Now messageContent is just a string, not an object
+                        if (connected && currentRoomDetails) {
                             const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+
+                            // FIXED: Check for recent similar temporary messages to prevent duplicates
+                            const hasSimilarTemp = messages.some(
+                                (msg) =>
+                                    msg.isTemporary &&
+                                    msg.content === messageContent &&
+                                    msg.sender._id === authUser._id &&
+                                    Math.abs(new Date().getTime() - new Date(msg.createdAt).getTime()) < 2000,
+                            )
+
+                            if (hasSimilarTemp) {
+                                console.log("Similar temporary message already exists, not adding duplicate")
+                                return
+                            }
+
                             const tempMessage = {
                                 content: messageContent,
                                 isTemporary: true,
@@ -503,27 +652,29 @@ const Chat = () => {
                             }
 
                             console.log("Adding temporary message while sending:", tempId)
+                            setMessages((prevMessages) => [...prevMessages, tempMessage])
 
-                            setMessages((prevMessages) => {
-                                const hasSimilarTemp = prevMessages.some(
-                                    (msg) =>
-                                        msg.isTemporary &&
-                                        msg.content === messageContent &&
-                                        msg.sender._id === authUser._id &&
-                                        Math.abs(new Date().getTime() - new Date(msg.createdAt).getTime()) < 5000,
-                                )
-
-                                if (hasSimilarTemp) {
-                                    console.log("Similar temporary message already exists, not adding duplicate")
-                                    return prevMessages
+                            // FIXED: Use the context's sendMessage function with just the message content string
+                            const result = sendMessage(currentRoomDetails._id, messageContent)
+                            if (!result || !result.success) {
+                                // Remove temporary message if send failed immediately
+                                setTimeout(() => {
+                                    setMessages((prevMessages) => prevMessages.filter((msg) => msg.tempId !== tempId))
+                                    // Only show error toast if the message actually failed to send
+                                    toast.error("Failed to send message. Please try again.")
+                                }, 100)
+                            } else {
+                                // Update the temporary message with the actual tempId from the service
+                                if (result.tempId && result.tempId !== tempId) {
+                                    setMessages((prevMessages) =>
+                                        prevMessages.map((msg) => (msg.tempId === tempId ? { ...msg, tempId: result.tempId } : msg)),
+                                    )
                                 }
-
-                                return [...prevMessages, tempMessage]
-                            })
+                            }
 
                             scrollToBottom()
                         } else {
-                            toast("Trying to reconnect...", { id: "connection-toast" })
+                            toast.error("Not connected to server. Please wait for reconnection.")
                         }
                     }}
                     disabled={!currentRoomDetails}

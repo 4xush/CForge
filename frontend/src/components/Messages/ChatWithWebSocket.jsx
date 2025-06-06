@@ -1,5 +1,3 @@
-"use client"
-
 import { useEffect, useState, useCallback, useRef } from "react"
 import { useParams } from "react-router-dom"
 import { useWebSocket } from "../../context/WebSocketContext"

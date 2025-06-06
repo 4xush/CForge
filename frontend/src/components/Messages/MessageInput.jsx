@@ -1,159 +1,156 @@
-import { useState, useEffect, useRef } from 'react';
-import { useRoomContext } from '../../context/RoomContext';
-import { useAuthContext } from '../../context/AuthContext';
-import { useMessageContext } from '../../context/MessageContext';
-import { useWebSocket } from '../../context/WebSocketContext';
-import toast from 'react-hot-toast';
-import { Send, X, WifiOff } from 'lucide-react';
-import PropTypes from 'prop-types';
+import { useState, useEffect, useRef } from "react"
+import { useRoomContext } from "../../context/RoomContext"
+import { useAuthContext } from "../../context/AuthContext"
+import { useMessageContext } from "../../context/MessageContext"
+import { useWebSocket } from "../../context/WebSocketContext"
+import toast from "react-hot-toast"
+import { Send, X, WifiOff } from "lucide-react"
+import PropTypes from "prop-types"
 
-const MessageInput = ({ initialMessage = '', onMessageSent, onCancel, isEditing = false, messageId = null, disabled = false }) => {
-    const { currentRoomDetails } = useRoomContext();
-    const { authUser } = useAuthContext();
-    const { socket, sendMessage, connected } = useWebSocket();
-    const { editMessage } = useMessageContext();
-    const [message, setMessage] = useState(initialMessage);
-    const [sending, setSending] = useState(false);
-    const lastSentRef = useRef('');
-    const sendTimeoutRef = useRef(null);
+const MessageInput = ({
+    initialMessage = "",
+    onMessageSent,
+    onCancel,
+    isEditing = false,
+    messageId = null,
+    disabled = false,
+}) => {
+    const { currentRoomDetails } = useRoomContext()
+    const { authUser } = useAuthContext()
+    const { socket, sendMessage, connected } = useWebSocket()
+    const { editMessage } = useMessageContext()
+    const [message, setMessage] = useState(initialMessage)
+    const [sending, setSending] = useState(false)
+    const lastSentRef = useRef("")
+    const sendTimeoutRef = useRef(null)
 
     useEffect(() => {
-        setMessage(initialMessage);
-    }, [initialMessage]);
+        setMessage(initialMessage)
+    }, [initialMessage])
 
     useEffect(() => {
-        if (!socket) return;
+        if (!socket) return
 
         const handleMessageUpdated = (updatedMessage) => {
             if (isEditing && messageId === updatedMessage._id) {
-                setMessage(updatedMessage.content);
-                if (onCancel) onCancel();
+                setMessage(updatedMessage.content)
+                if (onCancel) onCancel()
             }
-        };
+        }
 
-        socket.on('message_updated', handleMessageUpdated);
-        return () => socket.off('message_updated', handleMessageUpdated);
-    }, [socket, isEditing, messageId, onCancel]);
+        socket.on("message_updated", handleMessageUpdated)
+        return () => socket.off("message_updated", handleMessageUpdated)
+    }, [socket, isEditing, messageId, onCancel])
 
     useEffect(() => {
-        if (!socket) return;
+        if (!socket) return
 
         const handleMessageError = (data) => {
-            toast.error(data.error || 'Failed to send message');
-            setSending(false);
-            
+            toast.error(data.error || "Failed to send message")
+            setSending(false)
+
             // Reset last sent if there was an error
             if (data.tempId && lastSentRef.current) {
-                lastSentRef.current = '';
+                lastSentRef.current = ""
             }
-        };
+        }
 
         const handleMessageSent = (data) => {
-            setSending(false);
-            console.log('Message sent successfully:', data.messageId);
-        };
+            setSending(false)
+            console.log("Message sent successfully:", data.messageId)
+        }
 
-        socket.on('message_error', handleMessageError);
-        socket.on('message_sent', handleMessageSent);
-        
+        socket.on("message_error", handleMessageError)
+        socket.on("message_sent", handleMessageSent)
+
         return () => {
-            socket.off('message_error', handleMessageError);
-            socket.off('message_sent', handleMessageSent);
-        };
-    }, [socket]);
+            socket.off("message_error", handleMessageError)
+            socket.off("message_sent", handleMessageSent)
+        }
+    }, [socket])
 
     // Cleanup timeout on unmount
     useEffect(() => {
         return () => {
             if (sendTimeoutRef.current) {
-                clearTimeout(sendTimeoutRef.current);
+                clearTimeout(sendTimeoutRef.current)
             }
-        };
-    }, []);
+        }
+    }, [])
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        const trimmedMessage = message.trim();
-        
-        if (!trimmedMessage || !currentRoomDetails || sending || disabled) return;
+        e.preventDefault()
+        const trimmedMessage = message.trim()
+
+        if (!trimmedMessage || !currentRoomDetails || sending || disabled) return
 
         // Prevent duplicate submissions
         if (trimmedMessage === lastSentRef.current) {
-            console.log('Ignoring duplicate message submission');
-            return;
+            console.log("Ignoring duplicate message submission")
+            return
         }
 
         if (!connected && !isEditing) {
-            toast.error('Cannot send message: Not connected to the server');
-            return;
+            toast.error("Cannot send message: Not connected to the server")
+            return
         }
 
-        setSending(true);
-        
+        setSending(true)
+
         // Clear any existing timeout
         if (sendTimeoutRef.current) {
-            clearTimeout(sendTimeoutRef.current);
+            clearTimeout(sendTimeoutRef.current)
         }
 
         try {
             if (isEditing && messageId) {
                 // Handle message editing via WebSocket
-                const success = sendMessage ? 
-                    socket?.emit('edit_message', { 
-                        roomId: currentRoomDetails._id, 
-                        messageId, 
-                        newContent: trimmedMessage 
-                    }) : 
-                    await editMessage(messageId, trimmedMessage);
-                    
-                if (!success && !socket) {
-                    toast.error('Failed to edit message: Connection issue');
-                }
-                if (onCancel) onCancel();
-            } else {
-                // Handle new message sending via callback
-                if (onMessageSent) {
-                    const messageObj = {
-                        content: trimmedMessage,
+                const success = sendMessage
+                    ? socket?.emit("edit_message", {
                         roomId: currentRoomDetails._id,
-                        sender: authUser._id,
-                        tempId: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-                    };
+                        messageId,
+                        newContent: trimmedMessage,
+                    })
+                    : await editMessage(messageId, trimmedMessage)
 
-                    lastSentRef.current = trimmedMessage;
-                    onMessageSent(messageObj);
-                    
-                    // Send via WebSocket
-                    const sent = sendMessage(currentRoomDetails._id, messageObj);
-                    if (!sent) {
-                        toast.error('Failed to send message: Connection issue');
-                    }
+                if (!success && !socket) {
+                    toast.error("Failed to edit message: Connection issue")
+                }
+                if (onCancel) onCancel()
+            } else {
+                // FIXED: Pass just the message content string to onMessageSent
+                if (onMessageSent) {
+                    lastSentRef.current = trimmedMessage
+
+                    // Just pass the trimmed message content - don't call sendMessage here
+                    onMessageSent(trimmedMessage)
+
+                    // REMOVED: The duplicate sendMessage call that was causing issues
                 } else {
-                    toast.error('Message handler not available');
+                    toast.error("Message handler not available")
                 }
             }
 
-            setMessage('');
-            
+            setMessage("")
+
             // Reset the last sent reference after a delay to allow similar messages later
             sendTimeoutRef.current = setTimeout(() => {
-                lastSentRef.current = '';
-            }, 3000);
-            
+                lastSentRef.current = ""
+            }, 3000)
         } catch (error) {
-            console.error("Error sending message:", error);
-            toast.error('Failed to send message');
+            console.error("Error sending message:", error)
+            toast.error("Failed to send message")
         } finally {
-            setSending(false);
+            setSending(false)
         }
-    };
+    }
 
     const handleKeyDown = (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleSubmit(e);
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault()
+            handleSubmit(e)
         }
-    };
+    }
 
     return (
         <div className="flex items-center bg-[#25272E] p-2 rounded-md overflow-hidden focus-within:ring-2 ring-[#5A5FCF] transition-all duration-200">
@@ -178,18 +175,16 @@ const MessageInput = ({ initialMessage = '', onMessageSent, onCancel, isEditing 
                 className={`
                     p-2 mr-1
                     ${message.trim() && !sending && connected
-                    ? 'text-[#DDE3F1] hover:text-white hover:bg-[#333845]'
-                    : 'text-gray-600'}
+                        ? "text-[#DDE3F1] hover:text-white hover:bg-[#333845]"
+                        : "text-gray-600"
+                    }
                     transition-colors duration-200
                     rounded-md
                 `}
                 onClick={handleSubmit}
                 disabled={!message.trim() || sending || (!connected && !isEditing) || disabled}
             >
-                <Send
-                    size={16}
-                    className={sending ? 'animate-pulse' : ''}
-                />
+                <Send size={16} className={sending ? "animate-pulse" : ""} />
             </button>
             {onCancel && (
                 <button
@@ -200,8 +195,8 @@ const MessageInput = ({ initialMessage = '', onMessageSent, onCancel, isEditing 
                 </button>
             )}
         </div>
-    );
-};
+    )
+}
 
 MessageInput.propTypes = {
     initialMessage: PropTypes.string,
@@ -209,7 +204,7 @@ MessageInput.propTypes = {
     onCancel: PropTypes.func,
     isEditing: PropTypes.bool,
     messageId: PropTypes.string,
-    disabled: PropTypes.bool
-};
+    disabled: PropTypes.bool,
+}
 
-export default MessageInput;
+export default MessageInput

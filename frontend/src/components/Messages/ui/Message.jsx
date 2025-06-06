@@ -1,150 +1,121 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
-import { Edit,MoreVertical } from 'lucide-react';
+import { useState } from "react"
+import { MoreVertical, Edit3 } from "lucide-react"
+import PropTypes from 'prop-types'
 
 const Message = ({
   avatar,
   senderName,
   time,
   message,
-  isEdited = false,
-  isCurrentUser = false,
-  canModify = false,
-  onContextMenu = () => {},
-  onAvatarClick = () => {},
-  onEdit = () => {},
-  // onDelete = () => {}
+  isEdited,
+  isCurrentUser,
+  canModify,
+  onContextMenu,
+  onAvatarClick,
+  onEdit,
 }) => {
-  const [showActions, setShowActions] = useState(false);
-  
-  // Function to handle context menu event
-  const handleContextMenu = (e) => {
-    if (canModify) {
-      e.preventDefault();
-      onContextMenu(e);
+  const [showOptions, setShowOptions] = useState(false)
+
+  // FIXED: Ensure message is always a string
+  const messageText =
+    typeof message === "string"
+      ? message
+      : typeof message === "object" && message !== null
+        ? message.content || JSON.stringify(message)
+        : String(message || "")
+
+  // FIXED: Safe text processing
+  const formatMessage = (text) => {
+    if (!text || typeof text !== "string") {
+      return ""
     }
-  };
-  
-  // Show message with URL linking and code block support
-  const renderMessageWithLinks = (text) => {
-    // Handle code blocks
-    const codeBlockRegex = /```([\s\S]*?)```/g;
-    const parts = text.split(codeBlockRegex);
-    
-    return parts.map((part, index) => {
-      // If this is a code block (odd index), render it specially
-      if (index % 2 === 1) {
-        return (
-          <pre key={index} className="bg-gray-900 p-2 rounded-md my-2 overflow-x-auto">
-            <code className="text-sm text-gray-300">{part}</code>
-          </pre>
-        );
-      }
-      
-      // Handle URLs in non-code parts
-      const urlRegex = /(https?:\/\/[^\s]+)/g;
-      const urlParts = part.split(urlRegex);
-      
-      return urlParts.map((urlPart, urlIndex) => {
-        if (urlPart.match(urlRegex)) {
-          return (
-            <a 
-              key={`${index}-${urlIndex}`}
-              href={urlPart}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-400 hover:text-blue-300 hover:underline break-all"
-            >
-              {urlPart}
-            </a>
-          );
-        }
-        return urlPart;
-      });
-    });
-  };
+
+    try {
+      return text.split("\n").map((line, index) => (
+        <span key={index}>
+          {line}
+          {index < text.split("\n").length - 1 && <br />}
+        </span>
+      ))
+    } catch (error) {
+      console.error("Error formatting message:", error, "Text:", text)
+      return text
+    }
+  }
+
+  const handleAvatarClick = () => {
+    if (onAvatarClick && senderName) {
+      onAvatarClick(senderName)
+    }
+  }
+
+  const handleEdit = () => {
+    if (onEdit) {
+      onEdit()
+    }
+    setShowOptions(false)
+  }
 
   return (
     <div
-      className={`flex items-start mb-3 px-2 py-1.5 hover:bg-gray-800/50 rounded-lg transition-colors relative group ${
-        isCurrentUser ? 'pr-12' : ''
-      }`}
-      onContextMenu={handleContextMenu}
-      onMouseEnter={() => canModify && setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
+      className={`flex items-start space-x-3 p-3 hover:bg-gray-800/50 group relative rounded-xl ${isCurrentUser ? "flex-row-reverse space-x-reverse" : ""
+        }`}
+      onContextMenu={onContextMenu}
     >
       <img
-        src={avatar}
-        alt={senderName}
-        className="w-8 h-8 rounded-lg mr-2 cursor-pointer hover:opacity-80 transition-opacity"
-        onClick={() => onAvatarClick(senderName)}
+        src={avatar || "/placeholder.svg"}
+        alt={`${senderName}'s avatar`}
+        className="w-8 h-8 rounded-full cursor-pointer hover:opacity-80 transition-opacity"
+        onClick={handleAvatarClick}
       />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center mb-0.5">
-          <span 
-            className="text-sm font-medium text-gray-300 mr-2 hover:text-blue-400 cursor-pointer" 
-            onClick={() => onAvatarClick(senderName)}
-          >
-            {senderName}
-          </span>
+
+      <div className={`flex-1 ${isCurrentUser ? "text-right" : ""}`}>
+        <div className={`flex items-baseline space-x-2 ${isCurrentUser ? "justify-end" : ""}`}>
+          <span className="text-sm font-medium text-gray-300">{senderName}</span>
           <span className="text-xs text-gray-500">{time}</span>
-          {isEdited && (
-            <span className="text-xs text-gray-500 ml-1">(edited)</span>
+          {isEdited && <span className="text-xs text-gray-500 italic">(edited)</span>}
+        </div>
+
+        <div className={`mt-1 text-gray-100 ${isCurrentUser ? "text-right" : ""}`}>{formatMessage(messageText)}</div>
+      </div>
+
+      {canModify && (
+        <div className="relative">
+          <button
+            onClick={() => setShowOptions(!showOptions)}
+            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-700 rounded"
+          >
+            <MoreVertical size={16} className="text-gray-400" />
+          </button>
+
+          {showOptions && (
+            <div className="absolute right-0 top-8 bg-gray-800 border border-gray-700 rounded-md shadow-lg z-10 min-w-[120px]">
+              <button
+                onClick={handleEdit}
+                className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 flex items-center space-x-2"
+              >
+                <Edit3 size={14} />
+                <span>Edit</span>
+              </button>
+            </div>
           )}
         </div>
-        <div className="text-sm text-gray-200 bg-gray-800 rounded-md p-2 break-words">
-          {renderMessageWithLinks(message)}
-        </div>
-      </div>
-      
-      {/* Message actions */}
-      {canModify && showActions && (
-        <div className="absolute right-2 top-1 flex space-x-1">
-          <button
-            onClick={onEdit}
-            className="p-1 rounded-full bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition-colors"
-            title="Edit Message"
-          >
-            <Edit size={14} />
-          </button>
-          {/* <button
-            onClick={onDelete}
-            className="p-1 rounded-full bg-gray-700 hover:bg-red-600 text-gray-300 hover:text-white transition-colors"
-            title="Delete Message"
-          >
-            <Trash2 size={14} />
-          </button> */}
-        </div>
-      )}
-      
-      {/* Mobile-friendly actions toggle */}
-      {canModify && isCurrentUser && (
-        <button
-          className="absolute right-2 top-1 p-1 md:hidden rounded-full bg-gray-700 text-gray-300 transition-colors"
-          onClick={(e) => {
-            e.stopPropagation();
-            onContextMenu(e);
-          }}
-        >
-          <MoreVertical size={14} />
-        </button>
       )}
     </div>
-  );
-};
+  )
+}
 
 Message.propTypes = {
-  avatar: PropTypes.string.isRequired,
-  senderName: PropTypes.string.isRequired,
-  time: PropTypes.string.isRequired,
-  message: PropTypes.string.isRequired,
+  avatar: PropTypes.string,
+  senderName: PropTypes.string,
+  time: PropTypes.string,
+  message: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   isEdited: PropTypes.bool,
   isCurrentUser: PropTypes.bool,
   canModify: PropTypes.bool,
   onContextMenu: PropTypes.func,
   onAvatarClick: PropTypes.func,
   onEdit: PropTypes.func,
-  onDelete: PropTypes.func
-};
+}
 
-export default Message;
+export default Message
