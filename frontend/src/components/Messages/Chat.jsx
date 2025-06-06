@@ -31,13 +31,11 @@ const Chat = () => {
     const contextMenuRef = useRef(null)
     const messagesContainerRef = useRef(null)
     const lastScrollTopRef = useRef(0)
-    const observerRef = useRef(null)
     const eventListenersSetupRef = useRef(false) // FIXED: Prevent duplicate listeners
 
     // Fetch messages when room changes
     useEffect(() => {
         if (currentRoomDetails) {
-            console.log(`Chat: Room changed to ${currentRoomDetails._id}. Fetching messages.`)
             isInitialLoadRef.current = true
             fetchMessages()
         }
@@ -46,7 +44,6 @@ const Chat = () => {
     // FIXED: Improved message deduplication and replacement logic
     const handleNewMessage = useCallback(
         (message) => {
-            console.log("Chat: Received new message:", message._id, "tempId:", message.tempId)
 
             // FIXED: Validate message structure
             if (!message || typeof message !== "object") {
@@ -70,7 +67,6 @@ const Chat = () => {
                 }
 
                 if (tempIndex !== -1) {
-                    console.log("Chat: Replacing temporary message with confirmed message:", message.tempId)
                     const newMessages = [...prevMessages]
                     newMessages[tempIndex] = { ...message, isTemporary: false }
                     return newMessages
@@ -87,7 +83,6 @@ const Chat = () => {
                     )
 
                     if (similarTempIndex !== -1) {
-                        console.log("Chat: Replacing similar temporary message with confirmed message")
                         const newMessages = [...prevMessages]
                         newMessages[similarTempIndex] = { ...message, isTemporary: false }
                         return newMessages
@@ -104,11 +99,9 @@ const Chat = () => {
                 )
 
                 if (duplicateExists) {
-                    console.log("Chat: Ignoring duplicate message by content and timing")
                     return prevMessages
                 }
 
-                console.log("Chat: Adding new message to state:", message._id)
                 return [...prevMessages, message]
             })
         },
@@ -118,14 +111,12 @@ const Chat = () => {
     // FIXED: Handle message sent confirmation
     const handleMessageSent = useCallback(
         (data) => {
-            console.log("Chat: Message sent confirmation:", data)
 
             // FIXED: Remove temporary message when we get confirmation
             if (data.tempId) {
                 setMessages((prevMessages) => {
                     const tempIndex = prevMessages.findIndex((msg) => msg.tempId === data.tempId)
                     if (tempIndex !== -1) {
-                        console.log("Chat: Removing temporary message after confirmation:", data.tempId)
                         const newMessages = [...prevMessages]
                         newMessages.splice(tempIndex, 1)
                         return newMessages
@@ -144,13 +135,11 @@ const Chat = () => {
     // FIXED: Handle message errors
     const handleMessageError = useCallback(
         (error) => {
-            console.error("Chat: Error with message:", error)
 
             // FIXED: Remove temporary message if it failed to send
             if (error.tempId) {
                 setMessages((prevMessages) => {
                     const filtered = prevMessages.filter((msg) => msg.tempId !== error.tempId)
-                    console.log("Chat: Removed failed temporary message:", error.tempId)
                     return filtered
                 })
             }
@@ -163,8 +152,6 @@ const Chat = () => {
     // FIXED: Setup WebSocket listeners with deduplication
     useEffect(() => {
         if (!socket || eventListenersSetupRef.current) return
-
-        console.log("Chat: Setting up real-time message listeners")
         eventListenersSetupRef.current = true
 
         addEventListener("receive_message", handleNewMessage)
@@ -172,7 +159,6 @@ const Chat = () => {
         addEventListener("message_error", handleMessageError)
 
         return () => {
-            console.log("Chat: Cleaning up real-time message listeners")
             eventListenersSetupRef.current = false
             removeEventListener("receive_message", handleNewMessage)
             removeEventListener("message_sent", handleMessageSent)
@@ -183,7 +169,6 @@ const Chat = () => {
     // FIXED: Message edit listeners - Updated for backend format
     const handleMessageUpdated = useCallback(
         (updatedMessage) => {
-            console.log("Chat: Message updated event received:", updatedMessage._id)
 
             // FIXED: Validate updated message structure
             if (!updatedMessage || typeof updatedMessage !== "object") {
@@ -211,7 +196,6 @@ const Chat = () => {
     )
 
     const handleEditSuccess = useCallback((data) => {
-        console.log("Chat: Message edited successfully:", data)
         if (data.messageId) {
             toast.success("Message edited successfully", { duration: 1000 })
         }
@@ -220,12 +204,10 @@ const Chat = () => {
     useEffect(() => {
         if (!socket) return
 
-        console.log("Chat: Setting up message update listeners")
         addEventListener("message_updated", handleMessageUpdated)
         addEventListener("edit_success", handleEditSuccess)
 
         return () => {
-            console.log("Chat: Cleaning up message update listeners")
             removeEventListener("message_updated", handleMessageUpdated)
             removeEventListener("edit_success", handleEditSuccess)
         }
@@ -283,37 +265,13 @@ const Chat = () => {
         try {
             const oldestMessage = messages[0]
             await fetchMessages(oldestMessage._id)
+            toast.success("Older messages loaded", { duration: 1000 })
         } catch (error) {
-            console.error("Chat: Error loading older messages:", error)
+            toast.error("Failed to load older messages. Please try again.")
         } finally {
             setLoadingMore(false)
         }
     }, [hasMore, loadingMore, messages, fetchMessages])
-
-    // Intersection Observer for loading older messages
-    useEffect(() => {
-        if (!messagesContainerRef.current) return
-
-        const options = {
-            root: messagesContainerRef.current,
-            threshold: 0.1,
-        }
-
-        const handleIntersect = (entries) => {
-            if (entries[0].isIntersecting && hasMore && !loadingMore) {
-                loadOlderMessages()
-            }
-        }
-
-        observerRef.current = new IntersectionObserver(handleIntersect, options)
-
-        const firstMessage = messagesContainerRef.current.firstElementChild
-        if (firstMessage) {
-            observerRef.current.observe(firstMessage)
-        }
-
-        return () => observerRef.current?.disconnect()
-    }, [hasMore, loadingMore, messages, loadOlderMessages])
 
     // Context menu handling
     useEffect(() => {
@@ -361,7 +319,6 @@ const Chat = () => {
         async (messageId, newContent) => {
             try {
                 if (connected && currentRoomDetails) {
-                    console.log(`Editing message ${messageId} via WebSocket`)
 
                     // Optimistic update
                     setMessages((prevMessages) =>
@@ -387,13 +344,11 @@ const Chat = () => {
                         console.error("API edit error:", apiError)
                     }
                 } else {
-                    console.log(`Editing message ${messageId} via REST API only`)
                     await editMessage(messageId, newContent)
                 }
 
                 setEditingMessage(null)
             } catch (error) {
-                console.error("Edit error:", error)
                 toast.error(error.message || "Failed to edit message")
             }
         },
@@ -438,23 +393,19 @@ const Chat = () => {
     // FIXED: Validate message structure before rendering
     const validateMessage = useCallback((msg) => {
         if (!msg || typeof msg !== "object") {
-            console.error("Invalid message structure:", msg)
             return false
         }
 
         // Ensure required fields exist
         if (!msg._id && !msg.tempId) {
-            console.error("Message missing ID:", msg)
             return false
         }
 
         if (!msg.sender || typeof msg.sender !== "object") {
-            console.error("Message missing sender:", msg)
             return false
         }
 
         if (!msg.content && msg.content !== "") {
-            console.error("Message missing content:", msg)
             return false
         }
 
@@ -536,6 +487,27 @@ const Chat = () => {
                 ref={messagesContainerRef}
                 className="flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800"
             >
+                {hasMore && messages.length > 0 && (
+                    <div className="text-center py-2 border-b border-gray-800">
+                        <button
+                            onClick={loadOlderMessages}
+                            disabled={loadingMore}
+                            className="bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-white px-4 py-1 rounded-md flex items-center justify-center mx-auto transition-colors duration-200"
+                        >
+                            {loadingMore ? (
+                                <>
+                                    <Spinner size="sm" />
+                                    <span className="ml-2">Loading older messages...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <RefreshCw className="h-4 w-4 mr-2" />
+                                    Load Older Messages
+                                </>
+                            )}
+                        </button>
+                    </div>
+                )}
                 {loadingMore && (
                     <div className="text-center py-2">
                         <Spinner size="sm" />
@@ -550,7 +522,6 @@ const Chat = () => {
                         {msgs.map((msg, index) => {
                             // FIXED: Additional validation before rendering each message
                             if (!validateMessage(msg)) {
-                                console.error("Skipping invalid message:", msg)
                                 return null
                             }
 
@@ -611,9 +582,9 @@ const Chat = () => {
                     className="absolute bottom-20 right-6 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full shadow-lg transition-all duration-200 flex items-center space-x-2"
                 >
                     <ChevronDown size={20} />
-                    {unreadCount > 0 && (
-                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">{unreadCount}</span>
-                    )}
+                    {unreadCount > 0
+                        && (<span className="bg-red-500 text-white text-xs p-1 rounded-full"></span>)
+                    }
                 </button>
             )}
 
@@ -634,7 +605,7 @@ const Chat = () => {
                             )
 
                             if (hasSimilarTemp) {
-                                console.log("Similar temporary message already exists, not adding duplicate")
+                                // console.log("Similar temporary message already exists, not adding duplicate")
                                 return
                             }
 
@@ -651,7 +622,6 @@ const Chat = () => {
                                 },
                             }
 
-                            console.log("Adding temporary message while sending:", tempId)
                             setMessages((prevMessages) => [...prevMessages, tempMessage])
 
                             // FIXED: Use the context's sendMessage function with just the message content string

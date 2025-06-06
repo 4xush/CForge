@@ -62,7 +62,7 @@ const MainContent = ({ children }) => {
             </div>
 
             {/* Content area - takes remaining height */}
-            <div className="flex-1 p-4 overflow-hidden bg-gray-900">
+            <div className="flex-1 p-2 overflow-hidden bg-gray-900">
                 {children}
             </div>
         </div>
