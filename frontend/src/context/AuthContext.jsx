@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }) => {
     return false;
   }, []);
 
-  const refreshPlatformData = useCallback(async (force = false) => {
+  const refreshPlatformData = useCallback(async () => {
     try {
       const response = await ApiService.put('users/platform/refresh');
       if (response.data && response.data.user) {
@@ -145,16 +145,41 @@ export const AuthProvider = ({ children }) => {
 
   const updateUser = useCallback((updates) => {
     if (memoizedAuthUser) {
-      return setValidatedUser({ ...memoizedAuthUser, ...updates });
+      // Deep merge the updates
+      const updatedUser = {
+        ...memoizedAuthUser,
+        ...updates,
+        platforms: {
+          ...memoizedAuthUser.platforms,
+          ...(updates.platforms || {})
+        }
+      };
+
+      // Check if at least one platform has a username
+      const hasPlatformUsername = Object.values(updatedUser.platforms).some(
+        platform => platform && platform.username
+      );
+
+      // Set isProfileComplete based on platform usernames
+      updatedUser.isProfileComplete = hasPlatformUsername;
+
+      return setValidatedUser(updatedUser);
     }
     return false;
   }, [memoizedAuthUser, setValidatedUser]);
 
   const updatePlatformData = useCallback((platformName, platformData) => {
     if (memoizedAuthUser) {
+      const updatedPlatforms = { ...memoizedAuthUser.platforms, [platformName]: platformData };
+      // Check if at least one platform has a username
+      const hasPlatformUsername = Object.values(updatedPlatforms).some(
+        platform => platform && platform.username
+      );
+      
       return setValidatedUser({
         ...memoizedAuthUser,
-        platforms: { ...memoizedAuthUser.platforms, [platformName]: platformData }
+        platforms: updatedPlatforms,
+        isProfileComplete: hasPlatformUsername
       });
     }
     return false;

@@ -172,7 +172,7 @@ const HelpFAQ = () => {
     ];
 
     return (
-        <div className="bg-gradient-to-br from-gray-900 to-gray-800 text-white px-2 py-8 rounded-xl shadow-2xl w-full h-full overflow-hidden flex flex-col">
+        <div className="bg-gradient-to-br from-gray-900 to-gray-800 text-white px-4 py-4 rounded-xl shadow-2xl w-full h-full overflow-hidden flex flex-col">
             <h1 className="text-3xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">Help & FAQs</h1>
             <div className="space-y-4 overflow-y-auto p-3 flex-grow">
                 {faqData.map((faq, index) => (
@@ -208,11 +208,11 @@ const HelpFAQ = () => {
                     </div>
                 ))}
             </div>
-            <div className="mt-8 border-t border-gray-700 pt-6 text-center">
+            <div className="border-t border-gray-700 pt-2 text-center">
                 <p className="text-gray-400 mb-4">Still having issues? Report them directly to our support team</p>
                 <button
                     onClick={handleReportError}
-                    className="flex items-center justify-center gap-2 mx-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                    className="flex items-center justify-center gap-2 mx-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
                 >
                     <MailIcon size={20} />
                     <span>Report an Error</span>

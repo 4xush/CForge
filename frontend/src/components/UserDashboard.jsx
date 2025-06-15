@@ -12,8 +12,6 @@ import { PlatformCard, getPlatformStats } from './Profile/PlatformCards';
 import ActivityHeatmap from './Profile/ActivityHeatmap';
 import { useHeatmapData } from '../hooks/useHeatmapData';
 import LeetCodeDashboard from './Profile/LeetCodeDashboard';
-import { Dialog, DialogContent, DialogTitle } from './ui/dialog';
-import { Button } from './ui/Button';
 
 const TabButton = ({ active, onClick, icon: Icon, children }) => (
     <button
@@ -280,13 +278,27 @@ const UserProfile = () => {
     // Handle incomplete profile
     if (!user.isProfileComplete) {
         return (
-            <Dialog>
-                <DialogContent>
-                    <DialogTitle>Complete Your Profile</DialogTitle>
-                    <p>Please complete your profile by adding your LeetCode profile in the settings.</p>
-                    <Button onClick={() => navigate('/settings?tab=platforms')}>Complete Profile</Button>
-                </DialogContent>
-            </Dialog>
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                <div className="bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4 border border-gray-700 shadow-xl">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                            <AlertCircle className="w-6 h-6 text-yellow-400" />
+                            <h2 className="text-xl font-bold text-white">Complete Your Profile</h2>
+                        </div>
+                    </div>
+                    <p className="text-gray-400 mb-6">
+                        Please complete your profile by adding your LeetCode profile in the settings.
+                    </p>
+                    <div className="flex justify-end">
+                        <button
+                            onClick={() => navigate('/settings?tab=platforms')}
+                            className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 rounded-lg text-white font-medium transition-colors"
+                        >
+                            Complete Profile
+                        </button>
+                    </div>
+                </div>
+            </div>
         );
     }
 
