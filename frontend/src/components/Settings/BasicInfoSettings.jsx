@@ -3,8 +3,10 @@ import PropTypes from 'prop-types';
 import { User, CircleUser, Asterisk, Globe, ArrowUpRight, Loader2 } from 'lucide-react';
 import ApiService from '../../services/ApiService';
 import { toast } from 'react-hot-toast';
+import { useAuthContext } from '../../context/AuthContext';
 
 const BasicInfo = ({ profileData, onProfileUpdate }) => {
+    const { updateUser } = useAuthContext();
     const [formData, setFormData] = useState({
         fullName: profileData?.fullName || '',
         username: profileData?.username || '',
@@ -48,24 +50,63 @@ const BasicInfo = ({ profileData, onProfileUpdate }) => {
 
             let updatedProfile;
 
-            if (response.data && typeof response.data === 'object' && response.data[field]) {
-                updatedProfile = response.data;
+            // Handle different response formats
+            if (response.data && typeof response.data === 'object') {
+                if (response.data.user) {
+                    // If response has user object (some APIs return { user: {...} })
+                    updatedProfile = response.data.user;
+                } else if (response.data[field] !== undefined) {
+                    // If response has the field directly
+                    updatedProfile = { ...profileData, ...response.data };
+                } else {
+                    // If response doesn't contain expected data, merge with current profile
+                    updatedProfile = { ...profileData, [field]: formData[field] };
+                }
             } else {
-                const profileResponse = await ApiService.get('users/profile');
-                updatedProfile = profileResponse.data;
+                // Fallback: merge with current profile data
+                updatedProfile = { ...profileData, [field]: formData[field] };
             }
 
+            // Update original data to reflect the successful change
+            setOriginalData(prev => ({
+                ...prev,
+                [field]: updatedProfile[field] || formData[field]
+            }));
+
+            // Update form data to match the response
             setFormData(prev => ({
                 ...prev,
                 [field]: updatedProfile[field] || formData[field]
             }));
 
-            toast.success(`${field} updated successfully`);
-            if (onProfileUpdate) {
-                onProfileUpdate(updatedProfile);
+            // Update AuthContext
+            const contextUpdateSuccess = updateUser(updatedProfile);
+            
+            if (contextUpdateSuccess) {
+                toast.success(`${field.charAt(0).toUpperCase() + field.slice(1)} updated successfully`);
+                
+                // Call the callback if provided (for backward compatibility)
+                if (onProfileUpdate) {
+                    onProfileUpdate(updatedProfile);
+                }
+            } else {
+                toast.error('Failed to update local data');
             }
+
         } catch (error) {
-            toast.error(error.response?.data?.message || `Failed to update ${field}`);
+            console.error(`Error updating ${field}:`, error);
+            
+            // Reset form data on error
+            setFormData(prev => ({
+                ...prev,
+                [field]: originalData[field]
+            }));
+
+            // Show error message
+            const errorMessage = error.response?.data?.message || 
+                               error.response?.data?.error || 
+                               `Failed to update ${field}`;
+            toast.error(errorMessage);
         } finally {
             setLoading(prev => ({ ...prev, [field]: false }));
         }
@@ -77,6 +118,14 @@ const BasicInfo = ({ profileData, onProfileUpdate }) => {
             ...prev,
             [name]: value,
         }));
+    };
+
+    const isFieldChanged = (field) => {
+        return formData[field] !== originalData[field];
+    };
+
+    const isFieldValid = (field) => {
+        return formData[field] && formData[field].trim().length > 0;
     };
 
     return (
@@ -96,11 +145,12 @@ const BasicInfo = ({ profileData, onProfileUpdate }) => {
                             onChange={handleChange}
                             placeholder="Full Name"
                             className="w-full pl-10 pr-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white"
+                            disabled={loading.fullName}
                         />
                     </div>
                     <button
                         onClick={() => updateField('fullName')}
-                        disabled={loading.fullName || !formData.fullName || formData.fullName === originalData.fullName}
+                        disabled={loading.fullName || !isFieldValid('fullName') || !isFieldChanged('fullName')}
                         className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:bg-blue-500/50 disabled:cursor-not-allowed min-w-[120px]"
                     >
                         {loading.fullName ? (
@@ -127,11 +177,12 @@ const BasicInfo = ({ profileData, onProfileUpdate }) => {
                             onChange={handleChange}
                             placeholder="Username"
                             className="w-full pl-10 pr-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white"
+                            disabled={loading.username}
                         />
                     </div>
                     <button
                         onClick={() => updateField('username')}
-                        disabled={loading.username || !formData.username || formData.username === originalData.username}
+                        disabled={loading.username || !isFieldValid('username') || !isFieldChanged('username')}
                         className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:bg-blue-500/50 disabled:cursor-not-allowed min-w-[120px]"
                     >
                         {loading.username ? (
@@ -162,6 +213,7 @@ const BasicInfo = ({ profileData, onProfileUpdate }) => {
                             value={formData.gender}
                             onChange={handleChange}
                             className="w-full pl-10 pr-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white"
+                            disabled={loading.gender}
                         >
                             <option value="male">Male</option>
                             <option value="female">Female</option>
@@ -170,7 +222,7 @@ const BasicInfo = ({ profileData, onProfileUpdate }) => {
                     </div>
                     <button
                         onClick={() => updateField('gender')}
-                        disabled={loading.gender || formData.gender === originalData.gender}
+                        disabled={loading.gender || !isFieldChanged('gender')}
                         className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:bg-blue-500/50 disabled:cursor-not-allowed min-w-[120px]"
                     >
                         {loading.gender ? (

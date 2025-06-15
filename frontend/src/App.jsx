@@ -1,7 +1,7 @@
 import React, { Suspense, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate ,useLocation} from 'react-router-dom';
 import { RoomProvider } from './context/RoomContext';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuthContext } from './context/AuthContext';
 import { MessageProvider } from './context/MessageContext';
 import { WebSocketProvider } from './context/WebSocketContext';
 import { Toaster } from 'react-hot-toast';
@@ -11,6 +11,7 @@ import ErrorBoundary from './components/ErrorBoundary.jsx';
 import FullScreenLoader from './components/FullScreenLoader';
 import RoomPage from './pages/RoomPage.jsx';
 import AboutCForge from './pages/AboutCForge';
+
 // Lazy loaded components
 const LoginPage = React.lazy(() => import('./pages/Login'));
 const SignupPage = React.lazy(() => import('./pages/Signup'));
@@ -23,9 +24,32 @@ const RoomChat = React.lazy(() => import('./pages/RoomChatPage'));
 const HelpFAQ = React.lazy(() => import('./pages/HelpFAQ'));
 const NotFoundPage = React.lazy(() => import('./pages/Error404'));
 const Settings = React.lazy(() => import('./pages/Settings'));
+const ContestsPage = React.lazy(() => import('./pages/ContestsPage.jsx'));
+
+// Smart landing route handler
+const AuthLanding = () => {
+  const { authUser, isLoading } = useAuthContext();
+  const location = useLocation();
+
+  const searchParams = new URLSearchParams(location.search);
+  const forceVisit = searchParams.get('force') === 'true';
+
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-gray-900">
+        <FullScreenLoader />
+      </div>
+    );
+  }
+
+  if (authUser && !forceVisit) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <WelcomePage />;
+};
 
 const App = () => {
-  // Simple logout component
   const Logout = () => {
     useEffect(() => {
       localStorage.clear();
@@ -63,12 +87,13 @@ const App = () => {
                 <Route path="/signup" element={<SignupPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/logout" element={<Logout />} />
-                <Route path="/" element={<WelcomePage />} />
+                <Route path="/" element={<AuthLanding />} />
                 <Route path="/about" element={<AboutCForge />} />
                 <Route path="/404" element={<NotFoundPage />} />
 
-                {/* Protected routes within Layout */}
+                {/* Protected routes inside layout */}
                 <Route element={<Layout />}>
+                  <Route path="/contests-central" element={<ContestsPage />} />
                   <Route
                     path="/u/:username"
                     element={
@@ -143,7 +168,7 @@ const App = () => {
                   />
                 </Route>
 
-                {/* Special routes */}
+                {/* Invite route (public) */}
                 <Route
                   path="/rooms/join/:inviteCode"
                   element={
@@ -153,7 +178,7 @@ const App = () => {
                   }
                 />
 
-                {/* Catch all route */}
+                {/* Fallback */}
                 <Route path="*" element={<Navigate to="/404" replace />} />
               </Routes>
             </Suspense>

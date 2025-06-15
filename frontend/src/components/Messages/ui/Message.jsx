@@ -82,23 +82,11 @@ const Message = ({
       {canModify && (
         <div className="relative">
           <button
-            onClick={() => setShowOptions(!showOptions)}
+            onClick={handleEdit}
             className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-700 rounded"
           >
-            <MoreVertical size={16} className="text-gray-400" />
+            <Edit3 size={16} className="text-gray-400" />
           </button>
-
-          {showOptions && (
-            <div className="absolute right-0 top-8 bg-gray-800 border border-gray-700 rounded-md shadow-lg z-10 min-w-[120px]">
-              <button
-                onClick={handleEdit}
-                className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 flex items-center space-x-2"
-              >
-                <Edit3 size={14} />
-                <span>Edit</span>
-              </button>
-            </div>
-          )}
         </div>
       )}
     </div>

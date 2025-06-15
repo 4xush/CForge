@@ -183,7 +183,7 @@ const TerminalBrandingPanel = () => {
                     <span className="w-[10px] h-[10px] bg-green-500 rounded-full cursor-pointer hover:bg-green-400 transition-colors duration-150"></span>
                 </div>
                 <div className="flex-grow text-center text-[10px] text-gray-400/80 truncate">
-                    CForge Secure Terminal -- user@cforge-dev -- /bin/zsh
+                    CForge Secure Terminal -- user@cforge-live -- /bin/zsh
                 </div>
                 <div className="w-12"></div> {/* Spacer for balance */}
             </div>
@@ -210,7 +210,7 @@ const TerminalBrandingPanel = () => {
                             <div key={`anim-${index}`} className="whitespace-pre-wrap break-words leading-tight text-green-400/70">{line}</div>
                         ))}
                         <div className="whitespace-pre-wrap break-words leading-tight">
-                            <span className="text-blue-400/80">user@cforge-dev</span>
+                            <span className="text-blue-400/80">user@cforge-live</span>
                             <span className="text-gray-500/80">:</span>
                             <span className="text-purple-400/80">~</span>
                             <span className="text-gray-500/80">$</span>

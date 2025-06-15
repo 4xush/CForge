@@ -3,8 +3,10 @@ import PropTypes from 'prop-types';
 import { Github, Terminal, Code2, Loader2, AlertCircle } from 'lucide-react';
 import ApiService from '../../services/ApiService';
 import { toast } from 'react-hot-toast';
+import { useAuthContext } from '../../context/AuthContext';
 
 const AddPlatform = ({ onPlatformsUpdate, platforms }) => {
+    const { updateUser, authUser } = useAuthContext();
     const [formData, setFormData] = useState({
         leetcodeUsername: platforms?.leetcode?.username || '',
         githubUsername: platforms?.github?.username || '',
@@ -42,27 +44,105 @@ const AddPlatform = ({ onPlatformsUpdate, platforms }) => {
             return;
         }
 
+        if (!username.trim()) {
+            toast.error(`${platform} username cannot be empty`);
+            return;
+        }
+
         setLoading(prev => ({ ...prev, [platform]: true }));
 
         try {
             const response = await ApiService.put(`/users/platform/${platform}`, {
-                username: username
+                username: username.trim()
             });
 
+            let updatedProfile;
+            let updatedPlatform;
+
+            // Handle different response formats
             if (response.data) {
-                toast.success(`${platform} username updated successfully`);
+                if (response.data.user) {
+                    // If response has full user object
+                    updatedProfile = response.data.user;
+                    updatedPlatform = response.data.user.platforms?.[platform];
+                } else if (response.data.platform) {
+                    // If response has just the platform data
+                    updatedPlatform = response.data.platform;
+                    updatedProfile = {
+                        ...authUser,
+                        platforms: {
+                            ...authUser.platforms,
+                            [platform]: updatedPlatform
+                        }
+                    };
+                } else {
+                    // Fallback: create updated profile manually
+                    updatedPlatform = {
+                        username: username.trim(),
+                        isValid: true,
+                        lastUpdated: new Date().toISOString(),
+                        ...response.data
+                    };
+                    updatedProfile = {
+                        ...authUser,
+                        platforms: {
+                            ...authUser.platforms,
+                            [platform]: updatedPlatform
+                        }
+                    };
+                }
+            } else {
+                // No response data - create minimal update
+                updatedPlatform = {
+                    username: username.trim(),
+                    isValid: true,
+                    lastUpdated: new Date().toISOString()
+                };
+                updatedProfile = {
+                    ...authUser,
+                    platforms: {
+                        ...authUser.platforms,
+                        [platform]: updatedPlatform
+                    }
+                };
+            }
+
+            // Update AuthContext
+            const contextUpdateSuccess = updateUser(updatedProfile);
+            
+            if (contextUpdateSuccess) {
+                // Update local form state
                 const updatedFormData = {
                     ...formData,
-                    [usernameKey]: username
+                    [usernameKey]: username.trim()
                 };
                 setFormData(updatedFormData);
                 setOriginalData(updatedFormData);
-                if (onPlatformsUpdate) {
-                    onPlatformsUpdate(response.data.platform);
+
+                toast.success(`${platform.charAt(0).toUpperCase() + platform.slice(1)} username updated successfully`);
+                
+                // Call the callback if provided (for backward compatibility)
+                if (onPlatformsUpdate && updatedPlatform) {
+                    onPlatformsUpdate({ ...updatedPlatform, name: platform });
                 }
+            } else {
+                toast.error('Failed to update local data');
             }
+
         } catch (error) {
-            toast.error(error.response?.data?.message || `Failed to update ${platform} username`);
+            console.error(`Error updating ${platform}:`, error);
+            
+            // Reset form data on error
+            setFormData(prev => ({
+                ...prev,
+                [usernameKey]: originalData[usernameKey]
+            }));
+
+            // Show error message
+            const errorMessage = error.response?.data?.message || 
+                               error.response?.data?.error || 
+                               `Failed to update ${platform} username`;
+            toast.error(errorMessage);
         } finally {
             setLoading(prev => ({ ...prev, [platform]: false }));
         }
@@ -76,110 +156,120 @@ const AddPlatform = ({ onPlatformsUpdate, platforms }) => {
         }));
     };
 
+    const isFieldChanged = (platform) => {
+        const usernameKey = `${platform}Username`;
+        return formData[usernameKey] !== originalData[usernameKey];
+    };
+
+    const isFieldValid = (platform) => {
+        const usernameKey = `${platform}Username`;
+        return formData[usernameKey] && formData[usernameKey].trim().length > 0;
+    };
+
+    const getPlatformStatus = (platform) => {
+        const platformData = platforms?.[platform];
+        if (!platformData) return null;
+        
+        return {
+            isValid: platformData.isValid,
+            lastUpdated: platformData.lastUpdated,
+            username: platformData.username
+        };
+    };
+
+    const renderPlatformField = (platform, icon, placeholder) => {
+        const usernameKey = `${platform}Username`;
+        const platformStatus = getPlatformStatus(platform);
+        
+        return (
+            <div className="relative flex items-center gap-2">
+                <div className="flex-1 relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        {icon}
+                    </div>
+                    <input
+                        type="text"
+                        name={usernameKey}
+                        value={formData[usernameKey]}
+                        onChange={handleChange}
+                        placeholder={placeholder}
+                        className="w-full pl-10 pr-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white"
+                        disabled={loading[platform]}
+                    />
+                    {platformStatus && (
+                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <div className={`w-2 h-2 rounded-full ${platformStatus.isValid ? 'bg-green-500' : 'bg-red-500'}`} 
+                                 title={platformStatus.isValid ? 'Valid username' : 'Invalid username'} />
+                        </div>
+                    )}
+                </div>
+                <button
+                    onClick={() => updatePlatform(platform)}
+                    disabled={loading[platform] || !isFieldValid(platform) || !isFieldChanged(platform)}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:bg-blue-500/50 disabled:cursor-not-allowed min-w-[120px]"
+                >
+                    {loading[platform] ? (
+                        <>
+                            <Loader2 className="inline mr-2 h-4 w-4 animate-spin" />
+                            Updating...
+                        </>
+                    ) : (
+                        'Update'
+                    )}
+                </button>
+            </div>
+        );
+    };
+
     return (
         <div className="space-y-6 bg-gray-800/50 p-6 rounded-xl">
             <h3 className="text-lg font-medium text-white">Platform Integration</h3>
             <div className="space-y-4">
                 {/* LeetCode Input */}
-                <div className="relative flex items-center gap-2">
-                    <div className="flex-1 relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Terminal className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <input
-                            type="text"
-                            name="leetcodeUsername"
-                            value={formData.leetcodeUsername}
-                            onChange={handleChange}
-                            placeholder="LeetCode Username"
-                            className="w-full pl-10 pr-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white"
-                        />
-                    </div>
-                    <button
-                        onClick={() => updatePlatform('leetcode')}
-                        disabled={loading.leetcode || !formData.leetcodeUsername || formData.leetcodeUsername === originalData.leetcodeUsername}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:bg-blue-500/50 disabled:cursor-not-allowed min-w-[120px]"
-                    >
-                        {loading.leetcode ? (
-                            <>
-                                <Loader2 className="inline mr-2 h-4 w-4 animate-spin" />
-                                Updating...
-                            </>
-                        ) : (
-                            'Update'
-                        )}
-                    </button>
-                </div>
+                {renderPlatformField(
+                    'leetcode', 
+                    <Terminal className="h-5 w-5 text-gray-400" />, 
+                    'LeetCode Username'
+                )}
 
                 {/* GitHub Input */}
-                <div className="relative flex items-center gap-2">
-                    <div className="flex-1 relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Github className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <input
-                            type="text"
-                            name="githubUsername"
-                            value={formData.githubUsername}
-                            onChange={handleChange}
-                            placeholder="GitHub Username"
-                            className="w-full pl-10 pr-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white"
-                        />
-                    </div>
-                    <button
-                        onClick={() => updatePlatform('github')}
-                        disabled={loading.github || !formData.githubUsername || formData.githubUsername === originalData.githubUsername}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:bg-blue-500/50 disabled:cursor-not-allowed min-w-[120px]"
-                    >
-                        {loading.github ? (
-                            <>
-                                <Loader2 className="inline mr-2 h-4 w-4 animate-spin" />
-                                Updating...
-                            </>
-                        ) : (
-                            'Update'
-                        )}
-                    </button>
-                </div>
+                {renderPlatformField(
+                    'github', 
+                    <Github className="h-5 w-5 text-gray-400" />, 
+                    'GitHub Username'
+                )}
 
                 {/* Codeforces Input */}
-                <div className="relative flex items-center gap-2">
-                    <div className="flex-1 relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Code2 className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <input
-                            type="text"
-                            name="codeforcesUsername"
-                            value={formData.codeforcesUsername}
-                            onChange={handleChange}
-                            placeholder="Codeforces Username"
-                            className="w-full pl-10 pr-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white"
-                        />
-                    </div>
-                    <button
-                        onClick={() => updatePlatform('codeforces')}
-                        disabled={loading.codeforces || !formData.codeforcesUsername || formData.codeforcesUsername === originalData.codeforcesUsername}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:bg-blue-500/50 disabled:cursor-not-allowed min-w-[120px]"
-                    >
-                        {loading.codeforces ? (
-                            <>
-                                <Loader2 className="inline mr-2 h-4 w-4 animate-spin" />
-                                Updating...
-                            </>
-                        ) : (
-                            'Update'
-                        )}
-                    </button>
-                </div>
+                {renderPlatformField(
+                    'codeforces', 
+                    <Code2 className="h-5 w-5 text-gray-400" />, 
+                    'Codeforces Username'
+                )}
             </div>
+
+            {/* Platform Status Summary */}
+            {platforms && Object.keys(platforms).length > 0 && (
+                <div className="mt-4 p-3 bg-gray-700/30 rounded-lg">
+                    <h4 className="text-sm font-medium text-gray-300 mb-2">Platform Status</h4>
+                    <div className="space-y-1">
+                        {Object.entries(platforms).map(([platformName, platformData]) => (
+                            <div key={platformName} className="flex items-center justify-between text-sm">
+                                <span className="text-gray-400 capitalize">{platformName}</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-gray-300">@{platformData.username}</span>
+                                    <div className={`w-2 h-2 rounded-full ${platformData.isValid ? 'bg-green-500' : 'bg-red-500'}`} />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Pending Invite Note */}
             {(() => {
                 const params = new URLSearchParams(window.location.search);
                 const isNewUser = params.get('newUser') === 'true';
                 const pendingInviteCode = sessionStorage.getItem('app-pendingInviteCode');
-                console.log(pendingInviteCode);
 
                 if (isNewUser && pendingInviteCode) {
                     return (
@@ -211,12 +301,18 @@ AddPlatform.propTypes = {
     platforms: PropTypes.shape({
         leetcode: PropTypes.shape({
             username: PropTypes.string,
+            isValid: PropTypes.bool,
+            lastUpdated: PropTypes.string,
         }),
         github: PropTypes.shape({
             username: PropTypes.string,
+            isValid: PropTypes.bool,
+            lastUpdated: PropTypes.string,
         }),
         codeforces: PropTypes.shape({
             username: PropTypes.string,
+            isValid: PropTypes.bool,
+            lastUpdated: PropTypes.string,
         }),
     }),
 };

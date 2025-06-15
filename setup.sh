@@ -198,7 +198,7 @@ NODE_ENV=development
 PORT=5000
 
 # MongoDB Connection (REQUIRED)
-MONGODB_URI=mongodb://localhost:27017/cforge
+MONGODB_URI=mongodb://localhost:27017/
 
 # Redis Connection (Optional but recommended)
 REDIS_URL=redis://localhost:6379

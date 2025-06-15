@@ -26,10 +26,11 @@ exports.sendMessage = async (req, res) => {
 
     await message.save();
 
-    // Return response as before, with decrypted content
+    // Fix: Remove duplicate 'message' property
     res.status(201).json({
+      success: true,
       message: "Message sent successfully",
-      message: {
+      data: {
         ...message.toObject(),
         content, // Send decrypted content to the frontend
       },
@@ -38,6 +39,7 @@ exports.sendMessage = async (req, res) => {
     res.status(500).json({ message: "Error sending message", error: error.message });
   }
 };
+
 exports.getMessages = async (req, res) => {
   try {
     const { roomId } = req.params;
@@ -75,11 +77,35 @@ exports.getMessages = async (req, res) => {
     const hasMore = messages.length > sanitizedLimit;
     const messagesToSend = hasMore ? messages.slice(0, sanitizedLimit) : messages;
 
-    // Decrypt messages
-    const decryptedMessages = messagesToSend.map((msg) => ({
-      ...msg,
-      content: decrypt(msg.content, msg.iv),
-    }));
+    // Decrypt messages with proper error handling
+    const decryptedMessages = messagesToSend.map((msg) => {
+      try {
+        // Check if content and iv exist before decrypting
+        if (!msg.content || !msg.iv) {
+          console.warn(`Message ${msg._id} missing content or iv:`, {
+            hasContent: !!msg.content,
+            hasIv: !!msg.iv
+          });
+          return {
+            ...msg,
+            content: msg.content || '[Message content unavailable]', // Fallback for old messages
+          };
+        }
+
+        // Decrypt the message
+        const decryptedContent = decrypt(msg.content, msg.iv);
+        return {
+          ...msg,
+          content: decryptedContent,
+        };
+      } catch (decryptError) {
+        console.error(`Error decrypting message ${msg._id}:`, decryptError);
+        return {
+          ...msg,
+          content: '[Unable to decrypt message]', // Fallback for corrupted messages
+        };
+      }
+    });
 
     // Add total count for initial load (optional)
     let totalCount;
@@ -138,8 +164,9 @@ exports.editMessage = async (req, res) => {
     // Return decrypted content to the frontend
     await message.populate("sender", "username profilePicture");
     res.status(200).json({
+      success: true,
       message: "Message edited successfully",
-      message: {
+      data: {
         ...message.toObject(),
         content, // Send decrypted content to the frontend
       },

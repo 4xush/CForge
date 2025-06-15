@@ -59,7 +59,7 @@ exports.updateRoomMembersLeetCodeStats = async (req, res) => {
 
         // Check rate limiting for room-based refresh
         const rateLimitKey = `platform-refresh:room:${roomId}:leetcode`;
-        const rateLimitCheck = await redisClient.checkRateLimit(rateLimitKey, 1, 7200); // 1 request per 2 hours per room
+        const rateLimitCheck = await redisClient.checkRateLimit(rateLimitKey, 1, 172800); // 1 request per 48 hours per room
 
         if (!rateLimitCheck.allowed) {
             logger.warn('Room LeetCode refresh rate limit exceeded', { roomId, userId });
@@ -68,7 +68,7 @@ exports.updateRoomMembersLeetCodeStats = async (req, res) => {
                 message: "LeetCode stats were recently updated. Please wait before updating again.",
                 retryAfter: "2 hours",
                 lastUpdated: room.platformStats?.leetcode?.lastUpdated,
-                nextUpdateAvailable: new Date(Date.now() + 7200000).toISOString()
+                nextUpdateAvailable: new Date(Date.now() + 172800000).toISOString()
             });
         }
 
@@ -77,13 +77,13 @@ exports.updateRoomMembersLeetCodeStats = async (req, res) => {
         const isForced = req.query.force === 'true';
 
         if (!isForced && lastUpdate) {
-            const twoHoursAgo = new Date(Date.now() - 7200000);
+            const twoHoursAgo = new Date(Date.now() - 172800000);
             if (lastUpdate > twoHoursAgo) {
                 return res.status(200).json({
                     success: true,
                     message: "LeetCode stats were recently updated",
                     lastUpdated: lastUpdate,
-                    nextUpdateAvailable: new Date(lastUpdate.getTime() + 7200000),
+                    nextUpdateAvailable: new Date(lastUpdate.getTime() + 172800000),
                     skipReason: "RECENT_UPDATE"
                 });
             }
@@ -292,7 +292,7 @@ exports.updateRoomMembersCodeforcesStats = async (req, res) => {
 
         // Check rate limiting for room-based refresh
         const rateLimitKey = `platform-refresh:room:${roomId}:codeforces`;
-        const rateLimitCheck = await redisClient.checkRateLimit(rateLimitKey, 1, 7200); // 1 request per 2 hours per room
+        const rateLimitCheck = await redisClient.checkRateLimit(rateLimitKey, 1, 172800); // 1 request per 2 hours per room
 
         if (!rateLimitCheck.allowed) {
             logger.warn('Room Codeforces refresh rate limit exceeded', { roomId, userId });
@@ -301,7 +301,7 @@ exports.updateRoomMembersCodeforcesStats = async (req, res) => {
                 message: "Codeforces stats were recently updated. Please wait before updating again.",
                 retryAfter: "2 hours",
                 lastUpdated: room.platformStats?.codeforces?.lastUpdated,
-                nextUpdateAvailable: new Date(Date.now() + 7200000).toISOString()
+                nextUpdateAvailable: new Date(Date.now() + 172800000).toISOString()
             });
         }
 
@@ -310,13 +310,13 @@ exports.updateRoomMembersCodeforcesStats = async (req, res) => {
         const isForced = req.query.force === 'true';
 
         if (!isForced && lastUpdate) {
-            const twoHoursAgo = new Date(Date.now() - 7200000);
+            const twoHoursAgo = new Date(Date.now() - 172800000);
             if (lastUpdate > twoHoursAgo) {
                 return res.status(200).json({
                     success: true,
                     message: "Codeforces stats were recently updated",
                     lastUpdated: lastUpdate,
-                    nextUpdateAvailable: new Date(lastUpdate.getTime() + 7200000),
+                    nextUpdateAvailable: new Date(lastUpdate.getTime() + 172800000),
                     skipReason: "RECENT_UPDATE"
                 });
             }

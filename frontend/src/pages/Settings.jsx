@@ -1,17 +1,15 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import ApiService from '../services/ApiService';
 import AddPlatform from '../components/Settings/AddPlatform';
 import SocialNetworks from '../components/Settings/SocialNetworksSettings';
 import BasicInfo from '../components/Settings/BasicInfoSettings';
 import AccountSettings from '../components/Settings/AccountSettings';
 import { useAuthContext } from '../context/AuthContext';
-import { CheckCircle} from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
+
 const Settings = () => {
-    const { updateUser, logout } = useAuthContext();
+    const { authUser, updateUser, logout, isLoading } = useAuthContext();
     const [activeTab, setActiveTab] = useState('basic');
-    const [profileData, setProfileData] = useState(null);
-    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -21,50 +19,62 @@ const Settings = () => {
         }
     }, []);
 
-    useEffect(() => {
-        fetchProfileData();
-    }, []);
-
-    const fetchProfileData = async () => {
-        try {
-            const response = await ApiService.get('users/profile');
-            setProfileData(response.data);
-            updateUser(response.data);
-        } catch (error) {
-            toast.error('Failed to load profile data');
-            console.error('Error fetching profile:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handleProfileUpdate = (updatedData) => {
-        setProfileData(updatedData);
-        updateUser(updatedData);
+        const success = updateUser(updatedData);
+        if (success) {
+            // toast.success('Profile updated successfully');
+        } else {
+            toast.error('Failed to update profile');
+        }
     };
 
     const handlePlatformsUpdate = (updatedPlatform) => {
         const updatedPlatforms = {
-            ...profileData.platforms,
+            ...authUser.platforms,
             [updatedPlatform.name]: updatedPlatform,
         };
     
-        const updatedData = { ...profileData, platforms: updatedPlatforms };
-        setProfileData(updatedData);
-        updateUser(updatedData);
+        const updatedData = { ...authUser, platforms: updatedPlatforms };
+        const success = updateUser(updatedData);
+        if (success) {
+            // toast.success('Platform updated successfully');
+        } else {
+            toast.error('Failed to update platform');
+        }
     };
-    
 
     const handleSocialNetworksUpdate = (socialNetworks) => {
-        const updatedData = { ...profileData, socialNetworks };
-        setProfileData(updatedData);
-        updateUser(updatedData);
+        const updatedData = { ...authUser, socialNetworks };
+        const success = updateUser(updatedData);
+        if (success) {
+            // toast.success('Social networks updated successfully');
+        } else {
+            toast.error('Failed to update social networks');
+        }
     };
 
-    if (loading) {
+    // Show loading state if auth is still loading
+    if (isLoading) {
         return (
             <div className="min-h-screen bg-gray-900 text-white p-4 flex items-center justify-center">
                 Loading...
+            </div>
+        );
+    }
+
+    // Show error state if no user data
+    if (!authUser) {
+        return (
+            <div className="min-h-screen bg-gray-900 text-white p-4 flex items-center justify-center">
+                <div className="text-center">
+                    <p className="text-red-500 mb-4">Unable to load user data</p>
+                    <button 
+                        onClick={() => window.location.reload()} 
+                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    >
+                        Retry
+                    </button>
+                </div>
             </div>
         );
     }
@@ -77,19 +87,19 @@ const Settings = () => {
                 {/* Profile Summary */}
                 <div className="mb-6 flex items-center gap-4">
                     <img
-                        src={profileData?.profilePicture || '/default-avatar.png'}
+                        src={authUser?.profilePicture || '/default-avatar.png'}
                         alt="Profile"
                         className="w-16 h-16 rounded-full object-cover ring-2 ring-blue-500"
                     />
                     <div>
                         <div className="flex items-center gap-2">
-                            <h3 className="text-lg font-medium">{profileData?.fullName}</h3>
-                            {profileData?.isProfileComplete && (
+                            <h3 className="text-lg font-medium">{authUser?.fullName}</h3>
+                            {authUser?.isProfileComplete && (
                                 <CheckCircle className="w-5 h-5 text-green-500" title="Profile Complete" />
                             )}
                         </div>
-                        <p className="text-gray-400">@{profileData?.username}</p>
-                        {!profileData?.isProfileComplete && (
+                        <p className="text-gray-400">@{authUser?.username}</p>
+                        {!authUser?.isProfileComplete && (
                             <p className="text-sm text-yellow-500">Complete your profile for a professional look!</p>
                         )}
                     </div>
@@ -112,13 +122,13 @@ const Settings = () => {
                 {/* Content */}
                 <div className="space-y-6">
                     {activeTab === 'basic' ? (
-                        <BasicInfo profileData={profileData} onProfileUpdate={handleProfileUpdate} />
+                        <BasicInfo profileData={authUser} onProfileUpdate={handleProfileUpdate} />
                     ) : activeTab === 'platforms' ? (
-                        <AddPlatform platforms={profileData?.platforms} onPlatformsUpdate={handlePlatformsUpdate} />
+                        <AddPlatform platforms={authUser?.platforms} onPlatformsUpdate={handlePlatformsUpdate} />
                     ) : activeTab === 'social' ? (
-                        <SocialNetworks socialNetworks={profileData?.socialNetworks} onSocialNetworksUpdate={handleSocialNetworksUpdate} />
+                        <SocialNetworks socialNetworks={authUser?.socialNetworks} onSocialNetworksUpdate={handleSocialNetworksUpdate} />
                     ) : (
-                        <AccountSettings profileData={profileData} onProfileUpdate={handleProfileUpdate} onLogout={logout} />
+                        <AccountSettings profileData={authUser} onProfileUpdate={handleProfileUpdate} onLogout={logout} />
                     )}
                 </div>
             </div>

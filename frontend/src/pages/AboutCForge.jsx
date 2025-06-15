@@ -71,7 +71,7 @@ const AboutCForge = () => {
             whileTap={{ scale: 0.95 }}
             className="pt-4 mt-10">
             <a
-              href="https://v0-ayush-kumar-portfolio.vercel.app/"
+              href="https://4xush.github.io/portfolio/"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full text-white font-medium shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300"

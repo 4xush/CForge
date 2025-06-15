@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { PanelRightIcon, SettingsIcon, HelpCircleIcon, LayoutDashboardIcon } from 'lucide-react';
 import { useAuthContext } from '../context/AuthContext';
@@ -38,8 +38,9 @@ const LeftSidebar = () => {
             <div className="w-full md:w-64 bg-gray-800 p-3 flex flex-col justify-between hidden md:block border-r border-gray-700 relative h-screen overflow-y-auto shadow-lg">
                 <div className="flex flex-col h-full">
                     <Link
-                        to="/dashboard"
-                        className="text-2xl font-bold mb-8 text-white tracking-tight transition-colors hover:text-gray-300"
+                        to="/?force=true"
+                        className="text-2xl font-bold mb-8 tracking-tight bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent hover:drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)] transition-shadow duration-200"
+
                     >
                         CForge
                     </Link>

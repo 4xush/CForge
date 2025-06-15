@@ -44,6 +44,7 @@ const roomRoutes = require('./routes/roomRoutes');
 const adminRoomRoutes = require('./routes/adminRoomRoutes');
 const publicRoutes = require('./routes/publicRoutes');
 const healthRoutes = require('./routes/healthRoutes');
+const contestsRoutes = require('./routes/contests');
 
 // Enhanced services
 const serviceInitializer = require('./services/initialization/serviceInitializer');
@@ -96,7 +97,7 @@ const connectWithRetry = async (retries = 5, delay = 5000) => {
     try {
       await connectDB();
       logger.info('MongoDB connected successfully');
-      
+
       // Initialize enhanced services
       logger.info('Initializing enhanced services...');
       const servicesInitialized = await serviceInitializer.initializeServices();
@@ -105,7 +106,7 @@ const connectWithRetry = async (retries = 5, delay = 5000) => {
       } else {
         logger.info('All enhanced services initialized successfully');
       }
-      
+
       // Initialize schedulers
       initSchedulers();
       return;
@@ -128,6 +129,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/rooms/admin', adminRoomRoutes);
+app.use('/api/contests', contestsRoutes);
 app.use('/api', publicRoutes);
 
 // Serve static assets in production (if frontend is hosted with backend)

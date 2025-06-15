@@ -76,25 +76,39 @@ const CodingLeaderboard = () => {
 
         setLoading(true);
         try {
-            const refreshFunction = selectedPlatform === 'leetcode' 
-                ? refreshLeetcodeLeaderboard 
+            const refreshFunction = selectedPlatform === 'leetcode'
+                ? refreshLeetcodeLeaderboard
                 : refreshCodeforcesLeaderboard;
-            
+
             const result = await refreshFunction(currentRoomDetails.roomId);
-            toast.success(`${selectedPlatform === 'leetcode' ? 'LeetCode' : 'Codeforces'} stats update completed successfully`);
-            
-            if (result.results) {
-                if (result.results.success.length > 0) {
-                    toast.success(`Updated stats for ${result.results.success.length} members`);
-                }
-                if (result.results.failed.length > 0) {
-                    toast.error(`Failed to update ${result.results.failed.length} members`);
-                }
+
+            // Handle skipped update due to recent update
+            if (result?.skipReason === "RECENT_UPDATE") {
+                const nextTime = new Date(result?.nextUpdateAvailable).toLocaleString();
+                toast.info(`${selectedPlatform} stats were recently updated. Try again after ${nextTime}`);
+                return;
+            }
+
+            toast.success(`${selectedPlatform} stats update completed successfully`);
+
+            if (result?.updateResults?.success?.length > 0) {
+                toast.success(`Updated stats for ${result.updateResults.success.length} members`);
+            }
+
+            if (result?.updateResults?.failed?.length > 0) {
+                toast.error(`Failed to update ${result.updateResults.failed.length} members`);
             }
 
             await fetchLeaderboard(1);
         } catch (err) {
-            toast.error(err.message || `Failed to update ${selectedPlatform === 'leetcode' ? 'LeetCode' : 'Codeforces'} stats`);
+            // Rate limit handling
+            if (err?.status === 429 && err?.nextUpdateAvailable) {
+                const retryTime = new Date(err.nextUpdateAvailable).toLocaleString();
+                toast.error(`Rate limit exceeded. Try again after ${retryTime}`);
+            } else {
+                // Fallback error message
+                toast.error(err?.message || `Failed to update ${selectedPlatform} stats`);
+            }
         } finally {
             setLoading(false);
         }

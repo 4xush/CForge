@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from "react"
+import { useState, useEffect } from "react"
+import PropTypes from 'prop-types'
 import { Mail, Key, Trash2, AlertTriangle, Loader2 } from "lucide-react"
 import ApiService from "../../services/ApiService"
 import { toast } from "react-hot-toast"
+import { useAuthContext } from '../../context/AuthContext'
 
 const AccountSettings = ({ profileData, onProfileUpdate, onLogout }) => {
+  const { updateUser } = useAuthContext()
   const [formData, setFormData] = useState({
     email: profileData?.email || "",
   })
@@ -24,10 +27,14 @@ const AccountSettings = ({ profileData, onProfileUpdate, onLogout }) => {
     delete: false
   })
 
+  // Check if user is Google authenticated
+  const isGoogleAuth = profileData?.isGoogleAuth || false
+
   useEffect(() => {
     if (profileData) {
-      setFormData({ email: profileData.email || "" })
-      setOriginalData({ email: profileData.email || "" })
+      const newData = { email: profileData.email || "" }
+      setFormData(newData)
+      setOriginalData(newData)
     }
   }, [profileData])
 
@@ -47,24 +54,86 @@ const AccountSettings = ({ profileData, onProfileUpdate, onLogout }) => {
     }))
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(prev => ({ ...prev, email: true }))
-    try {
-      const responses = await Promise.all([ApiService.put("/users/update/email", { email: formData.email })])
+  const updateEmail = async () => {
+    if (!formData.email) {
+      toast.error('Please enter an email address')
+      return
+    }
 
-      toast.success("Account information updated successfully")
-      if (onProfileUpdate) {
-        onProfileUpdate({
-          ...profileData,
-          email: formData.email,
-        })
+    setLoading(prev => ({ ...prev, email: true }))
+
+    try {
+      const response = await ApiService.put("/users/update/email", { 
+        email: formData.email 
+      })
+
+      let updatedProfile
+
+      // Handle different response formats
+      if (response.data && typeof response.data === 'object') {
+        if (response.data.user) {
+          // If response has user object
+          updatedProfile = response.data.user
+        } else if (response.data.email !== undefined) {
+          // If response has the email field directly
+          updatedProfile = { ...profileData, ...response.data }
+        } else {
+          // If response doesn't contain expected data, merge with current profile
+          updatedProfile = { ...profileData, email: formData.email }
+        }
+      } else {
+        // Fallback: merge with current profile data
+        updatedProfile = { ...profileData, email: formData.email }
       }
+
+      // Update original data to reflect the successful change
+      setOriginalData(prev => ({
+        ...prev,
+        email: updatedProfile.email || formData.email
+      }))
+
+      // Update form data to match the response
+      setFormData(prev => ({
+        ...prev,
+        email: updatedProfile.email || formData.email
+      }))
+
+      // Update AuthContext
+      const contextUpdateSuccess = updateUser(updatedProfile)
+      
+      if (contextUpdateSuccess) {
+        toast.success('Email updated successfully')
+        
+        // Call the callback if provided (for backward compatibility)
+        if (onProfileUpdate) {
+          onProfileUpdate(updatedProfile)
+        }
+      } else {
+        toast.error('Failed to update local data')
+      }
+
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to update account information")
+      console.error('Error updating email:', error)
+      
+      // Reset form data on error
+      setFormData(prev => ({
+        ...prev,
+        email: originalData.email
+      }))
+
+      // Show error message
+      const errorMessage = error.response?.data?.message || 
+                         error.response?.data?.error || 
+                         'Failed to update email'
+      toast.error(errorMessage)
     } finally {
       setLoading(prev => ({ ...prev, email: false }))
     }
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    await updateEmail()
   }
 
   const handlePasswordSubmit = async (e) => {
@@ -119,6 +188,14 @@ const AccountSettings = ({ profileData, onProfileUpdate, onLogout }) => {
     }
   }
 
+  const isEmailChanged = () => {
+    return formData.email !== originalData.email
+  }
+
+  const isEmailValid = () => {
+    return formData.email && formData.email.trim().length > 0
+  }
+
   return (
     <div className="space-y-6">
       <div className="space-y-6 bg-gray-800/50 p-6 rounded-xl">
@@ -126,104 +203,110 @@ const AccountSettings = ({ profileData, onProfileUpdate, onLogout }) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-4">
             {/* Email Input */}
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail className="h-5 w-5 text-gray-400" />
+            <div className="relative flex items-center gap-2">
+              <div className="flex-1 relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="Email Address"
+                  className="w-full pl-10 pr-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white"
+                  disabled={loading.email}
+                />
               </div>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Email Address"
-                className="w-full pl-10 pr-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white"
-              />
-            </div>
-          </div>
-          <button
-            type="submit"
-            disabled={loading.email || formData.email === originalData.email}
-            className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:bg-blue-500/50 disabled:cursor-not-allowed"
-          >
-            {loading.email ? (
-              <>
-                <Loader2 className="inline mr-2 h-4 w-4 animate-spin" />
-                Updating...
-              </>
-            ) : (
-              'Update Account Info'
-            )}
-          </button>
-        </form>
-      </div>
-
-      {/* Password Change Section */}
-      <div className="space-y-6 bg-gray-800/50 p-6 rounded-xl">
-        <h3 className="text-lg font-medium text-white">Security</h3>
-        {!showPasswordForm ? (
-          <button
-            onClick={() => setShowPasswordForm(true)}
-            className="w-full flex items-center justify-between p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors"
-          >
-            <div className="flex items-center gap-2 text-gray-300">
-              <Key size={18} />
-              <span>Change Password</span>
-            </div>
-          </button>
-        ) : (
-          <form onSubmit={handlePasswordSubmit} className="space-y-4">
-            <div className="space-y-4">
-              <input
-                type="text"
-                name="currentPassword"
-                value={passwordData.currentPassword}
-                onChange={handlePasswordChange}
-                placeholder="Current Password"
-                className="w-full px-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white"
-              />
-              <input
-                type="text"
-                name="newPassword"
-                value={passwordData.newPassword}
-                onChange={handlePasswordChange}
-                placeholder="New Password"
-                className="w-full px-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white"
-              />
-              <input
-                type="text"
-                name="confirmPassword"
-                value={passwordData.confirmPassword}
-                onChange={handlePasswordChange}
-                placeholder="Confirm New Password"
-                className="w-full px-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white"
-              />
-            </div>
-            <div className="flex gap-2">
               <button
-                type="submit"
-                disabled={loading.password}
-                className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:bg-blue-500/50 disabled:cursor-not-allowed"
+                type="button"
+                onClick={updateEmail}
+                disabled={loading.email || !isEmailValid() || !isEmailChanged()}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:bg-blue-500/50 disabled:cursor-not-allowed min-w-[120px]"
               >
-                {loading.password ? (
+                {loading.email ? (
                   <>
                     <Loader2 className="inline mr-2 h-4 w-4 animate-spin" />
                     Updating...
                   </>
                 ) : (
-                  'Update Password'
+                  'Update'
                 )}
               </button>
-              <button
-                type="button"
-                onClick={() => setShowPasswordForm(false)}
-                className="flex-1 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
-              >
-                Cancel
-              </button>
             </div>
-          </form>
-        )}
+          </div>
+        </form>
       </div>
+
+      {/* Password Change Section - Hidden for Google Auth users */}
+      {!isGoogleAuth && (
+        <div className="space-y-6 bg-gray-800/50 p-6 rounded-xl">
+          <h3 className="text-lg font-medium text-white">Security</h3>
+          {!showPasswordForm ? (
+            <button
+              onClick={() => setShowPasswordForm(true)}
+              className="w-full flex items-center justify-between p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              <div className="flex items-center gap-2 text-gray-300">
+                <Key size={18} />
+                <span>Change Password</span>
+              </div>
+            </button>
+          ) : (
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <div className="space-y-4">
+                <input
+                  type="password"
+                  name="currentPassword"
+                  value={passwordData.currentPassword}
+                  onChange={handlePasswordChange}
+                  placeholder="Current Password"
+                  className="w-full px-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white"
+                />
+                <input
+                  type="password"
+                  name="newPassword"
+                  value={passwordData.newPassword}
+                  onChange={handlePasswordChange}
+                  placeholder="New Password"
+                  className="w-full px-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white"
+                />
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  value={passwordData.confirmPassword}
+                  onChange={handlePasswordChange}
+                  placeholder="Confirm New Password"
+                  className="w-full px-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={loading.password}
+                  className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:bg-blue-500/50 disabled:cursor-not-allowed"
+                >
+                  {loading.password ? (
+                    <>
+                      <Loader2 className="inline mr-2 h-4 w-4 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    'Update Password'
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordForm(false)}
+                  className="flex-1 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      )}
 
       {/* Delete Account Section */}
       <div className="space-y-6 bg-gray-800/50 p-6 rounded-xl">
@@ -306,5 +389,13 @@ const AccountSettings = ({ profileData, onProfileUpdate, onLogout }) => {
   )
 }
 
-export default AccountSettings
+AccountSettings.propTypes = {
+  profileData: PropTypes.shape({
+    email: PropTypes.string,
+    isGoogleAuth: PropTypes.bool,
+  }),
+  onProfileUpdate: PropTypes.func,
+  onLogout: PropTypes.func,
+}
 
+export default AccountSettings

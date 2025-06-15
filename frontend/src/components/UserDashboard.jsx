@@ -98,7 +98,7 @@ const PlatformVerificationModal = ({ user, onClose }) => {
                         <X className="w-5 h-5" />
                     </button>
                 </div>
-                
+
                 <p className="text-gray-400 mb-6">
                     Please verify your coding platform usernames to ensure accurate stats tracking.
                 </p>
@@ -159,10 +159,42 @@ PlatformVerificationModal.propTypes = {
     onClose: PropTypes.func.isRequired
 };
 
+// Error boundary component for heatmap
+const HeatmapErrorBoundary = ({ children, platform, error, onRetry }) => {
+    if (error) {
+        return (
+            <div className="flex flex-col justify-center items-center h-32 text-center p-4">
+                <AlertCircle className="w-8 h-8 text-red-500 mb-2" />
+                <p className="text-red-400 font-bold mb-1">
+                    Failed to load {platform} activity
+                </p>
+                <p className="text-gray-400 text-sm mb-3">
+                    Unable to fetch activity data
+                </p>
+                <button
+                    onClick={onRetry}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
+                >
+                    Try Again
+                </button>
+            </div>
+        );
+    }
+
+    return children;
+};
+
+HeatmapErrorBoundary.propTypes = {
+    children: PropTypes.node.isRequired,
+    platform: PropTypes.string.isRequired,
+    error: PropTypes.string,
+    onRetry: PropTypes.func.isRequired
+};
+
 const UserProfile = () => {
     // Use AuthContext instead of making separate API calls
     const { authUser: user, isLoading: authLoading, refreshPlatformData } = useAuthContext();
-    
+
     const [refreshing, setRefreshing] = useState(false);
     const [activeTab, setActiveTab] = useState('overview');
     const [showVerificationModal, setShowVerificationModal] = useState(false);
@@ -171,31 +203,43 @@ const UserProfile = () => {
     // Check if verification modal should be shown
     useEffect(() => {
         if (user?.email) {
-            const modalShown = sessionStorage.getItem(`platform_usernameCheck_${user.email}`);
+            const modalShown = localStorage.getItem(`platform_usernameCheck_${user.email}`);
             if (!modalShown) {
                 setShowVerificationModal(true);
             }
         }
     }, [user?.email]);
 
-    const { data: heatmapData, loading: heatmapLoading, error: heatmapError } = useHeatmapData(user?.username);
+    // Modified heatmap data hook call
+    const { 
+        data: heatmapData, 
+        loading: heatmapLoading, 
+        error: heatmapError,
+        refetch: refetchHeatmap
+    } = useHeatmapData(user?.username);
 
     // Use AuthContext's refreshPlatformData method
     const handleRefresh = async () => {
         setRefreshing(true);
         try {
-            await refreshPlatformData(true); // force refresh
+            // Try to refresh platform data first
+            await refreshPlatformData(true);
+            // Retry heatmap
+            refetchHeatmap();
         } catch (err) {
             console.error('Failed to refresh platform data:', err);
-            // You might want to show a toast notification here
         } finally {
             setRefreshing(false);
         }
     };
 
+    const handleHeatmapRetry = () => {
+        refetchHeatmap();
+    };
+
     const handleCloseVerificationModal = () => {
         if (user?.email) {
-            sessionStorage.setItem(`platform_usernameCheck_${user.email}`, 'true');
+            localStorage.setItem(`platform_usernameCheck_${user.email}`, 'true');
         }
         setShowVerificationModal(false);
     };
@@ -261,10 +305,15 @@ const UserProfile = () => {
                 <div className="mb-8">
                     <ProfileHeader user={user} />
                 </div>
+                
                 <div className="mt-8 mb-6">
                     <h1 className="text-3xl font-bold text-white">Welcome, {user.fullName}!</h1>
-                    <p className="text-gray-400 mt-2">Below are your coding details and activity statistics. Click the &apos;Refresh Data&apos; button to retrieve the most recent updates.</p>
+                    <p className="text-gray-400 mt-2">
+                        Below are your coding details and activity statistics. 
+                        Click the 'Refresh Data' button to retrieve the most recent updates.
+                    </p>
                 </div>
+                
                 <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div className="flex flex-wrap gap-4">
                         <TabButton
@@ -280,6 +329,13 @@ const UserProfile = () => {
                             icon={Code2}
                         >
                             LeetCode Stats
+                        </TabButton>
+                        <TabButton
+                            active={activeTab === 'contests'}
+                            onClick={() => navigate('/contests-central')}
+                            icon={Trophy}
+                        >
+                            Contests Central
                         </TabButton>
                     </div>
 
@@ -331,33 +387,33 @@ const UserProfile = () => {
                                             {platform} Activity
                                         </h3>
                                     </div>
-                                    {heatmapLoading ? (
-                                        <div className="flex justify-center items-center h-32">
-                                            <div className="flex flex-col items-center gap-4">
-                                                <div className="w-12 h-12 relative">
-                                                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-full animate-ping opacity-75"></div>
-                                                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-full"></div>
+                                    
+                                    <HeatmapErrorBoundary 
+                                        platform={platform}
+                                        error={heatmapError}
+                                        onRetry={handleHeatmapRetry}
+                                    >
+                                        {heatmapLoading ? (
+                                            <div className="flex justify-center items-center h-32">
+                                                <div className="flex flex-col items-center gap-4">
+                                                    <div className="w-12 h-12 relative">
+                                                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-full animate-ping opacity-75"></div>
+                                                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-full"></div>
+                                                    </div>
+                                                    <p className="text-gray-300 font-medium">Loading {platform} activity...</p>
                                                 </div>
-                                                <p className="text-gray-300 font-medium">Loading {platform} activity...</p>
                                             </div>
-                                        </div>
-                                    ) : heatmapError ? (
-                                        <div className="flex justify-center items-center h-32">
-                                            <div className="text-center">
-                                                <p className="text-yellow-500 font-bold">Failed to load {platform} activity</p>
-                                                <p className="text-gray-400 mt-2">Please try again later.</p>
+                                        ) : data && Object.keys(data).length > 0 ? (
+                                            <ActivityHeatmap
+                                                data={data}
+                                                platform={platform}
+                                            />
+                                        ) : (
+                                            <div className="flex justify-center items-center h-32">
+                                                <p className="text-gray-400">No activity data available for {platform}.</p>
                                             </div>
-                                        </div>
-                                    ) : data && Object.keys(data).length > 0 ? (
-                                        <ActivityHeatmap
-                                            data={data}
-                                            platform={platform}
-                                        />
-                                    ) : (
-                                        <div className="flex justify-center items-center h-32">
-                                            <p className="text-gray-400">No activity data available for {platform}.</p>
-                                        </div>
-                                    )}
+                                        )}
+                                    </HeatmapErrorBoundary>
                                 </div>
                             ))}
                         </div>

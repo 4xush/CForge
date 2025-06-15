@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import AuthLayout from './AuthPage';
@@ -15,16 +15,19 @@ const SignUp = () => {
         confirmPassword: '',
         gender: '',
     });
+
     const navigate = useNavigate();
-    const location = useLocation();
     const { registerUser, isLoading, loginUser, authUser } = useAuthContext();
-    
-    // Check if user is already logged in
+
+    // ✅ Block initial render until auth is determined
     useEffect(() => {
         if (authUser) {
-            navigate('/dashboard');
+            navigate('/dashboard', { replace: true });
         }
     }, [authUser, navigate]);
+
+    // Optional: show spinner or null while auth is loading or user already logged in
+    if (isLoading || authUser) return null;
 
     const handleInputChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -65,9 +68,6 @@ const SignUp = () => {
 
     const handleGoogleSuccess = async (credentialResponse) => {
         try {
-            // Using loginUser with Google token will either:
-            // 1. Log in the user if they already exist
-            // 2. Create a new user if they don't exist (handled on the backend)
             await loginUser(null, null, credentialResponse.credential);
             toast.success('Google sign up successful!');
 
@@ -76,7 +76,6 @@ const SignUp = () => {
                 sessionStorage.setItem('app-pendingInviteCode', pendingInviteCode);
             }
 
-            // Redirect to platforms setup since it's a new account
             navigate('/settings?tab=platforms&newUser=true');
         } catch (error) {
             toast.error(error.message || 'Google sign up failed. Please try again.');
