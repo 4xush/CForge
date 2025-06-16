@@ -1,13 +1,8 @@
 const User = require('../models/User');
 const axios = require('axios');
 const winston = require('winston');
-
-const { updateUserCodeforcesStats } = require('../services/codeforces/codeforcesStatsService');
-const { updateUserGitHubStats } = require('../services/github/githubStatsServices');
-const { updateUserLeetCodeStats } = require('../services/leetcode/leetcodeStatsService');
 const enhancedPlatformService = require('../services/enhancedPlatformService');
 const redisClient = require('../services/cache/redisClient');
-const concurrencyLimiter = require('../services/concurrencyLimiter');
 
 // Logger for platform data operations
 const logger = winston.createLogger({

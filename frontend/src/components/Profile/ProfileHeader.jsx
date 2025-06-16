@@ -61,7 +61,7 @@ export const ProfileHeader = ({ user }) => {
                                         <span className={`text-xs font-medium ${userTag.color}`}>{userTag.label}</span>
                                     </div>
                                 </div>
-                                <p className="text-blue-300 mt-1 font-medium">@{user?.username || 'N/A'}</p>
+                                <p className="text-blue-300 mt-1 font-medium">cforge : @{user?.username || 'N/A'}</p>
                             </div>
                             <div className="text-right text-blue-200/80 flex items-center gap-2 bg-white/5 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
                                 <GitBranch className="h-4 w-4 text-blue-300" />
@@ -71,6 +71,9 @@ export const ProfileHeader = ({ user }) => {
                             </div>
                         </div>
 
+                        <div className="mt-4">
+                            <SocialLinks socialNetworks={user?.socialNetworks} />
+                        </div>
                         <div className="mt-6 flex flex-wrap items-center gap-4 text-gray-200">
                             <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
                                 <Mail className="h-4 w-4 text-blue-300" />
@@ -83,9 +86,6 @@ export const ProfileHeader = ({ user }) => {
                             </div>
                         </div>
 
-                        <div className="mt-4">
-                            <SocialLinks socialNetworks={user?.socialNetworks} />
-                        </div>
                     </div>
                 </div>
             </CardContent>
