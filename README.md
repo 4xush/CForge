@@ -1,189 +1,172 @@
-## Project Overview
+# CForge - Enhanced Coding Platform Analytics 🚀
 
-CForge is a collaborative platform designed for programmers to create rooms, share information, and track their progress across various coding platforms (LeetCode, GitHub, and Codeforces). The application provides features such as user authentication, room management, messaging, and platform statistics integration.
+<div align="center">
 
-## Architecture Analysis
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.0-green.svg)
+![Node.js](https://img.shields.io/badge/Node.js-v18+-green.svg)
+![Redis](https://img.shields.io/badge/Redis-v6+-red.svg)
+![MongoDB](https://img.shields.io/badge/MongoDB-v5+-green.svg)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+
+[Features](#features) • [Quick Start](#quick-start) • [Documentation](#documentation) • [Tech Stack](#tech-stack) • [Contributing](#contributing)
+
+<img src="frontend/public/preview/preview.png" alt="CForge Preview" style="border: 2px solid #666; border-radius: 8px;" />
+
+</div>
+
+CForge is a powerful full-stack application that aggregates and analyzes coding statistics across multiple platforms (LeetCode, Codeforces, GitHub). Built with performance and scalability in mind, it features real-time updates, Redis caching, and intelligent rate limiting.
+
+## ✨ Key Features
+
+- **Multi-Platform Integration**
+
+  - LeetCode statistics and contest ratings
+  - Codeforces performance metrics
+  - GitHub contribution analytics
+  - Real-time platform data synchronization
+
+- **Advanced Caching System**
+
+  - Redis-powered caching layer
+  - Optimized data retrieval
+  - Configurable cache invalidation
+  - Reduced API load
+
+- **Intelligent Rate Limiting**
+
+  - Platform-specific rate limits
+  - Redis-based rate limiting storage
+  - Configurable limits per endpoint
+  - Development mode bypass options
+
+- **Real-Time Features**
+
+  - WebSocket-based live updates
+  - Activity heatmaps
+  - Contest notifications
+  - Live user statistics
+
+- **Room-Based Competition**
+  - Create private/public rooms
+  - Real-time leaderboards
+  - Platform-specific rankings
+  - Member management
+- **Leaderboards**: Compare progress with room members.
+- **Public Profiles**: Share your coding journey and stats.
+- **Rate Limiting**: Protects against abuse and ensures fair usage.
+- **Caching**: Improves response times for frequently accessed data.
+- **Health Monitoring**: Provides insights into system status and performance.
+
+## 🛠 Technology Stack
 
 ### Backend Architecture
 
-The backend is built with:
-
-- **Framework**: Express.js (Node.js)
+- **Core**: Node.js + Express
 - **Database**: MongoDB with Mongoose ODM
-- **Authentication**: JWT-based authentication
-- **External APIs**: Integration with LeetCode, GitHub, and Codeforces APIs
-- **Security**: Helmet for HTTP headers, CORS protection, and message encryption
+- **Caching**: Redis for performance optimization
+- **Real-time**: WebSocket implementation
+- **Security**: JWT, bcrypt, and crypto
+- **Performance**:
+  - Redis-based rate limiting
+  - Concurrent processing
+  - Batch operations
+  - Smart caching strategies
+- **Monitoring**: Winston logging system
 
-The architecture follows an MVC-like pattern:
+### Frontend Technology
 
-- Models: Define database schemas
-- Controllers: Handle request/response logic
-- Routes: Define API endpoints
-- Services: Encapsulate external API interactions
-- Utils: Provide helper functions
+- **Framework**: React.js with Vite
+- **State Management**: Redux/Context
+- **Styling**: TailwindCSS
+- **Real-time**: WebSocket client
+- **UI/UX**: Modern responsive design
+- **Data Viz**: Custom chart components
 
-### Code Structure Evaluation
+### Frontend Architecture
 
-**Strengths:**
+- **Core Framework**:
+  - React 18.3.1 with React DOM
+  - Vite as the build tool
+  - Next.js 13.4.19 integration
+- **UI Components & Styling**:
+  - TailwindCSS with PostCSS and Autoprefixer
+  - Chakra UI for accessible, composable components
+  - Material UI (MUI) for rich UI elements
+  - Radix UI primitives for enhanced accessibility
+  - Framer Motion for smooth animations
+  - React Icons for comprehensive icon set
+- **Data Management & Communication**:
+  - TanStack React Query v5 for data fetching and caching
+  - Socket.io-client for real-time features
+  - Axios for HTTP requests
+- **Visualization & Charts**:
+  - Recharts for flexible data visualization
+  - React Particles for interactive backgrounds
+  - D3.js integration for custom visualizations
+- **Developer Experience**:
+  - TypeScript for type safety
+  - ESLint with custom configuration
+  - Vite PWA plugin for Progressive Web App features
+  - Hot Module Replacement (HMR)
+- **Authentication & Security**:
+  - @react-oauth/google for Google Sign-In
+  - JWT handling with jwt-decode
+  - Secure HTTP-only cookie management
+- **User Experience**:
+  - React Hot Toast for elegant notifications
+  - Date-fns for comprehensive date handling
+  - Optimized bundle size with code splitting
+  - Responsive design with Tailwind breakpoints
+- **Performance Optimizations**:
+  - React.lazy and Suspense for code splitting
+  - Vite's build optimization
+  - Asset optimization with vite-imagetools
+  - Service Worker for offline capabilities
 
-- Well-organized folder structure with clear separation of concerns
-- Consistent error handling patterns
-- Modular code with reusable components
-- Security measures implemented (authentication, encryption)
-- Good use of middleware for authentication
+## 🚀 Getting Started
 
-**Areas for Improvement:**
+### System Requirements
 
-- Some controllers are too large (e.g., `authController.js`, `adminRoomController.js`)
-- Inconsistent use of async/await error handling (some use try/catch, others don't)
-- Duplicate code in platform service modules
-- Missing centralized logging system
+- Node.js 18.0.0 or newer
+- MongoDB 5.0 or newer
+- Redis 6.0 or newer
+- npm 8.0.0 or newer
 
-## Security Analysis
+### Installation Steps
 
-**Implemented Security Measures:**
+1. **Clone and Setup**
 
-- JWT authentication for protected routes
-- Password hashing with bcrypt
-- Message encryption for chat functionality
-- CORS configuration
-- HTTP security headers with helmet
+   ```bash
+   # Clone the repository
+   git clone https://github.com/4xush/CForge.git
+   cd cforge
 
-**Security Concerns:**
+   # Install dependencies
+   npm install
+   cd frontend && npm install
+   ```
 
-1. Token refresh mechanism is missing
-2. No rate limiting for authentication endpoints
-3. Potential MongoDB injection vulnerabilities in some queries
-4. Hard-coded timeout values in API requests
-5. Possible exposure of sensitive error details to clients
+2. **Configure Environment**
 
-## API Design Evaluation
+   ```bash
+   # Copy example environment files
+   cp .env.example .env
+   cd frontend && cp .env.example .env.local
+   ```
 
-The API follows RESTful conventions with appropriate HTTP methods:
+3. **Configure Environment Variables**
 
-- GET for retrieving data
-- POST for creating resources
-- PUT for updating resources
-- DELETE for removing resources
+Create a `.env` file in the `backend` directory with the following variables:
 
-**Strengths:**
-
-- Logical endpoint naming
-- Proper use of HTTP status codes
-- Consistent response formats
-- Protected routes with middleware
-
-**Improvement Opportunities:**
-
-- Add API versioning (e.g., `/api/v1/...`)
-- Implement pagination consistently across all list endpoints
-- Add more comprehensive query parameter validation
-- Consider implementing GraphQL for complex data requirements
-
-## Database Schema Analysis
-
-The project uses three main collections:
-
-- User: Stores user information and platform stats
-- Room: Manages room details, members, and permissions
-- Message: Stores encrypted communications
-
-**Schema Design Evaluation:**
-
-- Good use of references between collections
-- Proper indexing for performance optimization
-- Appropriate data validation
-- Well-thought-out nested objects for platform data
-
-**Potential Improvements:**
-
-- Consider using transactions for operations that modify multiple documents
-- Add more granular indexing for specific query patterns
-- Add TTL index for temporary data like join requests
-- Consider schema versioning strategy for future updates
-
-## Critical Updates Required
-
-1. **Security Fixes:**
-
-   - Implement rate limiting on authentication routes
-   - Add input sanitization for MongoDB queries
-   - Remove sensitive error details from production responses
-   - Add token refresh mechanism
-   - Strengthen password validation requirements
-
-2. **Performance Optimizations:**
-
-   - Add caching for platform API responses
-   - Optimize MongoDB queries with proper projection
-   - Implement connection pooling
-   - Add database query timeouts
-
-3. **Code Quality Improvements:**
-
-   - Refactor large controllers into smaller, focused modules
-   - Standardize error handling patterns
-   - Add comprehensive JSDoc comments
-   - Create centralized logging system
-   - Implement more thorough input validation
-
-4. **Feature Enhancements:**
-   - Add pagination for all list endpoints
-   - Add user account verification via email
-
-## README.md
-
-# CForge
-
-CForge is a collaborative platform for programmers to track progress across coding platforms, create community rooms, and share knowledge.
-
-## Features
-
-- **User Authentication**: Secure login/signup with JWT and Google OAuth
-- **Platform Integration**: Connect and track stats from LeetCode, GitHub, and Codeforces
-- **Community Rooms**: Create, join, and manage collaborative spaces
-- **Secure Messaging**: End-to-end encrypted real time room messaging
-- **Leaderboards**: Compare progress with room members
-- **Public Profiles**: Share your coding journey and stats
-
-## Tech Stack
-
-### Backend
-
-- Node.js with Express
-- MongoDB with Mongoose
-- JWT Authentication
-- Bcrypt for password hashing
-- Crypto for message encryption
-
-### Frontend (not included in this analysis)
-
-- React.js
-- React Router
-- Redux for state management
-- Axios for API calls
-- TailwindCSS for styling
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js (v14+)
-- MongoDB
-- npm or yarn
-
-### Environment Variables
-
-Create a `.env` file in the root directory with the following variables:
-
-```
+```env
 # Server Configuration
 PORT=5000
 NODE_ENV=development
 
 # MongoDB Connection
 MONGODB_URI=your_mongodb_connection_string
-MONGODB_URI=your_mongodb_connection_string_backup
+MONGODB_URI_BACKUP=your_mongodb_connection_string_backup # Optional backup
 
 # JWT Authentication
 JWT_SECRET=your_jwt_secret_key
@@ -197,43 +180,109 @@ GOOGLE_CLIENT_ID=your_google_client_id
 
 # Frontend URL for CORS
 FRONTEND_URL=http://localhost:5173
+
+# --- New Enhanced Features Configuration ---
+# Caching TTLs (in seconds)
+LEETCODE_CACHE_TTL=1800
+GITHUB_CACHE_TTL=1800
+CODEFORCES_CACHE_TTL=1800
+DEFAULT_CACHE_TTL=900
+
+# Concurrency Limits
+PLATFORM_CONCURRENCY_LIMIT=5
+DATABASE_CONCURRENCY_LIMIT=10
+GENERAL_CONCURRENCY_LIMIT=8
+EXTERNAL_CONCURRENCY_LIMIT=3
+
+# Batch Processing Sizes
+PLATFORM_BATCH_SIZE=10
+ROOM_BATCH_SIZE=5
+BULK_BATCH_SIZE=10
+
+# Rate Limiting Configuration (window in ms, max requests)
+AUTH_RATE_LIMIT_WINDOW=900000
+AUTH_RATE_LIMIT_MAX=5
+PLATFORM_REFRESH_WINDOW=600000
+PLATFORM_REFRESH_MAX=1
+ROOM_OPERATIONS_WINDOW=300000
+ROOM_OPERATIONS_MAX=10
+MESSAGING_RATE_WINDOW=60000
+MESSAGING_RATE_MAX=30
+API_RATE_LIMIT_WINDOW=900000
+API_RATE_LIMIT_MAX=100
+
+# Development settings
+DISABLE_RATE_LIMITING=false # Set to true to disable rate limits in dev
 ```
+
+````
 
 ### Installation
 
-1. Clone the repository
+1.  Clone the repository
+    ```bash
+    git clone https://github.com/your-username/cforge.git
+    cd cforge
+    ```
+2.  Install backend dependencies (includes new packages like `redis`, `express-rate-limit`, etc.)
+    ```bash
+    cd backend
+    npm install
+    ```
+3.  Start the development server
+    ```bash
+    npm run dev
+    ```
 
-```bash
-git clone https://github.com/your-username/cforge.git
-cd cforge
+## 🔧 Advanced Configuration
+
+### Rate Limiting Configuration
+```env
+# Authentication limits
+AUTH_RATE_LIMIT_WINDOW=900000     # 15 minutes
+AUTH_RATE_LIMIT_MAX=5             # 5 attempts
+
+# Platform refresh limits
+PLATFORM_REFRESH_WINDOW=600000    # 10 minutes
+PLATFORM_REFRESH_MAX=1            # 1 refresh
+
+# API general limits
+API_RATE_LIMIT_WINDOW=900000      # 15 minutes
+API_RATE_LIMIT_MAX=100           # 100 requests
 ```
 
-2. Install backend dependencies
-
-```bash
-cd backend
-npm install
+### Cache Configuration
+```env
+# Cache TTLs (in seconds)
+LEETCODE_CACHE_TTL=1800          # 30 minutes
+GITHUB_CACHE_TTL=1800            # 30 minutes
+CODEFORCES_CACHE_TTL=1800        # 30 minutes
+DEFAULT_CACHE_TTL=900            # 15 minutes
 ```
 
-3. Start the development server
-
-```bash
-npm run dev
+### Development Mode
+```env
+# Bypass rate limiting in development
+NODE_ENV=development
+DISABLE_RATE_LIMITING=true
 ```
 
-## API Documentation
+## 📚 API Documentation
 
 ### Authentication Endpoints
 
 - `POST /api/auth/signup`: Register a new user
 - `POST /api/auth/login`: Login with email and password
 - `POST /api/auth/google`: Authenticate with Google
+  - _Now with enhanced rate limiting and brute-force protection._
 
 ### User Endpoints
 
 - `GET /api/users/profile`: Get current user profile
 - `POST /api/users/setup-platforms`: Set up coding platform usernames
-- `PUT /api/users/platform/refresh`: Refresh platform statistics
+- **`PUT /api/users/platform/refresh/`**: Refresh platform statistics for the authenticated user.
+  - Rate limited (e.g., 1 req / 10 min per user).
+  - Supports `?force=true` & `?noCache=true`.
 - Various update endpoints for user settings
 
 ### Room Endpoints
@@ -244,6 +293,10 @@ npm run dev
 - `GET /api/rooms/:roomId`: Get room details
 - `POST /api/rooms/:roomId/join`: Request to join a room
 - `DELETE /api/rooms/:roomId/leave`: Leave a room
+- **`POST /api/rooms/:roomId/bulk-refresh`**: Bulk refresh platform data for specified users in a room.
+- **`POST /api/rooms/:roomId/update-{platform}-stats`**: (e.g., `update-leetcode-stats`) Enhanced room platform updates.
+  - Rate limited (e.g., 1 req / 2 hours per room).
+  - Supports `?force=true`.
 
 ### Admin Room Endpoints
 
@@ -258,6 +311,7 @@ npm run dev
 - `GET /api/rooms/:roomId/messages`: Get room messages
 - `PUT /api/rooms/messages/:messageId`: Edit a message
 - `DELETE /api/rooms/messages/:messageId`: Delete a message
+  - _Now with enhanced rate limiting._
 
 ### Public Endpoints
 
@@ -265,31 +319,102 @@ npm run dev
 - `GET /api/u/hmap/:username`: Get platform heatmaps
 - `GET /api/u/lc-stats/:username`: Get LeetCode question stats
 
-## Deployment
+### Cache Management Endpoints (New)
 
-For production deployment:
+- `DELETE /api/users/platform/cache?platform=<platformName>`: Invalidate user's cache for a specific platform.
+- `GET /api/users/platform/stats`: Get platform service statistics (cache hits/misses, etc.).
 
-1. Set `NODE_ENV=production` in your environment
-2. Configure proper security settings and CORS restrictions
-3. Use a process manager like PM2 to run the server
-4. Set up NGINX as a reverse proxy with SSL
+### Health Check Endpoints (New)
 
-## Contributing
+- `GET /api/health`: Basic health check.
+- `GET /api/health/ping`: Simple ping.
+- `GET /api/health/detailed`: Detailed service health (requires auth).
+- `GET /api/health/cache`, `/api/health/database`, `/api/health/services`: Service-specific checks (requires auth).
+- `GET /api/health/ready`: Kubernetes readiness probe.
+- `GET /api/health/live`: Kubernetes liveness probe.
+- `POST /api/health/restart/:serviceName`: Admin endpoint to restart a service (requires secret key).
+
+## Architecture & Security Highlights
+
+The backend architecture follows an MVC-like pattern with a strong focus on separation of concerns. Recent enhancements have significantly bolstered its capabilities:
+
+- **Security**: Includes JWT authentication, password hashing, message encryption, CORS, Helmet, and now comprehensive multi-tier rate limiting and brute force protection. Input sanitization practices are in place.
+- **Performance**: Leverages Redis for intelligent caching, `p-limit` for managing concurrency in external API calls and database operations, and batch processing for bulk tasks.
+- **Reliability**: Implements retry logic with exponential backoff for transient API failures, graceful degradation if Redis or cache is unavailable, and robust error handling.
+- **Scalability**: The design is job-queue ready (e.g., BullMQ) for handling background tasks and supports horizontal scaling.
+
+## Troubleshooting with New Features
+
+- **Rate Limit Errors (429 Too Many Requests)**: Check client-side request frequency or adjust rate limit ENV variables if necessary.
+- **Cache Issues**: Use `DELETE /api/users/platform/cache` to invalidate cache. Check Redis connectivity if issues persist.
+- **Performance Monitoring**: Utilize `GET /api/health/detailed` and `GET /api/users/platform/stats` for insights.
+- **Logs**: Detailed logs are available in `backend/logs/` (e.g., `platform-controller-combined.log`, `redis-combined.log`).
+
+## 🚀 Deployment
+
+### Production Setup
+1. Build the application
+   ```bash
+   npm run build
+   ```
+
+2. Configure production environment
+   ```env
+   NODE_ENV=production
+   MONGODB_URI=your_production_mongodb_uri
+   REDIS_URL=your_production_redis_url
+   ```
+
+3. Start the server
+   ```bash
+   npm start
+   ```
+
+### Health Monitoring
+- `/api/health`: Basic health check
+- `/api/health/detailed`: Detailed system status
+- `/api/health/cache`: Cache system status
+- `/api/health/redis`: Redis connection status
+
+## 🤝 Contributing
+
+We welcome contributions! Here's how you can help:
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create your feature branch
+   ```bash
+   git checkout -b feature/amazing-feature
+   ```
+3. Follow our development standards
+   - Use Winston for logging
+   - Implement proper error handling
+   - Add appropriate rate limiting
+   - Include health checks
+   - Add tests for new features
 
-## License
+4. Commit your changes
+   ```bash
+   git commit -m 'Add some amazing feature'
+   ```
+5. Push to your branch
+   ```bash
+   git push origin feature/amazing-feature
+   ```
+6. Open a Pull Request
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+## 📝 License
 
-## Acknowledgements
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-- LeetCode, GitHub and Codeforces for their APIs
-- The amazing open-source community for their tools and librariesProject overview -Cross-Platform Leaderboard
-  Integrate leaderboards that aggregate performance across multiple platforms like LeetCode, Codeforces, HackerRank, etc.,
-  Allowing users to see their overall coding rank across platforms.
-  This would provide a unified view of their competitive programming skills.
+## 🙏 Acknowledgments
+
+- LeetCode API Team
+- Codeforces API
+- GitHub API
+- MongoDB Team
+- Redis Team
+- Open source community
+
+---
+Built with 💗 by Ayush
+````
