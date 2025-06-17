@@ -19,7 +19,7 @@ const UserProfile = () => {
         const fetchProfile = async () => {
             try {
                 const response = await ApiService.get(`/u/${username}`);
-                setUser(response.data);
+                setUser(response.data.user);
             } catch (err) {
                 if (err.response?.status === 404) {
                     navigate('/404');

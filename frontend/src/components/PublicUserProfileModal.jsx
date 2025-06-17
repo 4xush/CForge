@@ -18,7 +18,7 @@ const PublicUserProfileModal = ({ username, isOpen, onClose }) => {
             setLoading(true);
             ApiService.get(`/u/${username}`)
                 .then(response => {
-                    setUser(response.data);
+                    setUser(response.data.user); // extract nested user
                     setLoading(false);
                 })
                 .catch(error => {

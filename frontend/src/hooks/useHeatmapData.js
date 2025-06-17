@@ -1,30 +1,52 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import ApiService from '../services/ApiService';
 
+// Cache duration in milliseconds (30 minutes)
+const CACHE_DURATION = 30 * 60 * 1000;
+
+const getCachedData = (username) => {
+  try {
+    const cached = localStorage.getItem(`heatmap_${username}`);
+    if (cached) {
+      const { data, timestamp } = JSON.parse(cached);
+      const now = Date.now();
+      // Return data if it's less than CACHE_DURATION old
+      if (now - timestamp < CACHE_DURATION) {
+        return data;
+      }
+    }
+  } catch (err) {
+    console.warn('Error reading cached heatmap data:', err);
+  }
+  return null;
+};
+
+const setCachedData = (username, data) => {
+  try {
+    localStorage.setItem(`heatmap_${username}`, JSON.stringify({
+      data,
+      timestamp: Date.now()
+    }));
+  } catch (err) {
+    console.warn('Error caching heatmap data:', err);
+  }
+};
+
 export const useHeatmapData = (username, options = {}) => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(() => getCachedData(username));
+  const [loading, setLoading] = useState(!data); // Only show loading if no cached data
   const [error, setError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
   const abortControllerRef = useRef(null);
   const lastFetchAttemptRef = useRef(0);
-  
-  const MAX_RETRIES = 2;
-  const CACHE_EXPIRY_DAYS = 2;
-  const MIN_RETRY_INTERVAL = 30000; // 30 seconds between retries
-  const { 
-    skipFetch = false, 
-    onError = () => {}, 
-    enableRetry = true 
-  } = options;
 
-  // Helper function to check if cached data is expired
-  const isCacheExpired = (timestamp) => {
-    const now = new Date().getTime();
-    const cacheTime = new Date(timestamp).getTime();
-    const diffInDays = (now - cacheTime) / (1000 * 60 * 60 * 24);
-    return diffInDays > CACHE_EXPIRY_DAYS;
-  };
+  const MAX_RETRIES = 2;
+  const MIN_RETRY_INTERVAL = 30000; // 30 seconds between retries
+  const {
+    skipFetch = false,
+    onError = () => { },
+    enableRetry = true
+  } = options;
 
   // Helper function to check if we should retry based on time interval
   const canRetryNow = () => {
@@ -36,7 +58,7 @@ export const useHeatmapData = (username, options = {}) => {
   const isServerError = (err) => {
     const errorMessage = err.message || '';
     const errorCode = err.code || '';
-    
+
     return (
       errorMessage.includes('network') ||
       errorMessage.includes('Failed to fetch') ||
@@ -56,6 +78,16 @@ export const useHeatmapData = (username, options = {}) => {
       return;
     }
 
+    // Check cache first if not forcing refresh
+    if (!forceRefresh) {
+      const cachedData = getCachedData(username);
+      if (cachedData) {
+        setData(cachedData);
+        setLoading(false);
+        return;
+      }
+    }
+
     // Prevent too frequent retry attempts
     if (!forceRefresh && !canRetryNow()) {
       setLoading(false);
@@ -73,34 +105,6 @@ export const useHeatmapData = (username, options = {}) => {
 
     try {
       setLoading(true);
-      
-      // Check localStorage first (unless forcing refresh)
-      if (!forceRefresh) {
-        const storedItem = localStorage.getItem(`heatmap-data-${username}`);
-        
-        if (storedItem) {
-          try {
-            const parsedItem = JSON.parse(storedItem);
-            
-            // Check if cached data exists and is not expired
-            if (parsedItem && parsedItem.data && parsedItem.timestamp && !isCacheExpired(parsedItem.timestamp)) {
-              // Validate the stored data format
-              if (parsedItem.data.heatmaps) {
-                setData(parsedItem.data.heatmaps);
-                setError(null);
-                setLoading(false);
-                return;
-              }
-            } else if (parsedItem && parsedItem.timestamp && isCacheExpired(parsedItem.timestamp)) {
-              // Remove expired cache
-              localStorage.removeItem(`heatmap-data-${username}`);
-            }
-          } catch (parseError) {
-            console.warn('Failed to parse cached heatmap data:', parseError);
-            localStorage.removeItem(`heatmap-data-${username}`);
-          }
-        }
-      }
 
       // Check if we're online
       if (!navigator.onLine) {
@@ -111,29 +115,18 @@ export const useHeatmapData = (username, options = {}) => {
         signal: abortControllerRef.current.signal,
         timeout: 10000 // 10 second timeout
       });
-      
+
       // Validate response format
-      if (!response.data || !response.data.heatmaps) {
+      if (!response.data || !response.data.success || !response.data.heatmaps) {
         throw new Error("Invalid data format received from API");
       }
 
-      // Store data with timestamp in localStorage
-      const dataToStore = {
-        data: response.data,
-        timestamp: new Date().toISOString()
-      };
-      
-      try {
-        localStorage.setItem(`heatmap-data-${username}`, JSON.stringify(dataToStore));
-      } catch (storageError) {
-        console.warn('Failed to cache heatmap data:', storageError);
-        // Continue without caching if storage fails
-      }
-      
+      // Cache the new data
+      setCachedData(username, response.data.heatmaps);
       setData(response.data.heatmaps);
       setError(null);
       setRetryCount(0); // Reset retry count on success
-      
+
     } catch (err) {
       // Don't set error if request was aborted (component unmounted or new request started)
       if (err.name === 'AbortError') {
@@ -143,32 +136,18 @@ export const useHeatmapData = (username, options = {}) => {
       const errorMessage = err.message || "Failed to load heatmap data";
       setError(errorMessage);
       console.error('Error fetching heatmap data:', err);
-      
+
       // Call the error callback
       onError(errorMessage);
-      
+
       // Implement retry logic only for network errors and if retries are enabled
       if (enableRetry && retryCount < MAX_RETRIES && isServerError(err)) {
         setRetryCount(prev => prev + 1);
         // Exponential backoff with jitter
         const backoffDelay = Math.min(1000 * Math.pow(2, retryCount) + Math.random() * 1000, 30000);
         setTimeout(() => fetchData(forceRefresh), backoffDelay);
-      } else {
-        // Try to load cached data as fallback if available
-        const storedItem = localStorage.getItem(`heatmap-data-${username}`);
-        if (storedItem) {
-          try {
-            const parsedItem = JSON.parse(storedItem);
-            if (parsedItem && parsedItem.data && parsedItem.data.heatmaps) {
-              setData(parsedItem.data.heatmaps);
-              setError(`Using cached data. ${errorMessage}`);
-            }
-          } catch (parseError) {
-            console.warn('Failed to parse cached fallback data:', parseError);
-          }
-        }
       }
-      
+
     } finally {
       setLoading(false);
       abortControllerRef.current = null;
@@ -179,7 +158,7 @@ export const useHeatmapData = (username, options = {}) => {
     if (username) {
       fetchData();
     }
-    
+
     // Cleanup function to abort ongoing requests
     return () => {
       if (abortControllerRef.current) {
@@ -195,31 +174,11 @@ export const useHeatmapData = (username, options = {}) => {
     fetchData(forceRefresh);
   }, [fetchData]);
 
-  // Function to manually clear cache (optional utility)
-  const clearCache = useCallback(() => {
-    localStorage.removeItem(`heatmap-data-${username}`);
-  }, [username]);
-
-  // Function to check if we have cached data
-  const hasCachedData = useCallback(() => {
-    const storedItem = localStorage.getItem(`heatmap-data-${username}`);
-    if (!storedItem) return false;
-    
-    try {
-      const parsedItem = JSON.parse(storedItem);
-      return !!(parsedItem && parsedItem.data && parsedItem.data.heatmaps);
-    } catch {
-      return false;
-    }
-  }, [username]);
-
-  return { 
-    data, 
-    loading, 
-    error, 
-    refetch, 
-    clearCache, 
-    hasCachedData: hasCachedData(),
+  return {
+    data,
+    loading,
+    error,
+    refetch,
     isRetrying: retryCount > 0 && loading
   };
 };

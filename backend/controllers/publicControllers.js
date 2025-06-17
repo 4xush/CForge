@@ -1,5 +1,23 @@
 const User = require('../models/User');
 const axios = require("axios");
+const winston = require('winston');
+
+// Logger setup
+const logger = winston.createLogger({
+    level: 'info',
+    format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.json()
+    ),
+    transports: [
+        new winston.transports.File({ filename: 'logs/public-controller-error.log', level: 'error' }),
+        new winston.transports.File({ filename: 'logs/public-controller-combined.log' })
+    ]
+});
+
+if (process.env.NODE_ENV !== 'production') {
+    logger.add(new winston.transports.Console({ format: winston.format.simple() }));
+}
 
 exports.getPublicUserProfile = async (req, res) => {
     try {
@@ -12,48 +30,137 @@ exports.getPublicUserProfile = async (req, res) => {
                 message: "User not found"
             });
         }
-        res.status(200).json(user);
+        res.status(200).json({
+            success: true,
+            user
+        });
     } catch (error) {
-        console.error("Error fetching user details:", error);
-        res.status(500).json({ message: "Server error", error: error.message });
+        logger.error('Error in getPublicUserProfile:', error);
+        res.status(500).json({
+            success: false,
+            message: "Server error",
+            error: error.message
+        });
     }
 };
 
 exports.getPublicUserHeatMaps = async (req, res) => {
     try {
-
         const username = req.params.username;
         const user = await User.findOne({ username });
 
         if (!user) {
             return res.status(404).json({
                 success: false,
-                message: "User not found",
+                message: "User not found"
             });
         }
-        // Fetch activity heatmap data
-        const leetcodeHeatmap = user.platforms.leetcode.username
-            ? await getLeetCodeHeatmap(user.platforms.leetcode.username)
-            : null;
 
-        const githubHeatmap = user.platforms.github.username
-            ? await getGitHubHeatmap(user.platforms.github.username)
-            : null;
-        const codeforcesHeatmap = user.platforms.codeforces.username
-            ? await getCodeforcesHeatmap(user.platforms.codeforces.username)
-            : null;
+        const CACHE_DURATION_DAYS = 3;
+        const now = new Date();
+        const heatmaps = {};
+
+        // Helper function to check if heatmap data needs refresh
+        const needsRefresh = (lastUpdated) => {
+            if (!lastUpdated) return true;
+            const diffTime = Math.abs(now - lastUpdated);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays > CACHE_DURATION_DAYS;
+        };
+
+        // Process each platform
+        for (const platform of ['leetcode', 'github', 'codeforces']) {
+            const platformData = user.platforms[platform];
+            if (platformData?.username) {
+                if (needsRefresh(platformData.heatmapLastUpdated)) {
+                    try {
+                        let heatmapData;
+                        switch (platform) {
+                            case 'leetcode':
+                                heatmapData = await getLeetCodeHeatmap(platformData.username);
+                                break;
+                            case 'github':
+                                heatmapData = await getGitHubHeatmap(platformData.username);
+                                break;
+                            case 'codeforces':
+                                heatmapData = await getCodeforcesHeatmap(platformData.username);
+                                break;
+                        }
+
+                        // Convert the data to Map format for storage
+                        const heatmapMap = new Map();
+                        if (platform === 'leetcode') {
+                            Object.entries(heatmapData).forEach(([timestamp, count]) => {
+                                heatmapMap.set(timestamp, count);
+                            });
+                        } else {
+                            heatmapData.forEach(({ date, count }) => {
+                                heatmapMap.set(date, count);
+                            });
+                        }
+
+                        // Update user document with new heatmap data
+                        await User.findOneAndUpdate(
+                            { username },
+                            {
+                                $set: {
+                                    [`platforms.${platform}.heatmapData`]: heatmapMap,
+                                    [`platforms.${platform}.heatmapLastUpdated`]: now
+                                }
+                            }
+                        );
+
+                        heatmaps[platform] = heatmapData;
+                    } catch (error) {
+                        logger.error(`Failed to fetch ${platform} heatmap:`, error);
+                        // If fetch fails, use cached data if available
+                        if (platformData.heatmapData) {
+                            // Convert Map back to original format
+                            if (platform === 'leetcode') {
+                                const leetcodeData = {};
+                                platformData.heatmapData.forEach((value, key) => {
+                                    leetcodeData[key] = value;
+                                });
+                                heatmaps[platform] = leetcodeData;
+                            } else {
+                                const arrayData = [];
+                                platformData.heatmapData.forEach((value, key) => {
+                                    arrayData.push({ date: key, count: value });
+                                });
+                                heatmaps[platform] = arrayData;
+                            }
+                        }
+                    }
+                } else {
+                    // Use cached data
+                    if (platform === 'leetcode') {
+                        const leetcodeData = {};
+                        platformData.heatmapData.forEach((value, key) => {
+                            leetcodeData[key] = value;
+                        });
+                        heatmaps[platform] = leetcodeData;
+                    } else {
+                        const arrayData = [];
+                        platformData.heatmapData.forEach((value, key) => {
+                            arrayData.push({ date: key, count: value });
+                        });
+                        heatmaps[platform] = arrayData;
+                    }
+                }
+            }
+        }
 
         res.status(200).json({
             success: true,
-            heatmaps: {
-                leetcode: leetcodeHeatmap,
-                github: githubHeatmap,
-                codeforces: codeforcesHeatmap,
-            },
+            heatmaps
         });
     } catch (error) {
-        console.error("Error fetching user details:", error);
-        res.status(500).json({ message: "Server error", error: error.message });
+        logger.error('Error in getPublicUserHeatMaps:', error);
+        res.status(500).json({
+            success: false,
+            message: "Server error",
+            error: error.message
+        });
     }
 };
 
@@ -87,6 +194,7 @@ async function getLeetCodeHeatmap(leetcodeUsername) {
         return {}; // Return empty object on parsing error
     }
 }
+
 async function getGitHubHeatmap(githubUsername) {
     try {
         // Add authentication and proper headers

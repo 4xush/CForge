@@ -128,9 +128,7 @@ The project uses three main collections:
    - Implement more thorough input validation
 
 4. **Feature Enhancements:**
-   - Implement websocket connections for real-time messaging
    - Add pagination for all list endpoints
-   - Implement more robust platform API error handling
    - Add user account verification via email
 
 ## README.md
@@ -144,7 +142,7 @@ CForge is a collaborative platform for programmers to track progress across codi
 - **User Authentication**: Secure login/signup with JWT and Google OAuth
 - **Platform Integration**: Connect and track stats from LeetCode, GitHub, and Codeforces
 - **Community Rooms**: Create, join, and manage collaborative spaces
-- **Secure Messaging**: End-to-end encrypted room messaging
+- **Secure Messaging**: End-to-end encrypted real time room messaging
 - **Leaderboards**: Compare progress with room members
 - **Public Profiles**: Share your coding journey and stats
 

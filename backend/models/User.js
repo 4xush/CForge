@@ -111,6 +111,14 @@ const userSchema = new mongoose.Schema(
         lastRefreshAttempt: {
           type: Date
         },
+        heatmapData: {
+          type: Map,
+          of: Number,
+          default: new Map()
+        },
+        heatmapLastUpdated: {
+          type: Date
+        }
       },
       github: {
         username: {
@@ -148,6 +156,14 @@ const userSchema = new mongoose.Schema(
         rateLimitReset: {
           type: Date
         },
+        heatmapData: {
+          type: Map,
+          of: Number,
+          default: new Map()
+        },
+        heatmapLastUpdated: {
+          type: Date
+        }
       },
       leetcode: {
         username: {
@@ -184,6 +200,14 @@ const userSchema = new mongoose.Schema(
         lastRefreshAttempt: {
           type: Date
         },
+        heatmapData: {
+          type: Map,
+          of: Number,
+          default: new Map()
+        },
+        heatmapLastUpdated: {
+          type: Date
+        }
       },
     },
   },

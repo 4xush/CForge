@@ -1,11 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
+import PropTypes from 'prop-types';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '../ui/Alert';
-import { RefreshCw } from 'lucide-react';
 
 const ActivityHeatmap = ({ data, platform }) => {
-    const [error, setError] = useState(null);
-    const [isRefreshing, setIsRefreshing] = useState(false);
     
     // Handle the case where data is invalid or missing
     if (!data || (Array.isArray(data) && data.length === 0) || 
@@ -188,6 +186,13 @@ const ActivityHeatmap = ({ data, platform }) => {
             </CardContent>
         </Card>
     );
+};
+ActivityHeatmap.propTypes = {
+    data: PropTypes.oneOfType([
+        PropTypes.array,
+        PropTypes.object
+    ]).isRequired,
+    platform: PropTypes.string.isRequired
 };
 
 export default ActivityHeatmap;
