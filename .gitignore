@@ -1,4 +1,4 @@
 node_modules/
+testRedis.js
 *.env
-userpass.txt
 *.log

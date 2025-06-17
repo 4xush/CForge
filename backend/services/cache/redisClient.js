@@ -1,4 +1,3 @@
-// Updated Redis client configuration to use your cloud Redis instance
 const redis = require("redis")
 const winston = require("winston")
 
@@ -22,6 +21,8 @@ class RedisClient {
         this.isConnected = false
         this.retryAttempts = 0
         this.maxRetries = 3
+        this.connectionPromise = null // Track connection promise to prevent duplicates
+        this.isConnecting = false // Track connection state
 
         // Cache TTL configurations (in seconds)
         this.ttlConfig = {
@@ -34,27 +35,62 @@ class RedisClient {
     }
 
     async connect() {
+        // If already connected, return true
+        if (this.isConnected && this.client?.isReady) {
+            logger.info("Redis: Already connected and ready")
+            return true
+        }
+
+        // If connection is in progress, wait for it
+        if (this.isConnecting && this.connectionPromise) {
+            logger.info("Redis: Connection already in progress, waiting...")
+            return await this.connectionPromise
+        }
+
+        // Start new connection
+        this.isConnecting = true
+        this.connectionPromise = this._performConnection()
+
+        try {
+            const result = await this.connectionPromise
+            return result
+        } finally {
+            this.isConnecting = false
+            this.connectionPromise = null
+        }
+    }
+
+    async _performConnection() {
         try {
             logger.info("Redis: Starting connection attempt...")
 
-            // Use your cloud Redis configuration
+            // If client exists but not connected, clean it up first
+            if (this.client && !this.isConnected) {
+                try {
+                    await this.client.quit()
+                } catch (error) {
+                    // Ignore cleanup errors
+                }
+                this.client = null
+            }
+
             const redisConfig = {
-                host: process.env.REDIS_HOST || "redis-13077.crce179.ap-south-1-1.ec2.redns.redis-cloud.com",
-                port: Number.parseInt(process.env.REDIS_PORT) || 13077,
-                username: process.env.REDIS_USERNAME || "default",
+                username: process.env.REDIS_USERNAME,
                 password: process.env.REDIS_PASSWORD,
                 socket: {
+                    host: process.env.REDIS_HOST,
+                    port: Number.parseInt(process.env.REDIS_PORT),
                     connectTimeout: 10000,
                     lazyConnect: true,
                     reconnectStrategy: (retries) => {
                         if (retries > 3) {
-                            logger.error("Redis: Max reconnection attempts reached")
-                            return false
+                            logger.error("Redis: Max reconnection attempts reached");
+                            return false;
                         }
-                        return Math.min(retries * 50, 500)
+                        return Math.min(retries * 50, 500);
                     },
                 },
-            }
+            };
 
             logger.info("Redis: Creating client with cloud config", {
                 host: redisConfig.host,
@@ -88,6 +124,11 @@ class RedisClient {
                 this.isConnected = false
             })
 
+            this.client.on("reconnecting", () => {
+                logger.info("Redis: Attempting to reconnect...")
+                this.isConnected = false
+            })
+
             logger.info("Redis: Attempting to connect to cloud instance...")
             await this.client.connect()
             logger.info("Redis: Connect call completed")
@@ -99,6 +140,7 @@ class RedisClient {
 
             if (pingResult === "PONG") {
                 logger.info("Redis: Cloud connection established and tested successfully")
+                this.isConnected = true
                 return true
             } else {
                 throw new Error("Redis ping failed")
@@ -110,6 +152,17 @@ class RedisClient {
                 code: error.code,
             })
             this.isConnected = false
+
+            // Clean up failed client
+            if (this.client) {
+                try {
+                    await this.client.quit()
+                } catch (cleanupError) {
+                    // Ignore cleanup errors
+                }
+                this.client = null
+            }
+
             return false
         }
     }
@@ -119,6 +172,8 @@ class RedisClient {
             if (this.client) {
                 await this.client.quit()
                 logger.info("Redis: Disconnected gracefully")
+                this.isConnected = false
+                this.client = null
             }
         } catch (error) {
             logger.error("Redis: Error during disconnect", { error: error.message })
@@ -478,10 +533,8 @@ class RedisClient {
 // Create singleton instance
 const redisClient = new RedisClient()
 
-// Initialize connection
-redisClient.connect().catch((error) => {
-    console.error("Failed to initialize Redis connection:", error)
-})
+// REMOVED: Auto-connection on module load
+// The ServiceInitializer will handle the connection
 
 // Graceful shutdown handling
 process.on("SIGINT", async () => {
