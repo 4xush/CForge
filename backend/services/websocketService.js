@@ -31,7 +31,7 @@ class WebSocketService {
         try {
             this.io = socketIO(server, {
                 cors: {
-                    origin: process.env.FRONTEND_URL || "*",
+                    origin: process.env.FRONTEND_URL ,
                     methods: ["GET", "POST"],
                     credentials: true,
                     allowedHeaders: ["Authorization"]

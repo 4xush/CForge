@@ -42,12 +42,13 @@ class WebSocketService {
   // Get the WebSocket server URL
   getServerUrl() {
     if (import.meta.env.MODE === "development" || window.location.hostname === "localhost") {
-      return import.meta.env.VITE_API_URL || "http://localhost:5000"
+      return import.meta.env.VITE_API_WS_URI || "http://localhost:5000";
     }
 
-    const protocol = window.location.protocol === "https:" ? "https" : "http"
-    return `${protocol}://${window.location.hostname}${window.location.port ? `:${window.location.port}` : ""}`
+    // Production
+    return "https://cforge.onrender.com";
   }
+
 
   // Connect with authentication - Updated to match backend expectations
   connect(token, userId) {
