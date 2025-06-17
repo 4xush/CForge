@@ -1,39 +1,30 @@
-import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Code2, Github } from 'lucide-react';
-import ApiService from '../services/ApiService';
 import { ProfileHeader } from './pulicUser/ProfileHeader';
 import { PlatformCard, getPlatformStats } from './pulicUser/PlatformCards';
 import ActivityHeatmap from '../components/Profile/ActivityHeatmap';
 import { useHeatmapData } from '../hooks/useHeatmapData';
+import { useUserProfile } from '../hooks/useUserProfile';
 
 const UserProfile = () => {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const navigate = useNavigate();
     const username = window.location.pathname.split('/').pop();
-    const { data: heatmapData, loading: heatmapLoading, error: heatmapError } = useHeatmapData(username);
 
-    useEffect(() => {
-        const fetchProfile = async () => {
-            try {
-                const response = await ApiService.get(`/u/${username}`);
-                setUser(response.data.user);
-            } catch (err) {
-                if (err.response?.status === 404) {
-                    navigate('/404');
-                } else {
-                    setError('Failed to fetch user profile. Please try again later.');
-                }
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchProfile();
-    }, [username, navigate]);
+    const {
+        user,
+        loading: userLoading,
+        error: userError
+    } = useUserProfile(username, {
+        onNotFound: () => navigate('/404')
+    });
 
-    if (loading || heatmapLoading) {
+    const {
+        data: heatmapData,
+        loading: heatmapLoading,
+        error: heatmapError
+    } = useHeatmapData(username);
+
+    if (userLoading || heatmapLoading) {
         return (
             <div className="flex justify-center items-center min-h-screen">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-500"></div>
@@ -41,7 +32,7 @@ const UserProfile = () => {
         );
     }
 
-    if (error) return <div className="text-center p-8">{error}</div>;
+    if (userError) return <div className="text-center p-8">{userError}</div>;
     if (heatmapError) return <div className="text-center p-8">Failed to load activity data</div>;
     if (!user) return <div className="text-center p-8">User not found</div>;
 

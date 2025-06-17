@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { Code2, Github, ExternalLink, X } from 'lucide-react';
@@ -6,30 +5,11 @@ import { Button } from '../components/ui/Button';
 import { Avatar } from '../components/ui/avatar';
 import { Badge } from '../components/ui/badge';
 import { Card, CardContent, CardFooter, CardHeader } from '../components/ui/card';
-import ApiService from '../services/ApiService';
+import { useUserProfile } from '../hooks/useUserProfile';
 
 const PublicUserProfileModal = ({ username, isOpen, onClose }) => {
     const navigate = useNavigate();
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(false);
-
-    useEffect(() => {
-        if (isOpen && username) {
-            setLoading(true);
-            ApiService.get(`/u/${username}`)
-                .then(response => {
-                    setUser(response.data.user); // extract nested user
-                    setLoading(false);
-                })
-                .catch(error => {
-                    console.error("Failed to fetch user profile:", error);
-                    setUser({ username, error: "Failed to load profile" });
-                    setLoading(false);
-                });
-        } else {
-            setUser(null);
-        }
-    }, [isOpen, username]);
+    const { user, loading } = useUserProfile(username);
 
     if (!isOpen || !username) return null;
 
