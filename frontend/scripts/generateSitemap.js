@@ -4,19 +4,19 @@ const generateSitemap = () => {
   const baseUrl = 'https://www.cforge.live';
 
   const pages = [
-    { path: '/', title: 'CForge - Competitive Coding Platform' },
-    { path: '/login', title: 'Login - CForge' },
-    { path: '/signup', title: 'Sign Up - CForge' },
+    { path: '/', title: 'CForge - Coding Platform Analytics | Track your coding progress and grow with your peers.' },
+    { path: '/login', title: 'Login - CForge | Track your coding progress and grow with your peers.' },
+    { path: '/signup', title: 'Sign Up - CForge | Track your coding progress and grow with your peers.' },
     { path: '/dashboard', title: 'Dashboard - Track Your Coding Progress' },
     { path: '/rooms', title: 'Rooms - Join Coding Groups' },
     { path: '/profile', title: 'User Profile - CForge' },
     { path: '/settings', title: 'Settings - Manage Account' },
-    { path: '/u/:username', title: 'User Profile - Competitive Coder' },
-    { path: '/rooms/:roomId/leaderboard', title: 'Leaderboard - CForge Room' },
+    { path: '/u/:username', title: 'User Profile - Competitive Coder Coding Platform Analytics' },
+    { path: '/rooms/:roomId/leaderboard', title: 'Leaderboard - CForge Room | Track your coding progress and grow with your peers.' },
     { path: '/rooms/:roomId/chat', title: 'Room Chat - CForge' },
-    { path: '/rooms/join/:inviteCode', title: 'Join Room - CForge' },
-    { path: '/help', title: 'Help and FAQ - CForge' },
-    { path: '/404', title: 'Page Not Found - CForge' }
+    { path: '/rooms/join/:inviteCode', title: 'Join Invited Room - CForge | Track your coding progress and grow with your peers.' },
+    { path: '/help', title: 'Help and FAQ - CForge | Track your coding progress and grow with your peers.' },
+    { path: '/404', title: 'Page Not Found - CForge | Track your coding progress and grow with your peers.' }
   ];
 
   const sitemapContent = `<?xml version="1.0" encoding="UTF-8"?>

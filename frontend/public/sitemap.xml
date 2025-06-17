@@ -3,19 +3,19 @@
     
       <url>
         <loc>https://www.cforge.live/</loc>
-        <title>CForge - Competitive Coding Platform</title>
+        <title>CForge - Coding Platform Analytics | Track your coding progress and grow with your peers.</title>
         <changefreq>daily</changefreq>
         <priority>1.0</priority>
       </url>
       <url>
         <loc>https://www.cforge.live/login</loc>
-        <title>Login - CForge</title>
+        <title>Login - CForge | Track your coding progress and grow with your peers.</title>
         <changefreq>daily</changefreq>
         <priority>0.8</priority>
       </url>
       <url>
         <loc>https://www.cforge.live/signup</loc>
-        <title>Sign Up - CForge</title>
+        <title>Sign Up - CForge | Track your coding progress and grow with your peers.</title>
         <changefreq>daily</changefreq>
         <priority>0.8</priority>
       </url>
@@ -45,13 +45,13 @@
       </url>
       <url>
         <loc>https://www.cforge.live/u/username</loc>
-        <title>User Profile - Competitive Coder</title>
+        <title>User Profile - Competitive Coder Coding Platform Analytics</title>
         <changefreq>daily</changefreq>
         <priority>0.8</priority>
       </url>
       <url>
         <loc>https://www.cforge.live/rooms/roomId/leaderboard</loc>
-        <title>Leaderboard - CForge Room</title>
+        <title>Leaderboard - CForge Room | Track your coding progress and grow with your peers.</title>
         <changefreq>daily</changefreq>
         <priority>0.8</priority>
       </url>
@@ -63,19 +63,19 @@
       </url>
       <url>
         <loc>https://www.cforge.live/rooms/join/inviteCode</loc>
-        <title>Join Room - CForge</title>
+        <title>Join Invited Room - CForge | Track your coding progress and grow with your peers.</title>
         <changefreq>daily</changefreq>
         <priority>0.8</priority>
       </url>
       <url>
         <loc>https://www.cforge.live/help</loc>
-        <title>Help &amp; FAQ - CForge</title>
+        <title>Help and FAQ - CForge | Track your coding progress and grow with your peers.</title>
         <changefreq>daily</changefreq>
         <priority>0.8</priority>
       </url>
       <url>
         <loc>https://www.cforge.live/404</loc>
-        <title>Page Not Found - CForge</title>
+        <title>Page Not Found - CForge | Track your coding progress and grow with your peers.</title>
         <changefreq>daily</changefreq>
         <priority>0.8</priority>
       </url>

@@ -139,6 +139,9 @@ if (isProduction) {
   app.get('*', (req, res) => {
     res.sendFile(path.resolve(staticPath, 'index.html'));
   });
+
+  // Serve sitemap
+  app.use('/sitemap.xml', express.static(path.join(__dirname, 'public', 'sitemap.xml')));
 }
 
 // Global error handler
