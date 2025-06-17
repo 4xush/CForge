@@ -8,63 +8,88 @@
     <!-- Viewport -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Title & Meta -->
-    <title>CForge</title>
-    <meta name="title" content="CForge" />
+    <!-- SEO: Title & Meta -->
+    <title>CForge: Collaborative Coding Platform Analytics  & Progress Tracker</title>
+    <meta
+      name="title"
+      content="CForge: Collaborative Coding Platform Analytics  & Progress Tracker"
+    />
     <meta
       name="description"
-      content="CForge is a collaborative platform connecting developers with tools, rooms, messaging, and coding statistics from LeetCode, GitHub, and Codeforces."
+      content="Join CForge, the ultimate collaborative platform for programmers. Track your coding stats from LeetCode, GitHub, Codeforces, create community rooms, share knowledge, and monitor progress on leaderboards. Level up your coding journey with CForge!"
     />
     <meta
       name="keywords"
-      content="CForge, coding platform, developer tools, LeetCode, GitHub, Codeforces, programming community"
+      content="CForge, collaborative coding platform analytics , programmer community, developer tools, LeetCode tracker, GitHub stats, Codeforces progress, coding rooms, coding collaboration, software development, competitive programming, skill tracking, coding leaderboards, project CForge"
     />
     <meta name="author" content="CForge Team" />
     <meta name="robots" content="index, follow" />
     <meta name="language" content="en" />
     <meta name="theme-color" content="#6b46c1" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="CForge" />
 
     <!-- Canonical -->
     <link rel="canonical" href="https://cforge.live/" />
 
     <!-- Favicons -->
-    <link rel="icon" href="favicon/favicon.ico" />
-    <link
-      rel="icon"
-      type="image/png"
-      href="favicon/favicon-96x96.png"
-      sizes="96x96"
-    />
-    <link rel="icon" type="image/svg+xml" href="favicon/favicon.svg" />
+    <link rel="icon" href="/favicon/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg" />
     <link
       rel="apple-touch-icon"
       sizes="180x180"
-      href="favicon/apple-touch-icon.png"
+      href="/favicon/apple-touch-icon.png"
+    />
+    <!-- Add other sizes if available, e.g., 32x32, 16x16 for older browsers -->
+    <link
+      rel="icon"
+      type="image/png"
+      href="/favicon/favicon-32x32.png"
+      sizes="32x32"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      href="/favicon/favicon-16x16.png"
+      sizes="16x16"
     />
 
     <!-- Manifest -->
     <link rel="manifest" href="/manifest.webmanifest" />
 
-    <!-- Open Graph -->
+    <!-- Open Graph (for Facebook, LinkedIn, etc.) -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://cforge.live/" />
-    <meta property="og:title" content="CForge" />
+    <meta
+      property="og:title"
+      content="CForge: Collaborative Coding Platform Analytics  & Progress Tracker"
+    />
     <meta
       property="og:description"
-      content="Join CForge — a collaborative platform to connect developers, track your coding progress, and grow together."
+      content="Join CForge to track coding progress from LeetCode, GitHub, Codeforces, collaborate in rooms, and climb leaderboards. Your all-in-one coding companion."
     />
     <meta property="og:image" content="https://cforge.live/og-image.png" />
+    <!-- Ensure og-image.png is 1200x630px for best display -->
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="CForge" />
+    <meta property="og:locale" content="en_US" />
 
-    <!-- Twitter -->
+    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://cforge.live/" />
-    <meta name="twitter:title" content="CForge" />
+    <meta
+      name="twitter:title"
+      content="CForge: Collaborative Coding Platform Analytics  & Progress Tracker"
+    />
     <meta
       name="twitter:description"
-      content="Join CForge — your all-in-one coding companion."
+      content="Connect, collaborate, and track your coding journey with CForge. Stats from LeetCode, GitHub, Codeforces, community rooms, and more!"
     />
     <meta name="twitter:image" content="https://cforge.live/og-image.png" />
+    <!-- Optional: If you have a Twitter handle for CForge -->
+    <!-- <meta name="twitter:site" content="@CForgeApp"> -->
+    <!-- <meta name="twitter:creator" content="@YourPersonalHandle"> -->
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
@@ -73,6 +98,57 @@
       href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
       rel="stylesheet"
     />
+
+    <!-- Structured Data (Schema.org JSON-LD) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "CForge",
+        "applicationCategory": [
+          "DeveloperTool",
+          "SocialNetworking",
+          "Education"
+        ],
+        "operatingSystem": "Web",
+        "description": "CForge is a collaborative platform for programmers to track coding statistics from LeetCode, GitHub, and Codeforces, create community rooms, share knowledge, and monitor progress on leaderboards.",
+        "url": "https://cforge.live/",
+        "logo": "https://cforge.live/favicon/favicon-96x96.png", // Or a more prominent logo URL
+        "screenshot": "https://cforge.live/og-image.png", // A good screenshot of the app
+        "author": {
+          "@type": "Organization",
+          "name": "CForge Team"
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": "0", // Assuming it's free
+          "priceCurrency": "USD"
+        },
+        "aggregateRating": {
+          // Optional: If you have user reviews
+          "@type": "AggregateRating",
+          "ratingValue": "4.5", // Example value
+          "reviewCount": "100" // Example value
+        },
+        "keywords": "CForge, collaborative coding, LeetCode tracker, GitHub stats, Codeforces progress, programmer community, developer tools, coding leaderboards"
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "CForge",
+        "url": "https://cforge.live/",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "https://cforge.live/search?q={search_term_string}" // If you have site search
+          },
+          "query-input": "required name=search_term_string"
+        }
+      }
+    </script>
   </head>
 
   <body
@@ -82,8 +158,13 @@
       font-family: sans-serif, Roboto, 'Press Start 2P';
     "
   >
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
+    <noscript
+      >You need to enable JavaScript to run this app. For the best experience
+      with CForge, please enable JavaScript.</noscript
+    >
+    <div id="root">
+      <!-- Your React app will render here. Ensure your main heading (H1) on the page uses CForge and relevant keywords -->
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

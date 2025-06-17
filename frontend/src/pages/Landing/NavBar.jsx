@@ -29,19 +29,25 @@ const Header = ({ isScrolled }) => {
                         className="flex items-center gap-3"
                         whileHover={{ scale: 1.05 }}
                     >
-                        <div className="relative">
-                            <Code className="h-10 w-10 text-purple-400" />
+                        <div className="relative h-8 w-8">
+                            <img
+                                src="/logo.png"
+                                alt="CForge Icon"
+                                className="h-8 w-8 rounded-full"
+                            />
                             <motion.div
                                 className="absolute inset-0 bg-purple-400/20 rounded-full blur-xl"
                                 animate={{ scale: [1, 1.2, 1] }}
                                 transition={{ duration: 2, repeat: Infinity }}
                             />
                         </div>
-                        <Link to="/" className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                        <Link
+                            to="/"
+                            className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent"
+                        >
                             CForge
                         </Link>
                     </motion.div>
-
                     {/* Desktop Navigation */}
                     <nav className="hidden md:flex items-center gap-8">
                         {navItems.map((item, index) => (

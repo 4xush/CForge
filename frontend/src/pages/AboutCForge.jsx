@@ -1,4 +1,4 @@
-import { Footer, Header } from './Landing/NavBar';
+import { Footer } from './Landing/NavBar';
 import { motion } from 'framer-motion';
 
 const AboutCForge = () => {
