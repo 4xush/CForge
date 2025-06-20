@@ -1,27 +1,29 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { PanelRightIcon, SettingsIcon, HelpCircleIcon, LayoutDashboardIcon } from 'lucide-react';
+import { PanelRightIcon, SettingsIcon, HelpCircleIcon, LayoutDashboardIcon, MenuIcon, XIcon } from 'lucide-react';
 import { useAuthContext } from '../context/AuthContext';
 import DashboardButton from './ui/DashboardButtons';
 import RoomList from './Rooms/RoomList';
 import UserProfileModal from './UserProfileModal';
 import CreateJoinModal from './CreateRoom/CreateJoinRoomModal';
 import toast from 'react-hot-toast';
+
 const LeftSidebar = () => {
     const { logout } = useAuthContext();
     const settingsButtonRef = useRef(null);
     const [isRoomFormVisible, setRoomFormVisible] = useState(false);
+    const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
 
     const handleLogout = () => {
         logout();
         toast.success('You have been logged out successfully');
-        navigate('/login', { 
+        navigate('/login', {
             replace: true,
-            state: { 
-                message: 'You have been logged out successfully', 
-                type: 'success' 
+            state: {
+                message: 'You have been logged out successfully',
+                type: 'success'
             }
         });
     };
@@ -33,59 +35,145 @@ const LeftSidebar = () => {
 
     const isActive = (path) => location.pathname.startsWith(path);
 
-    return (
-        <>
-            <div className="w-full md:w-64 bg-gray-800 p-3 flex flex-col justify-between hidden md:block border-r border-gray-700 relative h-screen overflow-y-auto shadow-lg">
-                <div className="flex flex-col h-full">
+    // Close mobile menu when route changes
+    useEffect(() => {
+        setMobileMenuOpen(false);
+    }, [location.pathname]);
+
+    // Close mobile menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (isMobileMenuOpen && !event.target.closest('.mobile-sidebar') && !event.target.closest('.mobile-menu-button')) {
+                setMobileMenuOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isMobileMenuOpen]);
+
+    // Prevent body scroll when mobile menu is open
+    useEffect(() => {
+        if (isMobileMenuOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isMobileMenuOpen]);
+
+    const SidebarContent = ({ isMobile = false }) => (
+        <div className="flex flex-col h-full">
+            {/* Header with close button for mobile */}
+            {isMobile && (
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-700">
                     <Link
                         to="/?force=true"
-                        className="text-2xl font-bold mb-8 tracking-tight bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent hover:drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)] transition-shadow duration-200"
-
+                        className="text-2xl font-bold tracking-tight bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent hover:drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)] transition-shadow duration-200"
+                        onClick={() => setMobileMenuOpen(false)}
                     >
                         CForge
                     </Link>
-                    <div className="flex-1 space-y-2">
-                        <DashboardButton
-                            icon={LayoutDashboardIcon}
-                            label="Dashboard"
-                            isActive={isActive('/dashboard')}
-                            onClick={() => navigate('/dashboard')}
-                            className="w-full transition-all duration-300 hover:bg-gray-700"
-                        />
-                        <DashboardButton
-                            icon={PanelRightIcon}
-                            label="Rooms"
-                            isActive={isActive('/rooms')}
-                            onClick={() => navigate('/rooms')}
-                            className="w-full transition-all duration-300 hover:bg-gray-700"
-                        />
-                        <div className="mt-2">
-                            <RoomList setRoomFormVisible={setRoomFormVisible} />
-                        </div>
-                        <DashboardButton
-                            ref={settingsButtonRef}
-                            icon={SettingsIcon}
-                            label="Settings"
-                            isActive={isActive('/settings')}
-                            onClick={() => navigate('/settings')}
-                            className="w-full transition-all duration-300 hover:bg-gray-700"
-                        />
-                        <DashboardButton
-                            icon={HelpCircleIcon}
-                            label="Help"
-                            isActive={isActive('/help')}
-                            onClick={() => navigate('/help')}
-                            className="w-full transition-all duration-300 hover:bg-gray-700"
-                        />
-                    </div>
-                    <div className="mt-auto pt-4 border-t border-gray-700">
-                        <UserProfileModal onLogout={handleLogout} />
+                    <button
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="p-2 rounded-lg hover:bg-gray-700 transition-colors"
+                        aria-label="Close menu"
+                    >
+                        <XIcon className="w-5 h-5 text-gray-400" />
+                    </button>
+                </div>
+            )}
+
+            {/* Desktop header */}
+            {!isMobile && (
+                <Link
+                    to="/?force=true"
+                    className="text-2xl font-bold mb-8 tracking-tight bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent hover:drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)] transition-shadow duration-200"
+                >
+                    CForge
+                </Link>
+            )}
+
+            <div className="flex-1 space-y-2">
+                <DashboardButton
+                    icon={LayoutDashboardIcon}
+                    label="Dashboard"
+                    isActive={isActive('/dashboard')}
+                    onClick={() => navigate('/dashboard')}
+                    className="w-full transition-all duration-300 hover:bg-gray-700"
+                />
+                <DashboardButton
+                    icon={PanelRightIcon}
+                    label="Rooms"
+                    isActive={isActive('/rooms')}
+                    onClick={() => navigate('/rooms')}
+                    className="w-full transition-all duration-300 hover:bg-gray-700"
+                />
+                <div className="mt-2">
+                    <RoomList setRoomFormVisible={setRoomFormVisible} />
+                </div>
+                <DashboardButton
+                    ref={settingsButtonRef}
+                    icon={SettingsIcon}
+                    label="Settings"
+                    isActive={isActive('/settings')}
+                    onClick={() => navigate('/settings')}
+                    className="w-full transition-all duration-300 hover:bg-gray-700"
+                />
+                <DashboardButton
+                    icon={HelpCircleIcon}
+                    label="Help"
+                    isActive={isActive('/help')}
+                    onClick={() => navigate('/help')}
+                    className="w-full transition-all duration-300 hover:bg-gray-700"
+                />
+            </div>
+            <div className="mt-auto pt-4 border-t border-gray-700">
+                <UserProfileModal onLogout={handleLogout} />
+            </div>
+        </div>
+    );
+
+    return (
+        <>
+            {/* Mobile Header with Hamburger Menu */}
+            <div className="md:hidden bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between w-full z-40">
+                <Link
+                    to="/?force=true"
+                    className="text-xl font-bold tracking-tight bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent"
+                >
+                    CForge
+                </Link>
+                <button
+                    onClick={() => setMobileMenuOpen(true)}
+                    className="mobile-menu-button p-2 rounded-lg hover:bg-gray-700 transition-colors"
+                    aria-label="Open menu"
+                >
+                    <MenuIcon className="w-6 h-6 text-gray-300" />
+                </button>
+            </div>
+
+            {/* Desktop Sidebar */}
+            <div className="w-64 bg-gray-800 p-3 flex-col justify-between hidden md:flex border-r border-gray-700 relative h-full overflow-y-auto shadow-lg">
+                <SidebarContent />
+            </div>
+
+            {/* Mobile Sidebar Overlay */}
+            {isMobileMenuOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 md:hidden">
+                    <div className="mobile-sidebar w-80 max-w-[85vw] bg-gray-800 h-full p-4 shadow-2xl transform transition-transform duration-300 ease-in-out overflow-y-auto">
+                        <SidebarContent isMobile={true} />
                     </div>
                 </div>
-            </div>
+            )}
+
+            {/* Room Creation/Join Modal */}
             {isRoomFormVisible && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                    <div className="relative w-full max-w-lg">
+                    <div className="relative w-full max-w-lg mx-4">
                         <CreateJoinModal
                             onClose={() => setRoomFormVisible(false)}
                             onRoomCreated={handleRoomCreatedOrJoined}
