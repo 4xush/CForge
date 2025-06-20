@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Terminal, X } from 'lucide-react';
 import CreateRoomForm from './CreateRoomForm';

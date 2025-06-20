@@ -58,7 +58,7 @@ const setCachedMessages = (roomId, messages, hasMore = true) => {
         }
 
         localStorage.setItem(cacheKey, JSON.stringify(cacheData))
-        console.log(`Cached ${limitedMessages.length} messages for room ${roomId}`)
+        // //console.log(`Cached ${limitedMessages.length} messages for room ${roomId}`)
     } catch (error) {
         console.error("Error caching messages:", error)
         // If localStorage is full, try to clear old caches
@@ -117,7 +117,7 @@ const clearExpiredCaches = () => {
                         const data = JSON.parse(cached)
                         if (Date.now() > data.expiresAt) {
                             localStorage.removeItem(key)
-                            console.log(`Cleared expired cache: ${key}`)
+                            //console.log(`Cleared expired cache: ${key}`)
                         }
                     }
                 } catch (error) {
@@ -159,7 +159,7 @@ export const MessageProvider = ({ children }) => {
             if (newRoomId) {
                 const cachedData = getCachedMessages(newRoomId)
                 if (cachedData && cachedData.length > 0) {
-                    console.log(`Loaded ${cachedData.length} messages from cache for room ${newRoomId}`)
+                    //console.log(`Loaded ${cachedData.length} messages from cache for room ${newRoomId}`)
                     setMessages(cachedData)
 
                     // FIXED: Get hasMore from cache if available
@@ -248,7 +248,7 @@ export const MessageProvider = ({ children }) => {
                 return
             }
 
-            console.log("Adding message to context:", newMessage._id || newMessage.tempId)
+            //console.log("Adding message to context:", newMessage._id || newMessage.tempId)
 
             setMessages((prevMessages) => {
                 // Check for exact duplicates by ID or tempId
@@ -258,7 +258,7 @@ export const MessageProvider = ({ children }) => {
                 )
 
                 if (isDuplicateById) {
-                    console.log("Ignoring duplicate message by ID:", newMessage._id || newMessage.tempId)
+                    //console.log("Ignoring duplicate message by ID:", newMessage._id || newMessage.tempId)
                     return prevMessages
                 }
 
@@ -273,7 +273,7 @@ export const MessageProvider = ({ children }) => {
                     )
 
                     if (hasSimilarTemp) {
-                        console.log("Ignoring similar temporary message:", newMessage.content?.substring(0, 20))
+                        //console.log("Ignoring similar temporary message:", newMessage.content?.substring(0, 20))
                         return prevMessages
                     }
                 }
@@ -300,7 +300,7 @@ export const MessageProvider = ({ children }) => {
                     }
                 }
 
-                console.log("Successfully adding message:", messageToAdd._id || messageToAdd.tempId)
+                //console.log("Successfully adding message:", messageToAdd._id || messageToAdd.tempId)
                 return [...prevMessages, messageToAdd]
             })
         },
@@ -316,7 +316,7 @@ export const MessageProvider = ({ children }) => {
         setMessages((prevMessages) => {
             return prevMessages.map((msg) => {
                 if (msg._id === messageId) {
-                    console.log("Updating message:", messageId)
+                    //console.log("Updating message:", messageId)
                     return { ...msg, ...updatedMessage }
                 }
                 return msg
@@ -374,7 +374,7 @@ export const MessageProvider = ({ children }) => {
             setCacheLoaded(false)
             // Clear all caches on logout
             clearAllCaches()
-            console.log("Cleared all message caches on logout")
+            //console.log("Cleared all message caches on logout")
         }
     }, [authUser])
 
@@ -387,7 +387,7 @@ export const MessageProvider = ({ children }) => {
     const clearCurrentRoomCache = useCallback(() => {
         if (currentRoomDetails?._id) {
             clearCachedMessages(currentRoomDetails._id)
-            console.log(`Cleared cache for room ${currentRoomDetails._id}`)
+            //console.log(`Cleared cache for room ${currentRoomDetails._id}`)
         }
     }, [currentRoomDetails?._id])
 

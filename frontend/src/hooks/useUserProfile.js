@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ApiService from '../services/ApiService';
 
 // Cache duration in milliseconds (2 hours)
@@ -38,13 +38,24 @@ export const useUserProfile = (username, options = {}) => {
     const [user, setUser] = useState(() => getCachedUser(username));
     const [loading, setLoading] = useState(!user); // Only show loading if no cached data
     const [error, setError] = useState(null);
+    const usernameRef = useRef(username);
 
     const { onNotFound } = options;
 
     useEffect(() => {
+        // Only update if username actually changed
+        if (username !== usernameRef.current) {
+            usernameRef.current = username;
+            // Reset state for new username
+            setUser(null);
+            setError(null);
+        }
+
         const fetchProfile = async () => {
+            const currentUsername = usernameRef.current;
+            
             // If we already have cached data, don't show loading state
-            const cachedUser = getCachedUser(username);
+            const cachedUser = getCachedUser(currentUsername);
             if (cachedUser) {
                 setUser(cachedUser);
                 setLoading(false);
@@ -54,11 +65,11 @@ export const useUserProfile = (username, options = {}) => {
             // If no cache, fetch from API
             setLoading(true);
             try {
-                const response = await ApiService.get(`/u/${username}`);
+                const response = await ApiService.get(`/u/${currentUsername}`);
                 const userData = response.data.user;
                 setUser(userData);
                 // Cache the new data
-                setCachedUser(username, userData);
+                setCachedUser(currentUsername, userData);
                 setError(null);
             } catch (err) {
                 if (err.response?.status === 404 && onNotFound) {
@@ -74,15 +85,16 @@ export const useUserProfile = (username, options = {}) => {
         if (username) {
             fetchProfile();
         }
-    }, [username, onNotFound]);
+    }, [username]); // Removed onNotFound from dependencies
 
     const refetch = async () => {
+        const currentUsername = usernameRef.current;
         setLoading(true);
         try {
-            const response = await ApiService.get(`/u/${username}`);
+            const response = await ApiService.get(`/u/${currentUsername}`);
             const userData = response.data.user;
             setUser(userData);
-            setCachedUser(username, userData);
+            setCachedUser(currentUsername, userData);
             setError(null);
         } catch (err) {
             setError('Failed to refresh user profile');

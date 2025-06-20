@@ -220,7 +220,7 @@ const UserProfile = () => {
         setRefreshing(true);
         try {
             // Try to refresh platform data first
-            await refreshPlatformData(true);
+            await refreshPlatformData();
             // Retry heatmap
             refetchHeatmap();
         } catch (err) {

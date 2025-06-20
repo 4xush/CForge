@@ -62,7 +62,7 @@ class WebSocketService {
 
     // Clean up existing socket completely
     if (this.socket) {
-      console.log("Cleaning up existing socket")
+      //console.log("Cleaning up existing socket")
       this.socket.removeAllListeners()
       this.socket.disconnect()
       this.socket = null
@@ -72,7 +72,7 @@ class WebSocketService {
 
     try {
       const serverUrl = this.getServerUrl()
-      console.log(`Connecting to WebSocket server at ${serverUrl}`)
+      //console.log(`Connecting to WebSocket server at ${serverUrl}`)
 
       // FIXED: Updated connection options for better reliability
       this.socket = io(serverUrl, {
@@ -90,7 +90,7 @@ class WebSocketService {
 
       // FIXED: Add more robust connection event handling
       this.socket.on("connect", () => {
-        console.log("WebSocket connected successfully")
+        //console.log("WebSocket connected successfully")
         this.isConnected = true
         this.notifyConnectionListeners(true)
 
@@ -102,7 +102,7 @@ class WebSocketService {
           setTimeout(() => {
             this.activeRooms.forEach((roomId) => {
               if (this.socket && this.isConnected) {
-                console.log(`Rejoining room: ${roomId}`)
+                //console.log(`Rejoining room: ${roomId}`)
                 this.socket.emit("join_room", { roomId, userId: this.userId })
               }
             })
@@ -117,7 +117,7 @@ class WebSocketService {
       })
 
       this.socket.on("disconnect", (reason) => {
-        console.log(`WebSocket disconnected: ${reason}`)
+        //console.log(`WebSocket disconnected: ${reason}`)
         this.isConnected = false
         this.notifyConnectionListeners(false)
       })
@@ -133,7 +133,7 @@ class WebSocketService {
 
       // FIXED: Check if already connected immediately after setup
       if (this.socket.connected) {
-        console.log("Socket already connected immediately after setup")
+        //console.log("Socket already connected immediately after setup")
         this.isConnected = true
         this.notifyConnectionListeners(true)
         this.registerStoredEventHandlers()
@@ -148,7 +148,7 @@ class WebSocketService {
   // Disconnect from the server
   disconnect() {
     if (this.socket) {
-      console.log("Disconnecting WebSocket")
+      //console.log("Disconnecting WebSocket")
 
       try {
         // Leave all active rooms before disconnecting
@@ -185,7 +185,7 @@ class WebSocketService {
 
     // FIXED: More robust connection check
     if (this.socket && this.socket.connected && this.isConnected) {
-      console.log(`Joining room ${roomId}`)
+      //console.log(`Joining room ${roomId}`)
       try {
         // Match backend expected format exactly
         this.socket.emit("join_room", { roomId, userId: this.userId })
@@ -195,7 +195,7 @@ class WebSocketService {
         return false
       }
     } else {
-      console.log(`Socket not connected, room ${roomId} will be joined when connected`)
+      //console.log(`Socket not connected, room ${roomId} will be joined when connected`)
       return false
     }
   }
@@ -212,7 +212,7 @@ class WebSocketService {
 
     // FIXED: More robust connection check
     if (this.socket && this.socket.connected && this.isConnected) {
-      console.log(`Leaving room ${roomId}`)
+      //console.log(`Leaving room ${roomId}`)
       try {
         // Match backend expected format
         this.socket.emit("leave_room", { roomId })
@@ -246,13 +246,13 @@ class WebSocketService {
     // FIXED: Check for duplicate pending messages
     const messageKey = `${roomId}-${messageContent}-${this.userId}`
     if (this.pendingMessages.has(messageKey)) {
-      console.log("Duplicate message detected, ignoring:", messageKey)
+      //console.log("Duplicate message detected, ignoring:", messageKey)
       return false
     }
 
     // FIXED: More robust connection check
     if (this.socket && this.socket.connected && this.isConnected) {
-      console.log(`Sending message to room ${roomId} with tempId: ${tempId}`)
+      //console.log(`Sending message to room ${roomId} with tempId: ${tempId}`)
       try {
         // FIXED: Track pending message to prevent duplicates
         this.pendingMessages.set(messageKey, tempId)
@@ -280,7 +280,7 @@ class WebSocketService {
         return false
       }
     } else {
-      console.log(`Socket not connected, cannot send message`)
+      //console.log(`Socket not connected, cannot send message`)
       return false
     }
   }
@@ -294,7 +294,7 @@ class WebSocketService {
 
     // FIXED: More robust connection check
     if (this.socket && this.socket.connected && this.isConnected) {
-      console.log(`Editing message ${messageId} in room ${roomId}`)
+      //console.log(`Editing message ${messageId} in room ${roomId}`)
       try {
         // Match backend expected format exactly
         this.socket.emit("edit_message", { roomId, messageId, newContent })
@@ -330,7 +330,7 @@ class WebSocketService {
     // Register the handler if socket exists and is connected
     if (this.socket && this.isConnected) {
       this.socket.on(event, callback)
-      console.log(`Registered handler for event: ${event}`)
+      //console.log(`Registered handler for event: ${event}`)
       return true
     }
 
@@ -351,7 +351,7 @@ class WebSocketService {
         const index = handlers.findIndex((h) => h === callback)
         if (index !== -1) {
           handlers.splice(index, 1)
-          console.log(`Removed stored handler for event: ${event}`)
+          //console.log(`Removed stored handler for event: ${event}`)
         }
         if (handlers.length === 0) {
           this.eventHandlers.delete(event)
@@ -359,7 +359,7 @@ class WebSocketService {
       } else {
         // Remove all handlers for this event
         this.eventHandlers.delete(event)
-        console.log(`Removed all stored handlers for event: ${event}`)
+        //console.log(`Removed all stored handlers for event: ${event}`)
       }
     }
 
@@ -371,7 +371,7 @@ class WebSocketService {
         } else {
           this.socket.off(event)
         }
-        console.log(`Removed socket listener for event: ${event}`)
+        //console.log(`Removed socket listener for event: ${event}`)
         return true
       } catch (error) {
         console.error(`Error removing socket listener for ${event}:`, error)
@@ -385,13 +385,13 @@ class WebSocketService {
   registerStoredEventHandlers() {
     if (!this.socket) return
 
-    console.log(`Registering stored event handlers for ${this.eventHandlers.size} events`)
+    //console.log(`Registering stored event handlers for ${this.eventHandlers.size} events`)
 
     this.eventHandlers.forEach((callbacks, event) => {
       callbacks.forEach((callback) => {
         try {
           this.socket.on(event, callback)
-          console.log(`Registered handler for event: ${event}`)
+          //console.log(`Registered handler for event: ${event}`)
         } catch (error) {
           console.error(`Error registering handler for ${event}:`, error)
         }
@@ -407,7 +407,7 @@ class WebSocketService {
 
   // Force cleanup and reset
   forceReset() {
-    console.log("Force resetting WebSocket service")
+    //console.log("Force resetting WebSocket service")
     if (this.socket) {
       this.socket.removeAllListeners()
       this.socket.disconnect()
@@ -428,7 +428,7 @@ class WebSocketService {
 
   // Clear event handlers
   clearEventHandlers() {
-    console.log("Clearing all event handlers")
+    //console.log("Clearing all event handlers")
     if (this.socket) {
       try {
         this.eventHandlers.forEach((_, event) => {

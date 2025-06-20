@@ -39,6 +39,7 @@ export const useHeatmapData = (username, options = {}) => {
   const [retryCount, setRetryCount] = useState(0);
   const abortControllerRef = useRef(null);
   const lastFetchAttemptRef = useRef(0);
+  const usernameRef = useRef(username);
 
   const MAX_RETRIES = 2;
   const MIN_RETRY_INTERVAL = 30000; // 30 seconds between retries
@@ -47,6 +48,9 @@ export const useHeatmapData = (username, options = {}) => {
     onError = () => { },
     enableRetry = true
   } = options;
+
+  // Stabilize the onError callback to prevent infinite loops
+  const stableOnError = useCallback(onError, []);
 
   // Helper function to check if we should retry based on time interval
   const canRetryNow = () => {
@@ -72,6 +76,8 @@ export const useHeatmapData = (username, options = {}) => {
   };
 
   const fetchData = useCallback(async (forceRefresh = false) => {
+    const currentUsername = usernameRef.current;
+    
     // Skip fetch if explicitly told to skip (offline mode)
     if (skipFetch && !forceRefresh) {
       setLoading(false);
@@ -80,7 +86,7 @@ export const useHeatmapData = (username, options = {}) => {
 
     // Check cache first if not forcing refresh
     if (!forceRefresh) {
-      const cachedData = getCachedData(username);
+      const cachedData = getCachedData(currentUsername);
       if (cachedData) {
         setData(cachedData);
         setLoading(false);
@@ -111,7 +117,7 @@ export const useHeatmapData = (username, options = {}) => {
         throw new Error('No internet connection available');
       }
 
-      const response = await ApiService.get(`/u/hmap/${username}`, {
+      const response = await ApiService.get(`/u/hmap/${currentUsername}`, {
         signal: abortControllerRef.current.signal,
         timeout: 10000 // 10 second timeout
       });
@@ -122,7 +128,7 @@ export const useHeatmapData = (username, options = {}) => {
       }
 
       // Cache the new data
-      setCachedData(username, response.data.heatmaps);
+      setCachedData(currentUsername, response.data.heatmaps);
       setData(response.data.heatmaps);
       setError(null);
       setRetryCount(0); // Reset retry count on success
@@ -138,7 +144,7 @@ export const useHeatmapData = (username, options = {}) => {
       console.error('Error fetching heatmap data:', err);
 
       // Call the error callback
-      onError(errorMessage);
+      stableOnError(errorMessage);
 
       // Implement retry logic only for network errors and if retries are enabled
       if (enableRetry && retryCount < MAX_RETRIES && isServerError(err)) {
@@ -152,9 +158,18 @@ export const useHeatmapData = (username, options = {}) => {
       setLoading(false);
       abortControllerRef.current = null;
     }
-  }, [username, retryCount, skipFetch, onError, enableRetry]);
+  }, [skipFetch, enableRetry, stableOnError]);
 
   useEffect(() => {
+    // Only update if username actually changed
+    if (username !== usernameRef.current) {
+      usernameRef.current = username;
+      // Reset state for new username
+      setData(null);
+      setError(null);
+      setRetryCount(0);
+    }
+    
     if (username) {
       fetchData();
     }
@@ -165,7 +180,7 @@ export const useHeatmapData = (username, options = {}) => {
         abortControllerRef.current.abort();
       }
     };
-  }, [username, fetchData]);
+  }, [username]);
 
   // Provide a retry function for the consumer
   const refetch = useCallback((forceRefresh = false) => {
