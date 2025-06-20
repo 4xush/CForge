@@ -57,7 +57,7 @@ const MessageInput = ({
 
         const handleMessageSent = (data) => {
             setSending(false)
-            console.log("Message sent successfully:", data.messageId)
+            // console.log("Message sent successfully:", data.messageId)
         }
 
         socket.on("message_error", handleMessageError)
@@ -86,7 +86,7 @@ const MessageInput = ({
 
         // Prevent duplicate submissions
         if (trimmedMessage === lastSentRef.current) {
-            console.log("Ignoring duplicate message submission")
+            // console.log("Ignoring duplicate message submission")
             return
         }
 

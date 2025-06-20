@@ -15,7 +15,6 @@ const RoomDetails = ({ roomDetails, loading, error, onInviteLinkGenerated }) => 
   const { authUser } = useAuthContext();
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
   const [showAllMembers, setShowAllMembers] = useState(false);
-console.log(roomDetails)
   const handleInviteClick = async () => {
     try {
       setIsGeneratingLink(true);

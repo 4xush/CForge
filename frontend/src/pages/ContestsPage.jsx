@@ -105,7 +105,7 @@ const ContestCard = ({ contest, isOngoing = false }) => {
 
   const handleJoinContest = () => {
     // Log analytics
-    console.log(`User clicked on contest: ${contest.name} (${contest.platform})`)
+    // console.log(`User clicked on contest: ${contest.name} (${contest.platform})`)
 
     const contestUrl = platform.getContestUrl(contest)
     if (contestUrl) {
@@ -117,7 +117,7 @@ const ContestCard = ({ contest, isOngoing = false }) => {
     <div className={`group relative bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-xl border ${platform.borderColor} hover:border-purple-400/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/20`}>
       {/* Background pattern */}
       <div className="absolute inset-0 bg-gradient-to-br from-purple-600/5 to-transparent rounded-xl"></div>
-      
+
       {/* Live indicator for ongoing contests */}
       {isOngoing && (
         <div className="absolute -top-2 -right-2 z-10">
@@ -190,11 +190,10 @@ const ContestCard = ({ contest, isOngoing = false }) => {
 
           <button
             onClick={handleJoinContest}
-            className={`group/btn px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-300 flex items-center space-x-2 ${
-              isOngoing 
-                ? "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg hover:shadow-emerald-500/25" 
-                : "bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-lg hover:shadow-purple-500/25"
-            } hover:scale-105`}
+            className={`group/btn px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-300 flex items-center space-x-2 ${isOngoing
+              ? "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg hover:shadow-emerald-500/25"
+              : "bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-lg hover:shadow-purple-500/25"
+              } hover:scale-105`}
           >
             {isOngoing ? (
               <>
@@ -240,11 +239,10 @@ const PlatformFilter = ({ selectedPlatforms, onPlatformToggle }) => {
                 <button
                   key={key}
                   onClick={() => onPlatformToggle(key)}
-                  className={`w-full flex items-center space-x-3 px-3 py-2 mb-1 rounded-lg text-sm font-medium transition-all ${
-                    isSelected
-                      ? `bg-gradient-to-r ${platform.color} text-white`
-                      : "text-slate-300 hover:bg-slate-700/50"
-                  }`}
+                  className={`w-full flex items-center space-x-3 px-3 py-2 mb-1 rounded-lg text-sm font-medium transition-all ${isSelected
+                    ? `bg-gradient-to-r ${platform.color} text-white`
+                    : "text-slate-300 hover:bg-slate-700/50"
+                    }`}
                 >
                   <PlatformIcon size={16} />
                   <span>{platform.name}</span>
@@ -266,39 +264,39 @@ const StatsComponent = ({ contests }) => {
   const totalParticipants = contests.ongoing.reduce((sum, contest) => sum + (contest.participants || 0), 0)
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-      <div className="bg-gradient-to-br from-purple-600/10 to-purple-800/10 backdrop-blur-sm border border-purple-500/20 rounded-xl p-6">
-        <div className="flex items-center space-x-3">
-          <div className="p-3 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg">
-            <Play size={24} className="text-white" />
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+      <div className="bg-gradient-to-br from-purple-600/10 to-purple-800/10 backdrop-blur-sm border border-purple-500/20 rounded-xl p-4 sm:p-6">
+        <div className="flex items-center space-x-2 sm:space-x-3">
+          <div className="p-2 sm:p-3 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg">
+            <Play size={20} className="sm:text-[24px] text-white" />
           </div>
           <div>
-            <p className="text-slate-400 text-sm">Ongoing Contests</p>
-            <p className="text-2xl font-bold text-white">{totalOngoing}</p>
+            <p className="text-slate-400 text-xs sm:text-sm">Ongoing Contests</p>
+            <p className="text-lg sm:text-2xl font-bold text-white">{totalOngoing}</p>
           </div>
         </div>
       </div>
 
-      <div className="bg-gradient-to-br from-blue-600/10 to-blue-800/10 backdrop-blur-sm border border-blue-500/20 rounded-xl p-6">
-        <div className="flex items-center space-x-3">
-          <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
-            <Calendar size={24} className="text-white" />
+      <div className="bg-gradient-to-br from-blue-600/10 to-blue-800/10 backdrop-blur-sm border border-blue-500/20 rounded-xl p-4 sm:p-6">
+        <div className="flex items-center space-x-2 sm:space-x-3">
+          <div className="p-2 sm:p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
+            <Calendar size={20} className="sm:text-[24px] text-white" />
           </div>
           <div>
-            <p className="text-slate-400 text-sm">Upcoming Contests</p>
-            <p className="text-2xl font-bold text-white">{totalUpcoming}</p>
+            <p className="text-slate-400 text-xs sm:text-sm">Upcoming Contests</p>
+            <p className="text-lg sm:text-2xl font-bold text-white">{totalUpcoming}</p>
           </div>
         </div>
       </div>
 
-      <div className="bg-gradient-to-br from-orange-600/10 to-orange-800/10 backdrop-blur-sm border border-orange-500/20 rounded-xl p-6">
-        <div className="flex items-center space-x-3">
-          <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg">
-            <TrendingUp size={24} className="text-white" />
+      <div className="bg-gradient-to-br from-orange-600/10 to-orange-800/10 backdrop-blur-sm border border-orange-500/20 rounded-xl p-4 sm:p-6">
+        <div className="flex items-center space-x-2 sm:space-x-3">
+          <div className="p-2 sm:p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg">
+            <TrendingUp size={20} className="sm:text-[24px] text-white" />
           </div>
           <div>
-            <p className="text-slate-400 text-sm">Active Participants</p>
-            <p className="text-2xl font-bold text-white">{totalParticipants.toLocaleString()}</p>
+            <p className="text-slate-400 text-xs sm:text-sm">Active Participants</p>
+            <p className="text-lg sm:text-2xl font-bold text-white">{totalParticipants.toLocaleString()}</p>
           </div>
         </div>
       </div>
@@ -322,7 +320,7 @@ const ContestsPage = () => {
       if (cachedData) {
         const { data, timestamp } = JSON.parse(cachedData);
         const now = new Date().getTime();
-        
+
         // Check if cache is still valid
         if (now - timestamp < CACHE_DURATION) {
           return data;
@@ -406,9 +404,9 @@ const ContestsPage = () => {
   }, []);
 
   const handlePlatformToggle = (platform) => {
-    setSelectedPlatforms(prev => 
-      prev.includes(platform) 
-        ? prev.filter(p => p !== platform) 
+    setSelectedPlatforms(prev =>
+      prev.includes(platform)
+        ? prev.filter(p => p !== platform)
         : [...prev, platform]
     )
   }
@@ -473,35 +471,35 @@ const ContestsPage = () => {
 
       {/* Header */}
       <header className="relative bg-slate-900/50 backdrop-blur-sm border-b border-slate-800">
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
             <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-white via-purple-200 to-purple-400 bg-clip-text text-transparent flex items-center">
-                <Trophy className="mr-4 text-purple-400" size={40} />
+              <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-white via-purple-200 to-purple-400 bg-clip-text text-transparent flex items-center">
+                <Trophy className="mr-3 sm:mr-4 text-purple-400" size={32} />
                 Contest Central
               </h1>
-              <p className="text-slate-400 mt-3 text-lg max-w-2xl">
-                Your ultimate destination for competitive programming contests. Track live competitions, 
+              <p className="text-slate-400 mt-2 sm:mt-3 text-base sm:text-lg max-w-2xl">
+                Your ultimate destination for competitive programming contests. Track live competitions,
                 upcoming events, and never miss a coding challenge.
               </p>
               {notes.length > 0 && (
-                <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-                  <p className="text-amber-400 text-sm">
+                <div className="mt-3 sm:mt-4 p-2 sm:p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                  <p className="text-amber-400 text-xs sm:text-sm">
                     ℹ️ Some contest data may be estimated due to API limitations
                   </p>
                 </div>
               )}
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-row items-center space-x-2 sm:space-x-4">
               {lastUpdated && (
-                <p className="text-slate-400 text-sm">
+                <p className="text-slate-400 text-xs sm:text-sm">
                   Last updated: {format(lastUpdated, "HH:mm")}
                 </p>
               )}
               <button
                 onClick={fetchContests}
                 disabled={loading}
-                className="px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg font-semibold transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg hover:shadow-purple-500/25"
+                className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg font-semibold transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg hover:shadow-purple-500/25 text-xs sm:text-base"
               >
                 <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
                 <span>Refresh</span>
@@ -512,37 +510,35 @@ const ContestsPage = () => {
       </header>
 
       {/* Main Content */}
-      <main className="relative max-w-7xl mx-auto px-6 py-12">
+      <main className="relative max-w-7xl mx-auto px-2 sm:px-6 py-6 sm:py-12">
         {/* Stats */}
         <StatsComponent contests={contests} />
 
         {/* Controls */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8">
-          <PlatformFilter 
-            selectedPlatforms={selectedPlatforms} 
-            onPlatformToggle={handlePlatformToggle} 
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <PlatformFilter
+            selectedPlatforms={selectedPlatforms}
+            onPlatformToggle={handlePlatformToggle}
           />
 
           {/* Tabs */}
-          <div className="flex bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-lg p-1">
+          <div className="flex bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-lg p-1 w-full sm:w-auto mt-3 sm:mt-0">
             <button
-              onClick={() => setActiveTab("ongoing")}
-              className={`flex items-center space-x-2 px-6 py-3 rounded-md font-semibold text-sm transition-all duration-300 ${
-                activeTab === "ongoing"
-                  ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg"
-                  : "text-slate-400 hover:text-white"
-              }`}
+              onClick={() => setActiveTab('ongoing')}
+              className={`flex items-center justify-center space-x-2 px-3 sm:px-6 py-2 sm:py-3 rounded-md font-semibold text-xs sm:text-sm transition-all duration-300 w-1/2 sm:w-auto ${activeTab === 'ongoing'
+                ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg'
+                : 'text-slate-400 hover:text-white'
+                }`}
             >
               <Play size={16} />
               <span>Live ({filteredContests.ongoing.length})</span>
             </button>
             <button
-              onClick={() => setActiveTab("upcoming")}
-              className={`flex items-center space-x-2 px-6 py-3 rounded-md font-semibold text-sm transition-all duration-300 ${
-                activeTab === "upcoming"
-                  ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg"
-                  : "text-slate-400 hover:text-white"
-              }`}
+              onClick={() => setActiveTab('upcoming')}
+              className={`flex items-center justify-center space-x-2 px-3 sm:px-6 py-2 sm:py-3 rounded-md font-semibold text-xs sm:text-sm transition-all duration-300 w-1/2 sm:w-auto ${activeTab === 'upcoming'
+                ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg'
+                : 'text-slate-400 hover:text-white'
+                }`}
             >
               <Calendar size={16} />
               <span>Upcoming ({filteredContests.upcoming.length})</span>
@@ -552,28 +548,28 @@ const ContestsPage = () => {
 
         {/* Contest Grid */}
         <div className="transition-all duration-500">
-          {activeTab === "ongoing" && (
+          {activeTab === 'ongoing' && (
             <>
               {filteredContests.ongoing.length > 0 ? (
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 gap-6 xl:grid-cols-2 xl:gap-8">
                   {filteredContests.ongoing.map((contest) => (
-                    <ContestCard 
-                      key={`${contest.platform}-${contest.id}`} 
-                      contest={contest} 
-                      isOngoing={true} 
+                    <ContestCard
+                      key={`${contest.platform}-${contest.id}`}
+                      contest={contest}
+                      isOngoing={true}
                     />
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-20">
-                  <div className="bg-slate-800/30 backdrop-blur-sm rounded-full w-24 h-24 flex items-center justify-center m-auto mb-6">
-                    <Trophy className="h-12 w-12 text-slate-600" />
+                <div className="text-center py-16 sm:py-20">
+                  <div className="bg-slate-800/30 backdrop-blur-sm rounded-full w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center m-auto mb-4 sm:mb-6">
+                    <Trophy className="h-10 w-10 sm:h-12 sm:w-12 text-slate-600" />
                   </div>
-                  <h3 className="text-xl font-semibold text-white mb-3">No Live Contests</h3>
-                  <p className="text-slate-400 mb-6">Check back soon or explore upcoming contests!</p>
-                  <button 
-                    onClick={() => setActiveTab("upcoming")}
-                    className="px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg font-semibold hover:scale-105 transition-all duration-300"
+                  <h3 className="text-lg sm:text-xl font-semibold text-white mb-2 sm:mb-3">No Live Contests</h3>
+                  <p className="text-slate-400 mb-4 sm:mb-6">Check back soon or explore upcoming contests!</p>
+                  <button
+                    onClick={() => setActiveTab('upcoming')}
+                    className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg font-semibold hover:scale-105 transition-all duration-300 text-xs sm:text-base"
                   >
                     View Upcoming Contests
                   </button>
@@ -582,24 +578,24 @@ const ContestsPage = () => {
             </>
           )}
 
-          {activeTab === "upcoming" && (
+          {activeTab === 'upcoming' && (
             <>
               {filteredContests.upcoming.length > 0 ? (
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 gap-6 xl:grid-cols-2 xl:gap-8">
                   {filteredContests.upcoming.map((contest) => (
-                    <ContestCard 
-                      key={`${contest.platform}-${contest.id}`} 
-                      contest={contest} 
-                      isOngoing={false} 
+                    <ContestCard
+                      key={`${contest.platform}-${contest.id}`}
+                      contest={contest}
+                      isOngoing={false}
                     />
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-20">
-                  <div className="bg-slate-800/30 backdrop-blur-sm rounded-full w-24 h-24 flex items-center justify-center m-auto mb-6">
-                    <Calendar className="h-12 w-12 text-slate-600" />
+                <div className="text-center py-16 sm:py-20">
+                  <div className="bg-slate-800/30 backdrop-blur-sm rounded-full w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center m-auto mb-4 sm:mb-6">
+                    <Calendar className="h-10 w-10 sm:h-12 sm:w-12 text-slate-600" />
                   </div>
-                  <h3 className="text-xl font-semibold text-white mb-3">No Upcoming Contests</h3>
+                  <h3 className="text-lg sm:text-xl font-semibold text-white mb-2 sm:mb-3">No Upcoming Contests</h3>
                   <p className="text-slate-400">All contests are currently live or completed.</p>
                 </div>
               )}

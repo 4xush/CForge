@@ -141,19 +141,21 @@ const LeftSidebar = () => {
         <>
             {/* Mobile Header with Hamburger Menu */}
             <div className="md:hidden bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between w-full z-40">
-                <Link
-                    to="/?force=true"
-                    className="text-xl font-bold tracking-tight bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent"
-                >
-                    CForge
-                </Link>
-                <button
-                    onClick={() => setMobileMenuOpen(true)}
-                    className="mobile-menu-button p-2 rounded-lg hover:bg-gray-700 transition-colors"
-                    aria-label="Open menu"
-                >
-                    <MenuIcon className="w-6 h-6 text-gray-300" />
-                </button>
+                <div className="flex items-center gap-2 w-full">
+                    <button
+                        onClick={() => setMobileMenuOpen(true)}
+                        className="mobile-menu-button p-2 rounded-lg hover:bg-gray-700 transition-colors"
+                        aria-label="Open menu"
+                    >
+                        <MenuIcon className="w-6 h-6 text-gray-300" />
+                    </button>
+                    <Link
+                        to="/?force=true"
+                        className="text-xl font-bold tracking-tight bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent"
+                    >
+                        CForge
+                    </Link>
+                </div>
             </div>
 
             {/* Desktop Sidebar */}
@@ -161,14 +163,19 @@ const LeftSidebar = () => {
                 <SidebarContent />
             </div>
 
-            {/* Mobile Sidebar Overlay */}
-            {isMobileMenuOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 md:hidden">
-                    <div className="mobile-sidebar w-80 max-w-[85vw] bg-gray-800 h-full p-4 shadow-2xl transform transition-transform duration-300 ease-in-out overflow-y-auto">
-                        <SidebarContent isMobile={true} />
-                    </div>
+            {/* Mobile Sidebar Overlay - always rendered for smooth transition */}
+            <div
+                className={`fixed inset-0 z-50 md:hidden flex transition-opacity duration-300 ${isMobileMenuOpen ? 'bg-black bg-opacity-50 pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}
+                style={{ transitionProperty: 'opacity, background-color' }}
+            >
+                <div
+                    className={`mobile-sidebar w-80 max-w-[85vw] h-full p-4 shadow-2xl transform transition-transform duration-300 ease-in-out overflow-y-auto rounded-r-xl
+                        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+                        bg-gradient-to-br from-gray-800 via-gray-900 to-gray-800`}
+                >
+                    <SidebarContent isMobile={true} />
                 </div>
-            )}
+            </div>
 
             {/* Room Creation/Join Modal */}
             {isRoomFormVisible && (

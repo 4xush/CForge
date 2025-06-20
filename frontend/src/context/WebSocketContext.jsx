@@ -27,7 +27,7 @@ export const WebSocketProvider = ({ children }) => {
   // FIXED: Direct connection listener
   useEffect(() => {
     const handleConnectionChange = (isConnected) => {
-      console.log(`WebSocketContext: Direct connection change detected: ${isConnected}`)
+      // // console.log(`WebSocketContext: Direct connection change detected: ${isConnected}`)
       setConnected(isConnected)
       if (isConnected) {
         setConnecting(false)
@@ -53,7 +53,7 @@ export const WebSocketProvider = ({ children }) => {
 
   // FIXED: Improved direct socket event handlers with better state management
   const handleDirectConnect = useCallback(() => {
-    console.log("Direct socket connect event received")
+    // // console.log("Direct socket connect event received")
     setConnected(true)
     setConnecting(false)
     connectionAttemptRef.current = 0
@@ -62,7 +62,7 @@ export const WebSocketProvider = ({ children }) => {
   }, [])
 
   const handleDirectDisconnect = useCallback((reason) => {
-    console.log("Direct socket disconnect event received:", reason)
+    // console.log("Direct socket disconnect event received:", reason)
     if (reason !== "io client disconnect") {
       setConnected(false)
       // Don't set connecting to false here as reconnection might be in progress
@@ -81,7 +81,7 @@ export const WebSocketProvider = ({ children }) => {
     async (token, userId) => {
       // FIXED: Check if already connected first
       if (webSocketService.isSocketConnected()) {
-        console.log("WebSocket already connected via direct check.")
+        // console.log("WebSocket already connected via direct check.")
         setConnected(true)
         setConnecting(false)
         connectionAttemptRef.current = 0
@@ -91,7 +91,7 @@ export const WebSocketProvider = ({ children }) => {
 
       // Prevent duplicate connection attempts
       if (connectionLockRef.current) {
-        console.log("Connection attempt already in progress, skipping ConnectWithRetry call.")
+        // console.log("Connection attempt already in progress, skipping ConnectWithRetry call.")
         return
       }
 
@@ -99,7 +99,7 @@ export const WebSocketProvider = ({ children }) => {
       connectionLockRef.current = true
       setConnecting(true)
 
-      console.log(`WebSocket connection attempt ${connectionAttemptRef.current + 1}/${maxRetries}`)
+      // console.log(`WebSocket connection attempt ${connectionAttemptRef.current + 1}/${maxRetries}`)
 
       try {
         // Ensure clean state before new connection
@@ -124,7 +124,7 @@ export const WebSocketProvider = ({ children }) => {
 
           // Check if already connected (might have connected during setup)
           if (webSocketService.socket.connected) {
-            console.log("Socket already connected during setup")
+            // console.log("Socket already connected during setup")
             handleDirectConnect()
           }
         } else {
@@ -169,16 +169,16 @@ export const WebSocketProvider = ({ children }) => {
       }
 
       if (!connected && !connecting) {
-        console.log("Main Effect: WebSocket needed and not connected/connecting. Initiating connection.")
+        // console.log("Main Effect: WebSocket needed and not connected/connecting. Initiating connection.")
         connectionAttemptRef.current = 0
         connectWithRetry(token, currentUserId)
       } else if (connected) {
-        console.log("Main Effect: WebSocket already connected and state is up-to-date.")
+        // console.log("Main Effect: WebSocket already connected and state is up-to-date.")
       } else if (connecting) {
-        console.log("Main Effect: WebSocket connection in progress.")
+        // console.log("Main Effect: WebSocket connection in progress.")
       }
     } else if (!needsConnection && (connected || connecting)) {
-      console.log("Main Effect: WebSocket no longer needed or user/token missing. Disconnecting.")
+      // console.log("Main Effect: WebSocket no longer needed or user/token missing. Disconnecting.")
       webSocketService.disconnect()
       setConnected(false)
       setConnecting(false)
@@ -196,7 +196,7 @@ export const WebSocketProvider = ({ children }) => {
       sessionStorage.removeItem("pageReloading")
 
       if (!isPageReloading && !isWebSocketNeeded()) {
-        console.log("WebSocketProvider cleanup: Disconnecting due to unmount/navigation away from needed pages.")
+        // console.log("WebSocketProvider cleanup: Disconnecting due to unmount/navigation away from needed pages.")
         webSocketService.disconnect()
         setConnected(false)
         setConnecting(false)
@@ -212,17 +212,17 @@ export const WebSocketProvider = ({ children }) => {
       if (!isWebSocketNeeded() || !authUser?._id) return
 
       if (document.hidden) {
-        console.log("Page hidden. Connection maintained.")
+        // console.log("Page hidden. Connection maintained.")
         if (visibilityTimeoutRef.current) clearTimeout(visibilityTimeoutRef.current)
       } else {
-        console.log("Page visible. Ensuring WebSocket connection.")
+        // console.log("Page visible. Ensuring WebSocket connection.")
         if (visibilityTimeoutRef.current) clearTimeout(visibilityTimeoutRef.current)
 
         // FIXED: Check actual socket connection
         if (!webSocketService.isSocketConnected() && !connecting) {
           const token = localStorage.getItem("app-token")
           if (token) {
-            console.log("Page became visible, not connected. Re-initiating connection.")
+            // console.log("Page became visible, not connected. Re-initiating connection.")
             connectionAttemptRef.current = 0
             connectWithRetry(token, authUser._id)
           }
@@ -258,7 +258,7 @@ export const WebSocketProvider = ({ children }) => {
         return false
       }
 
-      console.log(`Context: Joining room ${roomId}`)
+      // console.log(`Context: Joining room ${roomId}`)
       return webSocketService.joinRoom(roomId)
     },
     [authUser?._id, connectWithRetry],
@@ -305,12 +305,12 @@ export const WebSocketProvider = ({ children }) => {
   }, [])
 
   const addEventListener = useCallback((event, callback) => {
-    console.log(`Context: Registering event listener for: ${event}`)
+    // console.log(`Context: Registering event listener for: ${event}`)
     webSocketService.on(event, callback)
   }, [])
 
   const removeEventListener = useCallback((event, callback) => {
-    console.log(`Context: Removing event listener for: ${event}`)
+    // console.log(`Context: Removing event listener for: ${event}`)
     webSocketService.off(event, callback)
   }, [])
 
@@ -318,7 +318,7 @@ export const WebSocketProvider = ({ children }) => {
     const token = localStorage.getItem("app-token")
     const currentUserId = authUser?._id
     if (token && currentUserId) {
-      console.log("Manual reconnect triggered.")
+      // console.log("Manual reconnect triggered.")
       if (connected) {
         webSocketService.disconnect()
         setConnected(false)

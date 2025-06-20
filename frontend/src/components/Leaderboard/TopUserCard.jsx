@@ -1,8 +1,20 @@
 import PropTypes from 'prop-types';
-import { Star, TrendingUp } from 'lucide-react';
+import { Star, CheckCircle, TrendingUp } from 'lucide-react';
 
 export const TopUserCard = ({ user, index, isHighlighted, onProfileClick, platform }) => {
     const getPlatformStats = () => {
+        if (!platform) { // Handle case where platform data might be missing for a user
+            return {
+                mainStat: 'N/A',
+                secondaryStat: 'N/A',
+                tertiaryStat: 'N/A',
+                mainLabel: 'Data',
+                secondaryLabel: 'Not Available',
+                tertiaryLabel: '',
+                icon: <CheckCircle className="h-5 w-5 text-gray-500" />,
+                username: 'N/A'
+            };
+        }
         if (platform === 'leetcode') {
             return {
                 mainStat: user.platforms?.leetcode?.totalQuestionsSolved || 0,

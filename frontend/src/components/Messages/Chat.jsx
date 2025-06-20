@@ -55,7 +55,7 @@ const Chat = () => {
                 // FIXED: Check for existing message by ID first
                 const existsById = prevMessages.some((msg) => msg._id === message._id)
                 if (existsById) {
-                    console.log("Chat: Ignoring duplicate message by ID:", message._id)
+                    // console.log("Chat: Ignoring duplicate message by ID:", message._id)
                     return prevMessages
                 }
 
@@ -425,7 +425,7 @@ const Chat = () => {
                 seen.add(key)
                 deduped.push(msg)
             } else {
-                console.log("Chat: Removing duplicate message:", key)
+                // console.log("Chat: Removing duplicate message:", key)
             }
         }
 
