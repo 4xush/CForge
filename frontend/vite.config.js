@@ -40,15 +40,7 @@ export default defineConfig({
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/cforge\.onrender\.com\/api\//,
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "api-cache",
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24, // 1 day
-              },
-              networkTimeoutSeconds: 5,
-            },
+            handler: "NetworkOnly", // ✅ API calls should never be cached
           },
         ],
       },

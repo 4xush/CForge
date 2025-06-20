@@ -25,7 +25,7 @@ const Header = ({ isScrolled }) => {
                         <div className="flex items-center gap-2 sm:gap-3">
                             <div className="relative h-6 w-6 sm:h-8 sm:w-8">
                                 <img
-                                    src="/logo.png"
+                                    src="/cforge.png"
                                     alt="CForge Icon"
                                     className="h-6 w-6 sm:h-8 sm:w-8 rounded-full"
                                 />
@@ -50,7 +50,7 @@ const Header = ({ isScrolled }) => {
                                         className="text-base lg:text-lg font-medium text-gray-300 hover:text-purple-400 transition-colors duration-300 relative group"
                                     >
                                         {item.label}
-                                        
+
                                     </a>
                                 </div>
                             ))}

@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npx vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+     "generate:sitemap": "node scripts/generate-sitemap.js",
+  "build": "npm run generate:sitemap && npx vite build"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.2.3",

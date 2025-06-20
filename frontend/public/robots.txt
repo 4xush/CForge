@@ -1,1 +1,17 @@
+# Allow all crawlers access to everything
+User-agent: *
+
+# Disallow crawling internal or sensitive routes (adjust as needed)
+Disallow: /logout
+Disallow: /settings
+Disallow: /rooms/
+Disallow: /u/
+Disallow: /rooms/join/
+Disallow: /rooms/:roomId
+Disallow: /api/
+
+# Allow landing, login, signup, dashboard, contests, help, about
+Allow: /
+
+# Tell bots where the sitemap is
 Sitemap: https://www.cforge.live/sitemap.xml
