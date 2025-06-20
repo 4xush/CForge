@@ -18,7 +18,8 @@ const TopBar = ({ roomId }) => {
     currentRoomLoading,
     currentRoomError,
     setCurrentRoomDetails,
-    loadCurrentRoomDetails
+    loadCurrentRoomDetails,
+    refreshRoomList
   } = useRoomContext();
   const { authUser } = useAuthContext();
 
@@ -87,6 +88,8 @@ const TopBar = ({ roomId }) => {
       setShowLeaveConfirmation(false);
       toast.success(response.data.message || "Successfully left the room");
       setCurrentRoomDetails(null);
+      // Update room list and cache after leaving
+      await refreshRoomList(true); // force refresh from server if online, else update cache
       navigate("/rooms", { replace: true });
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to leave room.");
