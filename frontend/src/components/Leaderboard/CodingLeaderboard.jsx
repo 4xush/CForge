@@ -188,7 +188,7 @@ const CodingLeaderboard = () => {
         <div className="bg-gray-900 text-white h-full flex flex-col">
             <div className="flex flex-col h-full overflow-hidden">
                 {/* Fixed Headers */}
-                <div className="bg-gray-900 border-b border-gray-800 p-2 md:p-3">
+                <div className="bg-gray-900 border-b border-gray-800 p-2 md:px-3">
                     {/* Main control row: Platform selectors on left, other controls on right for desktop */}
                     <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
                         {/* Platform Selectors */}

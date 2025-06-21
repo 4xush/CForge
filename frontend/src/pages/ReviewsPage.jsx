@@ -1,0 +1,363 @@
+import { useState } from 'react';
+import { MessageCircle, Send, Star, ThumbsUp, Lightbulb, AlertTriangle, Filter, ChevronDown, User, Calendar } from 'lucide-react';
+
+const dummyReviews = [
+    {
+        id: 1,
+        user: 'smartboy67',
+        category: 'Feature Request',
+        message: 'Would love to see more platform integrations like AtCoder! The current LeetCode integration is great, but expanding to other platforms would make this even more valuable.',
+        date: '2025-06-18',
+        rating: 4,
+        helpful: 12,
+        icon: <Lightbulb className="w-4 h-4 text-yellow-400" />,
+    },
+    {
+        id: 2,
+        user: 'codequeen',
+        category: 'UI/UX',
+        message: 'A dark mode toggle would be awesome for late night coding sessions. The current theme is good but having options would be perfect.',
+        date: '2025-06-19',
+        rating: 5,
+        helpful: 8,
+        icon: <AlertTriangle className="w-4 h-4 text-orange-400" />,
+    },
+    {
+        id: 3,
+        user: 'devguru',
+        category: 'Compliment',
+        message: 'The leaderboard UI is super clean and motivating. Great job! Really helps me stay competitive and track my progress.',
+        date: '2025-06-20',
+        rating: 5,
+        helpful: 15,
+        icon: <Star className="w-4 h-4 text-purple-400" />,
+    },
+    {
+        id: 4,
+        user: 'pythonista',
+        category: 'Bug Report',
+        message: 'Found a small issue with the timer not pausing correctly when switching tabs. Otherwise, everything works smoothly!',
+        date: '2025-06-17',
+        rating: 4,
+        helpful: 6,
+        icon: <AlertTriangle className="w-4 h-4 text-red-400" />,
+    },
+    {
+        id: 5,
+        user: 'webdev_master',
+        category: 'Compliment',
+        message: 'Love the clean interface and the way progress is tracked. This has become my go-to platform for coding practice.',
+        date: '2025-06-16',
+        rating: 5,
+        helpful: 20,
+        icon: <Star className="w-4 h-4 text-purple-400" />,
+    },
+];
+
+const categoryOptions = [
+    { label: 'Feature Request', value: 'Feature Request', icon: <Lightbulb className="w-4 h-4 text-yellow-400" /> },
+    { label: 'UI/UX', value: 'UI/UX', icon: <AlertTriangle className="w-4 h-4 text-orange-400" /> },
+    { label: 'Bug Report', value: 'Bug Report', icon: <AlertTriangle className="w-4 h-4 text-red-400" /> },
+    { label: 'Compliment', value: 'Compliment', icon: <Star className="w-4 h-4 text-purple-400" /> },
+];
+
+const StarRating = ({ rating, onRatingChange, disabled = false }) => {
+    return (
+        <div className="flex gap-1">
+            {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                    key={star}
+                    type="button"
+                    onClick={() => !disabled && onRatingChange && onRatingChange(star)}
+                    disabled={disabled}
+                    className={`transition-colors ${disabled ? 'cursor-default' : 'cursor-pointer hover:scale-110'}`}
+                >
+                    <Star
+                        className={`w-5 h-5 ${star <= rating
+                            ? 'fill-yellow-400 text-yellow-400'
+                            : 'text-gray-600 hover:text-yellow-400'
+                            }`}
+                    />
+                </button>
+            ))}
+        </div>
+    );
+};
+
+export default function ReviewsPage({ isAuthUser = false }) {
+    const [review, setReview] = useState('');
+    const [category, setCategory] = useState(categoryOptions[0].value);
+    const [rating, setRating] = useState(5);
+    const [submitting, setSubmitting] = useState(false);
+    const [submitted, setSubmitted] = useState(false);
+    const [filterCategory, setFilterCategory] = useState('All');
+    const [showFilters, setShowFilters] = useState(false);
+    const [sortBy, setSortBy] = useState('newest');
+
+    const handleSubmit = () => {
+        if (!isAuthUser || !review.trim()) return;
+        setSubmitting(true);
+        setTimeout(() => {
+            setSubmitting(false);
+            setSubmitted(true);
+            setReview('');
+            setCategory(categoryOptions[0].value);
+            setRating(5);
+            setTimeout(() => setSubmitted(false), 3000);
+        }, 1200);
+    };
+
+    const filteredReviews = dummyReviews
+        .filter(review => filterCategory === 'All' || review.category === filterCategory)
+        .sort((a, b) => {
+            switch (sortBy) {
+                case 'rating': return b.rating - a.rating;
+                case 'helpful': return b.helpful - a.helpful;
+                case 'oldest': return new Date(a.date) - new Date(b.date);
+                default: return new Date(b.date) - new Date(a.date);
+            }
+        });
+
+    const averageRating = (dummyReviews.reduce((sum, r) => sum + r.rating, 0) / dummyReviews.length).toFixed(1);
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white font-sans">
+
+            <div className="container mx-auto px-4 py-8">
+                {/* Header Section */}
+                <div className="text-center mb-8">
+                    <div className="flex items-center justify-center gap-3 mb-4">
+                        <MessageCircle className="w-10 h-10 text-purple-400" />
+                        <h1 className="text-4xl font-extrabold bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                            User Reviews
+                        </h1>
+                    </div>
+                    <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+                        See what our community thinks about CForge and share your own experience
+                    </p>
+
+                    {/* Stats */}
+                    <div className="flex items-center justify-center gap-8 mt-6 text-sm">
+                        <div className="flex flex-col items-center">
+                            <div className="text-2xl font-bold text-yellow-400">{averageRating}</div>
+                            <div className="flex items-center gap-1">
+                                <StarRating rating={Math.round(parseFloat(averageRating))} disabled />
+                            </div>
+                            <div className="text-gray-500">Average Rating</div>
+                        </div>
+                        <div className="flex flex-col items-center">
+                            <div className="text-2xl font-bold text-purple-400">{dummyReviews.length}</div>
+                            <div className="text-gray-500">Total Reviews</div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Reviews Section - Main content for everyone */}
+                <div className="max-w-6xl mx-auto">
+                    {/* Compact Sign-in Banner for Public Users */}
+                    {!isAuthUser && (
+                        <div className="mb-6 bg-gradient-to-r from-purple-900/30 to-blue-900/30 backdrop-blur-sm rounded-xl p-4 border border-purple-700/30">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <User className="w-6 h-6 text-purple-400" />
+                                    <div>
+                                        <h3 className="font-semibold text-white">Share Your Experience</h3>
+                                        <p className="text-gray-400 text-sm">Join thousands of users and share your review</p>
+                                    </div>
+                                </div>
+                                <a
+                                    href="/login"
+                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium shadow-md transition-all duration-200 text-sm"
+                                >
+                                    <User className="w-4 h-4" />
+                                    Sign In
+                                </a>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className={`grid gap-8 ${isAuthUser ? 'lg:grid-cols-3' : 'lg:grid-cols-1'}`}>
+                        {/* Review Submission Form - Only for authenticated users */}
+                        {isAuthUser && (
+                            <div className="lg:col-span-1">
+                                <div className="bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-2xl p-6 border border-gray-700/50 sticky top-8">
+                                    <h2 className="text-xl font-bold mb-4 text-purple-300">Share Your Review</h2>
+
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-semibold mb-2">Overall Rating</label>
+                                            <StarRating rating={rating} onRatingChange={setRating} />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-semibold mb-2">Category</label>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                {categoryOptions.map(opt => (
+                                                    <button
+                                                        type="button"
+                                                        key={opt.value}
+                                                        className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border transition-all duration-200 ${category === opt.value
+                                                            ? 'bg-purple-700 border-purple-500 text-white shadow-lg'
+                                                            : 'bg-gray-900 border-gray-700 text-gray-300 hover:bg-gray-800 hover:border-gray-600'
+                                                            }`}
+                                                        onClick={() => setCategory(opt.value)}
+                                                        disabled={submitting}
+                                                    >
+                                                        {opt.icon}
+                                                        <span>{opt.label}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-semibold mb-2">Your Review</label>
+                                            <textarea
+                                                className="w-full rounded-lg bg-gray-900 border border-gray-700 p-3 text-white resize-none focus:ring-2 focus:ring-purple-500 focus:outline-none text-sm min-h-[100px] transition-all duration-200"
+                                                placeholder="Share your experience with CForge..."
+                                                value={review}
+                                                onChange={e => setReview(e.target.value)}
+                                                maxLength={500}
+                                                disabled={submitting}
+                                            />
+                                            <div className="text-xs text-gray-500 mt-1">{review.length}/500</div>
+                                        </div>
+
+                                        <button
+                                            onClick={handleSubmit}
+                                            className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold shadow-md transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+                                            disabled={submitting || !review.trim()}
+                                        >
+                                            {submitting ? (
+                                                <>
+                                                    <Send className="animate-bounce w-4 h-4" />
+                                                    Submitting...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Send className="w-4 h-4" />
+                                                    Submit Review
+                                                </>
+                                            )}
+                                        </button>
+
+                                        {submitted && (
+                                            <div className="mt-4 p-3 bg-green-900/30 border border-green-700 rounded-lg text-green-300 text-center text-sm">
+                                                Thank you for your review! 🎉
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Reviews Section */}
+                        <div className={`${isAuthUser ? 'lg:col-span-2' : ''}`}>
+                            {/* Filters */}
+                            <div className="mb-6">
+                                <div className="flex flex-wrap items-center gap-4 mb-4">
+                                    <button
+                                        onClick={() => setShowFilters(!showFilters)}
+                                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white hover:bg-gray-700 transition-all duration-200"
+                                    >
+                                        <Filter className="w-4 h-4" />
+                                        Filters
+                                        <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+                                    </button>
+
+                                    <select
+                                        value={sortBy}
+                                        onChange={(e) => setSortBy(e.target.value)}
+                                        className="px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                                    >
+                                        <option value="newest">Newest First</option>
+                                        <option value="oldest">Oldest First</option>
+                                        <option value="rating">Highest Rated</option>
+                                        <option value="helpful">Most Helpful</option>
+                                    </select>
+                                </div>
+
+                                {showFilters && (
+                                    <div className="flex flex-wrap gap-2 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                                        <button
+                                            onClick={() => setFilterCategory('All')}
+                                            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ${filterCategory === 'All'
+                                                ? 'bg-purple-700 border-purple-500 text-white'
+                                                : 'bg-gray-900 border-gray-700 text-gray-300 hover:bg-gray-800'
+                                                }`}
+                                        >
+                                            All Categories
+                                        </button>
+                                        {categoryOptions.map(opt => (
+                                            <button
+                                                key={opt.value}
+                                                onClick={() => setFilterCategory(opt.value)}
+                                                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ${filterCategory === opt.value
+                                                    ? 'bg-purple-700 border-purple-500 text-white'
+                                                    : 'bg-gray-900 border-gray-700 text-gray-300 hover:bg-gray-800'
+                                                    }`}
+                                            >
+                                                {opt.icon}
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Reviews List */}
+                            <div className="space-y-4">
+                                {filteredReviews.length === 0 ? (
+                                    <div className="text-center py-12 text-gray-500">
+                                        <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                                        <p>No reviews found for the selected category.</p>
+                                    </div>
+                                ) : (
+                                    filteredReviews.map(review => (
+                                        <div
+                                            key={review.id}
+                                            className="bg-gray-800/80 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6 hover:bg-gray-800/90 transition-all duration-200 group"
+                                        >
+                                            <div className="flex items-start justify-between mb-3">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                                        {review.user[0].toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-semibold text-white">{review.user}</span>
+                                                            <span className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-purple-900/60 text-purple-300 border border-purple-700">
+                                                                {review.icon}
+                                                                {review.category}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <StarRating rating={review.rating} disabled />
+                                                            <span className="text-xs text-gray-500 flex items-center gap-1">
+                                                                <Calendar className="w-3 h-3" />
+                                                                {review.date}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <p className="text-gray-200 leading-relaxed mb-4">{review.message}</p>
+
+                                            <div className="flex items-center justify-between">
+                                                <button className="flex items-center gap-1 text-xs text-gray-500 hover:text-purple-400 transition-colors">
+                                                    <ThumbsUp className="w-4 h-4" />
+                                                    Helpful ({review.helpful})
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}

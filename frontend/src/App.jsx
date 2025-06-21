@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate ,useLocation} from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { RoomProvider } from './context/RoomContext';
 import { AuthProvider, useAuthContext } from './context/AuthContext';
 import { MessageProvider } from './context/MessageContext';
@@ -25,6 +25,7 @@ const HelpFAQ = React.lazy(() => import('./pages/HelpFAQ'));
 const NotFoundPage = React.lazy(() => import('./pages/Error404'));
 const Settings = React.lazy(() => import('./pages/Settings'));
 const ContestsPage = React.lazy(() => import('./pages/ContestsPage.jsx'));
+const ReviewsPage = React.lazy(() => import('./pages/ReviewsPage.jsx'));
 
 // Smart landing route handler
 const AuthLanding = () => {
@@ -89,6 +90,7 @@ const App = () => {
                 <Route path="/logout" element={<Logout />} />
                 <Route path="/" element={<AuthLanding />} />
                 <Route path="/about" element={<AboutCForge />} />
+                <Route path="/reviews" element={<ReviewsPageWrapper />} />
                 <Route path="/404" element={<NotFoundPage />} />
 
                 {/* Protected routes inside layout */}
@@ -187,6 +189,12 @@ const App = () => {
       </Router>
     </ErrorBoundary>
   );
+};
+
+const ReviewsPageWrapper = () => {
+  const { authUser, isLoading } = useAuthContext();
+  if (isLoading) return null;
+  return <ReviewsPage isAuthUser={!!authUser} />;
 };
 
 export default App;

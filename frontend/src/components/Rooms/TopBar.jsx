@@ -206,17 +206,14 @@ const TopBar = ({ roomId }) => {
           </div>
         </div>
         <div className="flex-shrink-0">
-          {!activeComponent && (
-            <button
-              onClick={toggleMenu}
-              className="text-gray-300 p-1 hover:bg-gray-700 rounded transition-colors"
-              aria-label="Open menu"
-            >
-              <MoreVertical size={16} className="sm:w-6 sm:h-6" />
-            </button>
-          )}
+          <button
+            onClick={toggleMenu}
+            className={`text-gray-300 p-1 hover:bg-gray-700 rounded transition-colors${activeComponent === 'menu' ? ' bg-gray-700' : ''}`}
+            aria-label="Open menu"
+          >
+            <MoreVertical size={16} className="sm:w-6 sm:h-6" />
+          </button>
         </div>
-
         {/* Mobile-optimized dropdown menu */}
         {activeComponent === "menu" && (
           <div className="absolute right-3 sm:right-4 top-12 sm:top-14 w-44 sm:w-48 bg-gray-700 text-gray-300 rounded-lg shadow-lg z-10 border border-gray-600">

@@ -59,16 +59,16 @@ const RoomDetails = ({ roomDetails, loading, error, onInviteLinkGenerated }) => 
   const displayMembers = showAllMembers ? allMembers : allMembers.slice(0, 5);
 
   return (
-    <div className="p-5 h-full overflow-y-auto">
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg p-3 mb-3">
-        <div className="bg-white bg-opacity-20 w-14 h-14 rounded-full flex items-center justify-center text-2xl font-bold mb-2 mx-auto">
+    <div className="p-3 sm:p-5 h-full overflow-y-auto text-xs sm:text-base">
+      <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg p-2 sm:p-3 mb-3">
+        <div className="bg-white bg-opacity-20 w-10 h-10 sm:w-14 sm:h-14 rounded-full flex items-center justify-center text-lg sm:text-2xl font-bold mb-2 mx-auto">
           #
         </div>
-        <h2 className="text-xl font-bold text-center mb-1">
+        <h2 className="text-base sm:text-xl font-bold text-center mb-1">
           {roomDetails.name}
         </h2>
-        <p className="text-sm font-bold text-center">@{roomDetails.roomId}</p>
-        <p className="text-sm text-center mb-2">{roomDetails.description}</p>
+        <p className="text-xs sm:text-sm font-bold text-center">@{roomDetails.roomId}</p>
+        <p className="text-xs sm:text-sm text-center mb-2">{roomDetails.description}</p>
         <div className="flex justify-center items-center">
           {roomDetails.isPublic ? (
             <span className="flex items-center text-xs bg-green-500 text-white px-2 py-1 rounded">
@@ -82,17 +82,17 @@ const RoomDetails = ({ roomDetails, loading, error, onInviteLinkGenerated }) => 
         </div>
       </div>
 
-      <div className="bg-gray-700 rounded-lg p-3 mb-3">
-        <h3 className="text-md font-semibold mb-2 flex items-center">
-          <Calendar size={16} className="mr-2" /> Created
+      <div className="bg-gray-700 rounded-lg p-2 sm:p-3 mb-3">
+        <h3 className="text-sm sm:text-md font-semibold mb-2 flex items-center">
+          <Calendar size={14} className="mr-2" /> Created
         </h3>
-        <p className="text-sm">{formatDate(roomDetails.createdAt)}</p>
-        <p className="text-sm mt-1">by {roomDetails.createdBy}</p>
+        <p className="text-xs sm:text-sm">{formatDate(roomDetails.createdAt)}</p>
+        <p className="text-xs sm:text-sm mt-1">by {roomDetails.createdBy}</p>
       </div>
 
-      <div className="bg-gray-700 rounded-lg p-3 mb-3">
-        <h3 className="text-md font-semibold mb-2 flex items-center">
-          <Users size={16} className="mr-2" /> Members ({allMembers.length})
+      <div className="bg-gray-700 rounded-lg p-2 sm:p-3 mb-3">
+        <h3 className="text-sm sm:text-md font-semibold mb-2 flex items-center">
+          <Users size={14} className="mr-2" /> Members ({allMembers.length})
         </h3>
         <div className="space-y-2">
           {displayMembers.map((member, index) => (
@@ -100,9 +100,9 @@ const RoomDetails = ({ roomDetails, loading, error, onInviteLinkGenerated }) => 
               <img
                 src={member.profilePicture || "/placeholder.svg"}
                 alt={member.username}
-                className="w-8 h-8 rounded-full mr-2"
+                className="w-6 h-6 sm:w-8 sm:h-8 rounded-full mr-2"
               />
-              <span className="text-sm">
+              <span className="text-xs sm:text-sm">
                 {member.username} {member.isAdmin && <span className="text-xs text-blue-400">(Admin)</span>}
               </span>
             </div>
@@ -110,7 +110,7 @@ const RoomDetails = ({ roomDetails, loading, error, onInviteLinkGenerated }) => 
           {allMembers.length > 5 && !showAllMembers && (
             <button
               onClick={() => setShowAllMembers(true)}
-              className="text-sm text-blue-400 hover:text-blue-300 mt-2"
+              className="text-xs sm:text-sm text-blue-400 hover:text-blue-300 mt-2"
             >
               View All
             </button>
@@ -118,7 +118,7 @@ const RoomDetails = ({ roomDetails, loading, error, onInviteLinkGenerated }) => 
           {showAllMembers && (
             <button
               onClick={() => setShowAllMembers(false)}
-              className="text-sm text-blue-400 hover:text-blue-300 mt-2"
+              className="text-xs sm:text-sm text-blue-400 hover:text-blue-300 mt-2"
             >
               Show Less
             </button>
@@ -131,12 +131,12 @@ const RoomDetails = ({ roomDetails, loading, error, onInviteLinkGenerated }) => 
           <button
             onClick={handleInviteClick}
             disabled={isGeneratingLink}
-            className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-400 disabled:cursor-not-allowed text-white font-bold py-2 px-2 rounded flex items-center justify-center transition duration-300"
+            className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-400 disabled:cursor-not-allowed text-white font-bold py-1.5 sm:py-2 px-2 rounded flex items-center justify-center transition duration-300 text-xs sm:text-base"
           >
             {isGeneratingLink ? (
               <span className="flex items-center">
                 <svg
-                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                  className="animate-spin -ml-1 mr-3 h-4 w-4 sm:h-5 sm:w-5 text-white"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
@@ -159,7 +159,7 @@ const RoomDetails = ({ roomDetails, loading, error, onInviteLinkGenerated }) => 
               </span>
             ) : (
               <>
-                <Plus size={16} className="mr-2" />
+                <Plus size={14} className="mr-2" />
                 Invite Link
               </>
             )}

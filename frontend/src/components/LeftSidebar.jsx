@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { PanelRightIcon, SettingsIcon, HelpCircleIcon, LayoutDashboardIcon, MenuIcon, XIcon } from 'lucide-react';
+import { PanelRightIcon, SettingsIcon, HelpCircleIcon, LayoutDashboardIcon, MenuIcon, XIcon, MessageCircle } from 'lucide-react';
 import { useAuthContext } from '../context/AuthContext';
 import DashboardButton from './ui/DashboardButtons';
 import RoomList from './Rooms/RoomList';
@@ -132,6 +132,16 @@ const LeftSidebar = () => {
                 />
             </div>
             <div className="mt-auto pt-4 border-t border-gray-700">
+                <div className="mt-4 mb-2 flex items-center justify-center">
+                    <button
+                        onClick={() => navigate('/reviews')}
+                        className="flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 transition-colors focus:outline-none"
+                        style={{ fontWeight: 500 }}
+                    >
+                        <MessageCircle className="w-4 h-4 mr-1" />
+                        Give us feedback
+                    </button>
+                </div>
                 <UserProfileModal onLogout={handleLogout} />
             </div>
         </div>

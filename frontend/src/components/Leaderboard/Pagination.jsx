@@ -1,9 +1,7 @@
-import React from "react";
-
 const Pagination = ({ page, totalCount, limit, setPage }) => {
     const totalPages = Math.ceil(totalCount / limit);
     return (
-        <div className="flex justify-between items-center mt-4">
+        <div className="flex justify-between items-center ">
             <button
                 disabled={page <= 1}
                 className="bg-gray-800 px-3 py-1 rounded text-sm"
