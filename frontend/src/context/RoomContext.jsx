@@ -63,7 +63,7 @@ export const RoomProvider = ({ children }) => {
     const [currentRoomError, setCurrentRoomError] = useState(null);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [lastSync, setLastSync] = useState(null);
-    
+
     const location = useLocation();
     const { authUser, isLoading: authLoading } = useAuthContext();
     const currentRoomIdRef = useRef(null);
@@ -86,13 +86,13 @@ export const RoomProvider = ({ children }) => {
     // Load cached data on initialization
     useEffect(() => {
         if (!authUser || initializationRef.current) return;
-        
+
         initializationRef.current = true;
-        
+
         // Load cached rooms
         const cachedRooms = storage.get(STORAGE_KEYS.ROOMS);
         const cachedLastSync = storage.get(STORAGE_KEYS.LAST_SYNC);
-        
+
         if (cachedRooms) {
             setRooms(cachedRooms);
             setLastSync(cachedLastSync);
@@ -101,7 +101,7 @@ export const RoomProvider = ({ children }) => {
         // Load cached room details if on a room page
         const pathSegments = location.pathname.split('/').filter(Boolean);
         const isRoomRoute = pathSegments[0] === 'rooms' && pathSegments.length >= 2;
-        
+
         if (isRoomRoute) {
             const roomId = pathSegments[1];
             const cachedDetails = storage.get(`${STORAGE_KEYS.ROOM_DETAILS}_${roomId}`);
@@ -148,24 +148,20 @@ export const RoomProvider = ({ children }) => {
         setListError(null);
 
         try {
-            const response = await ApiService.get('/rooms', {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-            
+            const response = await ApiService.get('/rooms');
+
             const roomsData = response.data.rooms;
             setRooms(roomsData);
-            
+
             // Cache the data
             storage.set(STORAGE_KEYS.ROOMS, roomsData);
             const now = Date.now();
             storage.set(STORAGE_KEYS.LAST_SYNC, now);
             setLastSync(now);
-            
+
         } catch (error) {
             console.error('Failed to fetch rooms:', error);
-            
+
             // Try to use cached data on error
             const cachedRooms = storage.get(STORAGE_KEYS.ROOMS);
             if (cachedRooms) {
@@ -189,7 +185,7 @@ export const RoomProvider = ({ children }) => {
         if (!isOnline) {
             // Search in cached rooms when offline
             const cachedRooms = storage.get(STORAGE_KEYS.ROOMS) || [];
-            const filteredRooms = cachedRooms.filter(room => 
+            const filteredRooms = cachedRooms.filter(room =>
                 room.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 room.description?.toLowerCase().includes(searchQuery.toLowerCase())
             );
@@ -198,9 +194,6 @@ export const RoomProvider = ({ children }) => {
 
         try {
             const response = await ApiService.get('/rooms/search', {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
                 params: {
                     search: searchQuery,
                     limit: 50
@@ -214,15 +207,15 @@ export const RoomProvider = ({ children }) => {
         } catch (error) {
             // Fallback to cached search on error
             const cachedRooms = storage.get(STORAGE_KEYS.ROOMS) || [];
-            const filteredRooms = cachedRooms.filter(room => 
+            const filteredRooms = cachedRooms.filter(room =>
                 room.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 room.description?.toLowerCase().includes(searchQuery.toLowerCase())
             );
-            
+
             if (filteredRooms.length > 0) {
                 return filteredRooms;
             }
-            
+
             throw new Error(error.response?.data?.message || 'Failed to search rooms');
         }
     }, [authUser, isOnline]);
@@ -235,7 +228,7 @@ export const RoomProvider = ({ children }) => {
                 setCurrentRoomError('Authentication required.');
                 return;
             }
-            
+
             if (!roomId) {
                 setCurrentRoomDetails(null);
                 setCurrentRoomError(null);
@@ -246,13 +239,13 @@ export const RoomProvider = ({ children }) => {
             // Check cached data first
             const cacheKey = `${STORAGE_KEYS.ROOM_DETAILS}_${roomId}`;
             const cachedDetails = storage.get(cacheKey);
-            
+
             if (!forceRefresh && cachedDetails) {
                 if (currentRoomIdRef.current !== roomId) {
                     setCurrentRoomDetails(cachedDetails);
                     currentRoomIdRef.current = roomId;
                 }
-                
+
                 // If offline or cache is still valid, use cached data
                 if (!isOnline || isCacheValid(cachedDetails.cachedAt)) {
                     return;
@@ -279,18 +272,14 @@ export const RoomProvider = ({ children }) => {
             currentRoomIdRef.current = roomId;
 
             try {
-                const response = await ApiService.get(`/rooms/${roomId}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
+                const response = await ApiService.get(`/rooms/${roomId}`);
 
                 const roomData = { ...response.data, cachedAt: Date.now() };
 
                 // Only update if we're still loading the same room (prevent race conditions)
                 if (currentRoomIdRef.current === roomId) {
                     setCurrentRoomDetails(roomData);
-                    
+
                     // Cache the room details
                     storage.set(cacheKey, roomData);
                 }
@@ -349,11 +338,11 @@ export const RoomProvider = ({ children }) => {
             setLastSync(null);
             currentRoomIdRef.current = null;
             initializationRef.current = false;
-            
+
             // Clear cached data
             storage.remove(STORAGE_KEYS.ROOMS);
             storage.remove(STORAGE_KEYS.LAST_SYNC);
-            
+
             // Clear all room details cache
             Object.keys(localStorage).forEach(key => {
                 if (key.startsWith(STORAGE_KEYS.ROOM_DETAILS)) {

@@ -174,7 +174,7 @@ const HelpFAQ = () => {
     return (
         <div className="bg-gradient-to-br from-gray-900 to-gray-800 text-white px-4 py-4 rounded-xl shadow-2xl w-full h-full overflow-hidden flex flex-col">
             <h1 className="text-3xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">Help & FAQs</h1>
-            <div className="space-y-4 overflow-y-auto p-3 flex-grow">
+            <div className="space-y-4 overflow-y-auto p-3 flex-grow custom-scrollbar">
                 {faqData.map((faq, index) => (
                     <div key={index} className="border-b border-gray-700 pb-4">
                         <motion.div
@@ -218,6 +218,30 @@ const HelpFAQ = () => {
                     <span>Report an Error</span>
                 </button>
             </div>
+            {/* Custom scrollbar styles */}
+            <style jsx global>{`
+            .custom-scrollbar::-webkit-scrollbar {
+              width: 10px;
+              background: transparent;
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb {
+              background: linear-gradient(135deg, #a78bfa 0%, #6366f1 100%);
+              border-radius: 8px;
+              min-height: 40px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+              background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+            }
+            .custom-scrollbar::-webkit-scrollbar-track {
+              background: transparent;
+            }
+            
+            /* For Firefox */
+            .custom-scrollbar {
+              scrollbar-width: thin;
+              scrollbar-color: #a78bfa #18181b;
+            }
+            `}</style>
         </div>
     );
 };

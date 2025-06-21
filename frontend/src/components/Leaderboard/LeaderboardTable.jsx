@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { ChevronDown, ChevronUp, ArrowUpRight } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Spinner } from '../ui/Spinner'; // Assuming a Spinner component
 
 export const LeaderboardTable = ({
@@ -144,25 +144,26 @@ export const LeaderboardTable = ({
                                 <td className={`px-4 py-3 ${currentColumns[1].className || ''}`}>
                                     <div className="flex items-center">
                                         <div className="relative group flex-shrink-0">
-                                            <img
-                                                src={user.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName)}&background=random`}
-                                                alt={user.fullName}
-                                                className="w-9 h-9 bg-gray-700 rounded-full mr-3 object-cover border-2 border-gray-600 group-hover:border-blue-500 transition-all"
-                                            />
-                                            {platformUsername !== 'N/A' && (
-                                                <button
-                                                    onClick={() => onProfileClick(user.username)}
-                                                    className="absolute -top-1 -right-1 p-0.5 bg-blue-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none focus:ring-1 focus:ring-white"
-                                                    title="View Profile"
-                                                >
-                                                    <ArrowUpRight className="h-3 w-3 text-white" />
-                                                </button>
-                                            )}
+                                            <button
+                                                onClick={() => onProfileClick(user.username)}
+                                                className="focus:outline-none"
+                                                title={`View ${user.fullName}'s profile`}
+                                            >
+                                                <img
+                                                    src={user.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName)}&background=random`}
+                                                    alt={user.fullName}
+                                                    className="w-9 h-9 bg-gray-700 rounded-full mr-3 object-cover border-2 border-gray-600 group-hover:border-blue-500 transition-all hover:scale-105"
+                                                />
+                                            </button>
                                         </div>
                                         <div>
-                                            <div className="font-medium text-gray-100 truncate max-w-[150px] sm:max-w-xs" title={user.fullName}>
+                                            <button
+                                                onClick={() => onProfileClick(user.username)}
+                                                className="font-medium text-gray-100 truncate max-w-[150px] sm:max-w-xs text-left hover:underline hover:text-blue-400 transition-colors"
+                                                title={`View ${user.fullName}'s profile`}
+                                            >
                                                 {user.fullName}
-                                            </div>
+                                            </button>
                                             <div className={`text-xs ${platformUsername === 'N/A' ? 'text-gray-500' : 'text-blue-400'}`}>
                                                 {platformUsername}
                                             </div>

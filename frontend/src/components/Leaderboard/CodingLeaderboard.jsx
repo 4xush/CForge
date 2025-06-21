@@ -258,7 +258,7 @@ const CodingLeaderboard = () => {
                                 onClick={handleShowMyPlace}
                                 className={`px-3 py-1.5 rounded text-sm transition-colors whitespace-nowrap ${isMyPlaceHighlighted ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
                             >
-                                {isMyPlaceHighlighted ? 'Clear My Highlight' : 'Show My Place'}
+                                {isMyPlaceHighlighted ? 'Clear Highlight' : 'Show My Place'}
                             </button>
 
                             {/* Search Form */}

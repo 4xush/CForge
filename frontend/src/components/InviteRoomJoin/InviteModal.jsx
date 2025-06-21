@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from '../ui/Alert';
 import { Loader2, Users, Lock, Unlock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useRoomContext } from '../../context/RoomContext';
-const API_URI = import.meta.env.VITE_API_URI;
+import ApiService from '../../services/ApiService';
 
 const InviteModal = () => {
     const location = useLocation();
@@ -59,8 +59,8 @@ const InviteModal = () => {
             setLoading(true);
             setIsOpen(true);
 
-            const response = await fetch(`${API_URI}/rooms/invite/${inviteCode}/verify`);
-            const data = await response.json();
+            const response = await ApiService.get(`/rooms/invite/${inviteCode}/verify`);
+            const data = response.data;
 
             if (data.success) {
                 setInviteDetails(data.data);
@@ -99,13 +99,8 @@ const InviteModal = () => {
         }
         try {
             setLoading(true);
-            const response = await fetch(`${API_URI}/rooms/invite/${currentInviteCode}/join`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('app-token')}`
-                }
-            });
-            const data = await response.json();
+            const response = await ApiService.post(`/rooms/invite/${currentInviteCode}/join`);
+            const data = response.data;
 
             if (data.success) {
                 toast.success('Successfully joined room!');

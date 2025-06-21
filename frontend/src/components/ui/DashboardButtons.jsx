@@ -1,13 +1,14 @@
-import React, { forwardRef } from 'react';
+import { forwardRef } from 'react';
+import PropTypes from 'prop-types';
 
 const DashboardButton = forwardRef(({ icon: Icon, label, badge, isActive, onClick }, ref) => {
     return (
         <button
             ref={ref}
             onClick={onClick}
-            className={`w-full flex items-center gap-2 px-3 py-5 rounded-lg transition-colors duration-200 
+            className={`w-full flex items-center gap-2 px-3 py-4 rounded-lg transition-colors duration-200 
         ${isActive
-                    ? 'bg-gray-700 text-white'
+                    ? 'bg-gray-700 text-purple-400'
                     : 'text-gray-400 hover:bg-gray-700 hover:text-white'
                 }`}
         >
@@ -25,8 +26,14 @@ const DashboardButton = forwardRef(({ icon: Icon, label, badge, isActive, onClic
         </button>
     );
 });
-
-// Add a display name for better debugging
 DashboardButton.displayName = 'DashboardButton';
+
+DashboardButton.propTypes = {
+    icon: PropTypes.elementType.isRequired,
+    label: PropTypes.string.isRequired,
+    badge: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    isActive: PropTypes.bool,
+    onClick: PropTypes.func,
+};
 
 export default DashboardButton;
