@@ -1,58 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MessageCircle, Send, Star, ThumbsUp, Lightbulb, AlertTriangle, Filter, ChevronDown, User, Calendar } from 'lucide-react';
-
-const dummyReviews = [
-    {
-        id: 1,
-        user: 'smartboy67',
-        category: 'Feature Request',
-        message: 'Would love to see more platform integrations like AtCoder! The current LeetCode integration is great, but expanding to other platforms would make this even more valuable.',
-        date: '2025-06-18',
-        rating: 4,
-        helpful: 12,
-        icon: <Lightbulb className="w-4 h-4 text-yellow-400" />,
-    },
-    {
-        id: 2,
-        user: 'codequeen',
-        category: 'UI/UX',
-        message: 'A dark mode toggle would be awesome for late night coding sessions. The current theme is good but having options would be perfect.',
-        date: '2025-06-19',
-        rating: 5,
-        helpful: 8,
-        icon: <AlertTriangle className="w-4 h-4 text-orange-400" />,
-    },
-    {
-        id: 3,
-        user: 'devguru',
-        category: 'Compliment',
-        message: 'The leaderboard UI is super clean and motivating. Great job! Really helps me stay competitive and track my progress.',
-        date: '2025-06-20',
-        rating: 5,
-        helpful: 15,
-        icon: <Star className="w-4 h-4 text-purple-400" />,
-    },
-    {
-        id: 4,
-        user: 'pythonista',
-        category: 'Bug Report',
-        message: 'Found a small issue with the timer not pausing correctly when switching tabs. Otherwise, everything works smoothly!',
-        date: '2025-06-17',
-        rating: 4,
-        helpful: 6,
-        icon: <AlertTriangle className="w-4 h-4 text-red-400" />,
-    },
-    {
-        id: 5,
-        user: 'webdev_master',
-        category: 'Compliment',
-        message: 'Love the clean interface and the way progress is tracked. This has become my go-to platform for coding practice.',
-        date: '2025-06-16',
-        rating: 5,
-        helpful: 20,
-        icon: <Star className="w-4 h-4 text-purple-400" />,
-    },
-];
+import ApiService from '../services/ApiService';
+import toast from 'react-hot-toast';
+import PropTypes from 'prop-types';
+import useMyReview from './useMyReview';
 
 const categoryOptions = [
     { label: 'Feature Request', value: 'Feature Request', icon: <Lightbulb className="w-4 h-4 text-yellow-400" /> },
@@ -83,6 +34,11 @@ const StarRating = ({ rating, onRatingChange, disabled = false }) => {
         </div>
     );
 };
+StarRating.propTypes = {
+    rating: PropTypes.number.isRequired,
+    onRatingChange: PropTypes.func,
+    disabled: PropTypes.bool,
+};
 
 export default function ReviewsPage({ isAuthUser = false }) {
     const [review, setReview] = useState('');
@@ -93,36 +49,110 @@ export default function ReviewsPage({ isAuthUser = false }) {
     const [filterCategory, setFilterCategory] = useState('All');
     const [showFilters, setShowFilters] = useState(false);
     const [sortBy, setSortBy] = useState('newest');
+    const [reviews, setReviews] = useState([]);
+    const [stats, setStats] = useState({ averageRating: '0.0', totalReviews: 0 });
+    const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1 });
+    const [loading, setLoading] = useState(false);
+    const [page, setPage] = useState(1);
+    const { myReview, setMyReview, loading: loadingMyReview } = useMyReview(isAuthUser);
+    const [editMode, setEditMode] = useState(false);
 
-    const handleSubmit = () => {
+    // Fetch reviews and stats
+    useEffect(() => {
+        const fetchReviews = async () => {
+            setLoading(true);
+            try {
+                const params = {
+                    category: filterCategory,
+                    sortBy,
+                    page,
+                    limit: 10,
+                };
+                const res = await ApiService.get('/reviews', params);
+                const json = res.data;
+                if (!json.success) throw new Error('Failed to fetch reviews');
+                setReviews(json.data.reviews);
+                setPagination(json.data.pagination);
+                setStats(json.data.stats);
+            } catch (err) {
+                toast.error(err.message || 'Error fetching reviews');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchReviews();
+    }, [filterCategory, sortBy, page]);
+
+    // Submit review
+    const handleSubmit = async () => {
         if (!isAuthUser || !review.trim()) return;
         setSubmitting(true);
-        setTimeout(() => {
-            setSubmitting(false);
+        try {
+            await ApiService.post('/reviews', {
+                message: review,
+                category,
+                rating,
+            });
             setSubmitted(true);
             setReview('');
             setCategory(categoryOptions[0].value);
             setRating(5);
             setTimeout(() => setSubmitted(false), 3000);
-        }, 1200);
+            setPage(1);
+            toast.success('Review submitted!');
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Error submitting review');
+        } finally {
+            setSubmitting(false);
+        }
     };
 
-    const filteredReviews = dummyReviews
-        .filter(review => filterCategory === 'All' || review.category === filterCategory)
-        .sort((a, b) => {
-            switch (sortBy) {
-                case 'rating': return b.rating - a.rating;
-                case 'helpful': return b.helpful - a.helpful;
-                case 'oldest': return new Date(a.date) - new Date(b.date);
-                default: return new Date(b.date) - new Date(a.date);
-            }
-        });
+    // Edit review handler
+    const handleEdit = () => {
+        if (!myReview) return;
+        setReview(myReview.message);
+        setCategory(myReview.category);
+        setRating(myReview.rating);
+        setEditMode(true);
+    };
 
-    const averageRating = (dummyReviews.reduce((sum, r) => sum + r.rating, 0) / dummyReviews.length).toFixed(1);
+    // Update review handler
+    const handleUpdate = async () => {
+        setSubmitting(true);
+        try {
+            await ApiService.put('/reviews/my-review', {
+                message: review,
+                category,
+                rating,
+            });
+            setEditMode(false);
+            setSubmitted(true);
+            setTimeout(() => setSubmitted(false), 3000);
+            setPage(1);
+            toast.success('Review updated!');
+            setMyReview({ ...myReview, message: review, category, rating });
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Error updating review');
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
+    // Helpful vote
+    const handleHelpful = async (id) => {
+        if (!isAuthUser) return toast.info('Sign in to vote helpful!');
+        try {
+            await ApiService.put(`/reviews/${id}/helpful`);
+            setReviews(reviews => reviews.map(r => r.id === id ? { ...r, helpful: r.helpful + 1 } : r));
+            toast.success('Marked as helpful!');
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Error marking helpful');
+        }
+    };
+
+    // Use pagination and loading in the UI
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white font-sans">
-
             <div className="container mx-auto px-4 py-8">
                 {/* Header Section */}
                 <div className="text-center mb-8">
@@ -139,14 +169,14 @@ export default function ReviewsPage({ isAuthUser = false }) {
                     {/* Stats */}
                     <div className="flex items-center justify-center gap-8 mt-6 text-sm">
                         <div className="flex flex-col items-center">
-                            <div className="text-2xl font-bold text-yellow-400">{averageRating}</div>
+                            <div className="text-2xl font-bold text-yellow-400">{stats.averageRating}</div>
                             <div className="flex items-center gap-1">
-                                <StarRating rating={Math.round(parseFloat(averageRating))} disabled />
+                                <StarRating rating={Math.round(parseFloat(stats.averageRating))} disabled />
                             </div>
                             <div className="text-gray-500">Average Rating</div>
                         </div>
                         <div className="flex flex-col items-center">
-                            <div className="text-2xl font-bold text-purple-400">{dummyReviews.length}</div>
+                            <div className="text-2xl font-bold text-purple-400">{stats.totalReviews}</div>
                             <div className="text-gray-500">Total Reviews</div>
                         </div>
                     </div>
@@ -181,66 +211,91 @@ export default function ReviewsPage({ isAuthUser = false }) {
                         {isAuthUser && (
                             <div className="lg:col-span-1">
                                 <div className="bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-2xl p-6 border border-gray-700/50 sticky top-8">
-                                    <h2 className="text-xl font-bold mb-4 text-purple-300">Share Your Review</h2>
-
+                                    <h2 className="text-xl font-bold mb-4 text-purple-300">{myReview && !editMode ? 'Your Review' : editMode ? 'Edit Your Review' : 'Share Your Review'}</h2>
                                     <div className="space-y-4">
-                                        <div>
-                                            <label className="block text-sm font-semibold mb-2">Overall Rating</label>
-                                            <StarRating rating={rating} onRatingChange={setRating} />
-                                        </div>
+                                        {myReview && !editMode ? (
+                                            <>
+                                                <div className="mb-2">
+                                                    <StarRating rating={myReview.rating} disabled />
+                                                    <div className="text-xs text-gray-400 mt-1">{myReview.category}</div>
+                                                    <div className="text-gray-200 mt-2">{myReview.message}</div>
+                                                </div>
+                                                <button
+                                                    onClick={handleEdit}
+                                                    className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold shadow-md transition-all duration-200"
+                                                >
+                                                    Edit Review
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div>
+                                                    <label className="block text-sm font-semibold mb-2">Overall Rating</label>
+                                                    <StarRating rating={rating} onRatingChange={setRating} />
+                                                </div>
 
-                                        <div>
-                                            <label className="block text-sm font-semibold mb-2">Category</label>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                {categoryOptions.map(opt => (
+                                                <div>
+                                                    <label className="block text-sm font-semibold mb-2">Category</label>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        {categoryOptions.map(opt => (
+                                                            <button
+                                                                type="button"
+                                                                key={opt.value}
+                                                                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border transition-all duration-200 ${category === opt.value
+                                                                    ? 'bg-purple-700 border-purple-500 text-white shadow-lg'
+                                                                    : 'bg-gray-900 border-gray-700 text-gray-300 hover:bg-gray-800 hover:border-gray-600'
+                                                                    }`}
+                                                                onClick={() => setCategory(opt.value)}
+                                                                disabled={submitting}
+                                                            >
+                                                                {opt.icon}
+                                                                <span>{opt.label}</span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-sm font-semibold mb-2">Your Review</label>
+                                                    <textarea
+                                                        className="w-full rounded-lg bg-gray-900 border border-gray-700 p-3 text-white resize-none focus:ring-2 focus:ring-purple-500 focus:outline-none text-sm min-h-[100px] transition-all duration-200"
+                                                        placeholder="Share your experience with CForge..."
+                                                        value={review}
+                                                        onChange={e => setReview(e.target.value)}
+                                                        maxLength={500}
+                                                        disabled={submitting}
+                                                    />
+                                                    <div className="text-xs text-gray-500 mt-1">{review.length}/500</div>
+                                                </div>
+
+                                                <button
+                                                    onClick={editMode ? handleUpdate : handleSubmit}
+                                                    className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold shadow-md transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    disabled={submitting || !review.trim()}
+                                                >
+                                                    {submitting ? (
+                                                        <>
+                                                            <Send className="animate-bounce w-4 h-4" />
+                                                            {editMode ? 'Updating...' : 'Submitting...'}
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Send className="w-4 h-4" />
+                                                            {editMode ? 'Update Review' : 'Submit Review'}
+                                                        </>
+                                                    )}
+                                                </button>
+                                                {editMode && (
                                                     <button
-                                                        type="button"
-                                                        key={opt.value}
-                                                        className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border transition-all duration-200 ${category === opt.value
-                                                            ? 'bg-purple-700 border-purple-500 text-white shadow-lg'
-                                                            : 'bg-gray-900 border-gray-700 text-gray-300 hover:bg-gray-800 hover:border-gray-600'
-                                                            }`}
-                                                        onClick={() => setCategory(opt.value)}
+                                                        onClick={() => setEditMode(false)}
+                                                        className="w-full mt-2 px-5 py-2 rounded-lg bg-gray-700 text-white font-medium"
                                                         disabled={submitting}
                                                     >
-                                                        {opt.icon}
-                                                        <span>{opt.label}</span>
+                                                        Cancel
                                                     </button>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-semibold mb-2">Your Review</label>
-                                            <textarea
-                                                className="w-full rounded-lg bg-gray-900 border border-gray-700 p-3 text-white resize-none focus:ring-2 focus:ring-purple-500 focus:outline-none text-sm min-h-[100px] transition-all duration-200"
-                                                placeholder="Share your experience with CForge..."
-                                                value={review}
-                                                onChange={e => setReview(e.target.value)}
-                                                maxLength={500}
-                                                disabled={submitting}
-                                            />
-                                            <div className="text-xs text-gray-500 mt-1">{review.length}/500</div>
-                                        </div>
-
-                                        <button
-                                            onClick={handleSubmit}
-                                            className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold shadow-md transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
-                                            disabled={submitting || !review.trim()}
-                                        >
-                                            {submitting ? (
-                                                <>
-                                                    <Send className="animate-bounce w-4 h-4" />
-                                                    Submitting...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Send className="w-4 h-4" />
-                                                    Submit Review
-                                                </>
-                                            )}
-                                        </button>
-
+                                                )}
+                                            </>
+                                        )}
                                         {submitted && (
                                             <div className="mt-4 p-3 bg-green-900/30 border border-green-700 rounded-lg text-green-300 text-center text-sm">
                                                 Thank you for your review! 🎉
@@ -307,13 +362,15 @@ export default function ReviewsPage({ isAuthUser = false }) {
 
                             {/* Reviews List */}
                             <div className="space-y-4">
-                                {filteredReviews.length === 0 ? (
+                                {loading ? (
+                                    <div className="text-center py-12 text-gray-400">Loading reviews...</div>
+                                ) : reviews.length === 0 ? (
                                     <div className="text-center py-12 text-gray-500">
                                         <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
                                         <p>No reviews found for the selected category.</p>
                                     </div>
                                 ) : (
-                                    filteredReviews.map(review => (
+                                    reviews.map(review => (
                                         <div
                                             key={review.id}
                                             className="bg-gray-800/80 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6 hover:bg-gray-800/90 transition-all duration-200 group"
@@ -345,7 +402,11 @@ export default function ReviewsPage({ isAuthUser = false }) {
                                             <p className="text-gray-200 leading-relaxed mb-4">{review.message}</p>
 
                                             <div className="flex items-center justify-between">
-                                                <button className="flex items-center gap-1 text-xs text-gray-500 hover:text-purple-400 transition-colors">
+                                                <button
+                                                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-purple-400 transition-colors"
+                                                    onClick={() => handleHelpful(review.id)}
+                                                    disabled={!isAuthUser}
+                                                >
                                                     <ThumbsUp className="w-4 h-4" />
                                                     Helpful ({review.helpful})
                                                 </button>
@@ -354,6 +415,26 @@ export default function ReviewsPage({ isAuthUser = false }) {
                                     ))
                                 )}
                             </div>
+                            {/* Pagination Controls */}
+                            {pagination.totalPages > 1 && (
+                                <div className="flex justify-center mt-8 gap-2">
+                                    <button
+                                        className="px-3 py-1 rounded bg-gray-700 text-white disabled:opacity-50"
+                                        onClick={() => setPage(page - 1)}
+                                        disabled={page <= 1}
+                                    >
+                                        Prev
+                                    </button>
+                                    <span className="px-3 py-1">Page {pagination.currentPage} of {pagination.totalPages}</span>
+                                    <button
+                                        className="px-3 py-1 rounded bg-gray-700 text-white disabled:opacity-50"
+                                        onClick={() => setPage(page + 1)}
+                                        disabled={page >= pagination.totalPages}
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -361,3 +442,6 @@ export default function ReviewsPage({ isAuthUser = false }) {
         </div>
     );
 }
+ReviewsPage.propTypes = {
+    isAuthUser: PropTypes.bool,
+};
