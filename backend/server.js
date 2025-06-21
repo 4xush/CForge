@@ -45,7 +45,7 @@ const adminRoomRoutes = require('./routes/adminRoomRoutes');
 const publicRoutes = require('./routes/publicRoutes');
 const healthRoutes = require('./routes/healthRoutes');
 const contestsRoutes = require('./routes/contests');
-
+const reviewRoutes = require('./routes/reviewRoutes');
 // Enhanced services
 const serviceInitializer = require('./services/initialization/serviceInitializer');
 
@@ -129,6 +129,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/rooms/admin', adminRoomRoutes);
+app.use('/api/reviews', reviewRoutes);
 app.use('/api/contests', contestsRoutes);
 app.use('/api', publicRoutes);
 
