@@ -172,6 +172,33 @@ const FeaturesSection = () => {
                     </DialogContent>
                 </Dialog>
             )}
+
+            {/* Reviews Link Section */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.8 }}
+                className="mt-16 text-center"
+            >
+                <div className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 backdrop-blur-sm rounded-2xl p-8 border border-purple-500/20">
+                    <h3 className="text-2xl font-bold text-white mb-4">
+                        See What Our Community Says
+                    </h3>
+                    <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
+                        Don't just take our word for it. Discover how CForge is helping developers track their progress and grow together.
+                    </p>
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full text-white font-medium shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300"
+                        onClick={() => document.getElementById('reviews').scrollIntoView({ behavior: 'smooth' })}
+                    >
+                        <MessageCircle className="w-5 h-5" />
+                        Read Community Reviews
+                        <ArrowRight className="w-4 h-4" />
+                    </motion.button>
+                </div>
+            </motion.div>
         </div>
     );
 };

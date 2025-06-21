@@ -4,6 +4,8 @@ import Hero from './Landing/Hero';
 import { Header, Footer, DeveloperResources, About } from './Landing/NavBar';
 import FeaturesSection from './Landing/FeaturesSection';
 import PreviewSection from './Landing/PreviewPopup';
+import ReviewsSection from './Landing/ReviewsSection';
+import FloatingReviewsButton from './Landing/FloatingReviewsButton';
 
 const CforgeLanding = () => {
     const [scrollPosition, setScrollPosition] = useState(0);
@@ -68,10 +70,14 @@ const CforgeLanding = () => {
                     <PreviewSection />
                 </section>
 
+                {/* Reviews Section */}
+                <ReviewsSection />
+
                 <DeveloperResources />
                 <About />
                 <Footer />
             </div>
+            <FloatingReviewsButton />
         </div>
     );
 };

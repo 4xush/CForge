@@ -4,6 +4,7 @@ import ApiService from '../services/ApiService';
 import toast from 'react-hot-toast';
 import PropTypes from 'prop-types';
 import useMyReview from './useMyReview';
+import { Footer } from './Landing/NavBar';
 
 const categoryOptions = [
     { label: 'Feature Request', value: 'Feature Request', icon: <Lightbulb className="w-4 h-4 text-yellow-400" /> },
@@ -157,27 +158,27 @@ export default function ReviewsPage({ isAuthUser = false }) {
                 {/* Header Section */}
                 <div className="text-center mb-8">
                     <div className="flex items-center justify-center gap-3 mb-4">
-                        <MessageCircle className="w-10 h-10 text-purple-400" />
-                        <h1 className="text-4xl font-extrabold bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                        <MessageCircle className="w-8 h-8 sm:w-10 sm:h-10 text-purple-400" />
+                        <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
                             User Reviews
                         </h1>
                     </div>
-                    <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+                    <p className="text-sm sm:text-base md:text-lg text-gray-400 max-w-2xl mx-auto">
                         See what our community thinks about CForge and share your own experience
                     </p>
 
                     {/* Stats */}
-                    <div className="flex items-center justify-center gap-8 mt-6 text-sm">
+                    <div className="flex items-center justify-center gap-4 sm:gap-8 mt-6 text-xs sm:text-sm">
                         <div className="flex flex-col items-center">
-                            <div className="text-2xl font-bold text-yellow-400">{stats.averageRating}</div>
+                            <div className="text-xl sm:text-2xl font-bold text-yellow-400">{stats.averageRating}</div>
                             <div className="flex items-center gap-1">
                                 <StarRating rating={Math.round(parseFloat(stats.averageRating))} disabled />
                             </div>
-                            <div className="text-gray-500">Average Rating</div>
+                            <div className="text-gray-500 text-xs sm:text-sm">Average Rating</div>
                         </div>
                         <div className="flex flex-col items-center">
-                            <div className="text-2xl font-bold text-purple-400">{stats.totalReviews}</div>
-                            <div className="text-gray-500">Total Reviews</div>
+                            <div className="text-xl sm:text-2xl font-bold text-purple-400">{stats.totalReviews}</div>
+                            <div className="text-gray-500 text-xs sm:text-sm">Total Reviews</div>
                         </div>
                     </div>
                 </div>
@@ -186,43 +187,43 @@ export default function ReviewsPage({ isAuthUser = false }) {
                 <div className="max-w-6xl mx-auto">
                     {/* Compact Sign-in Banner for Public Users */}
                     {!isAuthUser && (
-                        <div className="mb-6 bg-gradient-to-r from-purple-900/30 to-blue-900/30 backdrop-blur-sm rounded-xl p-4 border border-purple-700/30">
-                            <div className="flex items-center justify-between">
+                        <div className="mb-6 bg-gradient-to-r from-purple-900/30 to-blue-900/30 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-purple-700/30">
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
                                 <div className="flex items-center gap-3">
-                                    <User className="w-6 h-6 text-purple-400" />
+                                    <User className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400" />
                                     <div>
-                                        <h3 className="font-semibold text-white">Share Your Experience</h3>
-                                        <p className="text-gray-400 text-sm">Join thousands of users and share your review</p>
+                                        <h3 className="font-semibold text-white text-sm sm:text-base">Share Your Experience</h3>
+                                        <p className="text-gray-400 text-xs sm:text-sm">Join users and share your review</p>
                                     </div>
                                 </div>
                                 <a
                                     href="/login"
-                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium shadow-md transition-all duration-200 text-sm"
+                                    className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium shadow-md transition-all duration-200 text-xs sm:text-sm"
                                 >
-                                    <User className="w-4 h-4" />
+                                    <User className="w-3 h-3 sm:w-4 sm:h-4" />
                                     Sign In
                                 </a>
                             </div>
                         </div>
                     )}
 
-                    <div className={`grid gap-8 ${isAuthUser ? 'lg:grid-cols-3' : 'lg:grid-cols-1'}`}>
+                    <div className={`grid gap-6 sm:gap-8 ${isAuthUser ? 'lg:grid-cols-3' : 'lg:grid-cols-1'}`}>
                         {/* Review Submission Form - Only for authenticated users */}
                         {isAuthUser && (
                             <div className="lg:col-span-1">
-                                <div className="bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-2xl p-6 border border-gray-700/50 sticky top-8">
-                                    <h2 className="text-xl font-bold mb-4 text-purple-300">{myReview && !editMode ? 'Your Review' : editMode ? 'Edit Your Review' : 'Share Your Review'}</h2>
-                                    <div className="space-y-4">
+                                <div className="bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-2xl p-4 sm:p-6 border border-gray-700/50 sticky top-8">
+                                    <h2 className="text-lg sm:text-xl font-bold mb-4 text-purple-300">{myReview && !editMode ? 'Your Review' : editMode ? 'Edit Your Review' : 'Share Your Review'}</h2>
+                                    <div className="space-y-3 sm:space-y-4">
                                         {myReview && !editMode ? (
                                             <>
                                                 <div className="mb-2">
                                                     <StarRating rating={myReview.rating} disabled />
                                                     <div className="text-xs text-gray-400 mt-1">{myReview.category}</div>
-                                                    <div className="text-gray-200 mt-2">{myReview.message}</div>
+                                                    <div className="text-gray-200 mt-2 text-sm sm:text-base">{myReview.message}</div>
                                                 </div>
                                                 <button
                                                     onClick={handleEdit}
-                                                    className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold shadow-md transition-all duration-200"
+                                                    className="w-full inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-3 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold shadow-md transition-all duration-200 text-sm sm:text-base"
                                                 >
                                                     Edit Review
                                                 </button>
@@ -230,18 +231,18 @@ export default function ReviewsPage({ isAuthUser = false }) {
                                         ) : (
                                             <>
                                                 <div>
-                                                    <label className="block text-sm font-semibold mb-2">Overall Rating</label>
+                                                    <label className="block text-xs sm:text-sm font-semibold mb-2">Overall Rating</label>
                                                     <StarRating rating={rating} onRatingChange={setRating} />
                                                 </div>
 
                                                 <div>
-                                                    <label className="block text-sm font-semibold mb-2">Category</label>
+                                                    <label className="block text-xs sm:text-sm font-semibold mb-2">Category</label>
                                                     <div className="grid grid-cols-2 gap-2">
                                                         {categoryOptions.map(opt => (
                                                             <button
                                                                 type="button"
                                                                 key={opt.value}
-                                                                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border transition-all duration-200 ${category === opt.value
+                                                                className={`flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 rounded-lg text-xs font-medium border transition-all duration-200 ${category === opt.value
                                                                     ? 'bg-purple-700 border-purple-500 text-white shadow-lg'
                                                                     : 'bg-gray-900 border-gray-700 text-gray-300 hover:bg-gray-800 hover:border-gray-600'
                                                                     }`}
@@ -249,16 +250,16 @@ export default function ReviewsPage({ isAuthUser = false }) {
                                                                 disabled={submitting}
                                                             >
                                                                 {opt.icon}
-                                                                <span>{opt.label}</span>
+                                                                <span className="text-xs sm:text-sm">{opt.label}</span>
                                                             </button>
                                                         ))}
                                                     </div>
                                                 </div>
 
                                                 <div>
-                                                    <label className="block text-sm font-semibold mb-2">Your Review</label>
+                                                    <label className="block text-xs sm:text-sm font-semibold mb-2">Your Review</label>
                                                     <textarea
-                                                        className="w-full rounded-lg bg-gray-900 border border-gray-700 p-3 text-white resize-none focus:ring-2 focus:ring-purple-500 focus:outline-none text-sm min-h-[100px] transition-all duration-200"
+                                                        className="w-full rounded-lg bg-gray-900 border border-gray-700 p-3 text-white resize-none focus:ring-2 focus:ring-purple-500 focus:outline-none text-sm min-h-[80px] sm:min-h-[100px] transition-all duration-200"
                                                         placeholder="Share your experience with CForge..."
                                                         value={review}
                                                         onChange={e => setReview(e.target.value)}
@@ -270,17 +271,17 @@ export default function ReviewsPage({ isAuthUser = false }) {
 
                                                 <button
                                                     onClick={editMode ? handleUpdate : handleSubmit}
-                                                    className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold shadow-md transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    className="w-full inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-3 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold shadow-md transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed text-sm sm:text-base"
                                                     disabled={submitting || !review.trim()}
                                                 >
                                                     {submitting ? (
                                                         <>
-                                                            <Send className="animate-bounce w-4 h-4" />
+                                                            <Send className="animate-bounce w-3 h-3 sm:w-4 sm:h-4" />
                                                             {editMode ? 'Updating...' : 'Submitting...'}
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <Send className="w-4 h-4" />
+                                                            <Send className="w-3 h-3 sm:w-4 sm:h-4" />
                                                             {editMode ? 'Update Review' : 'Submit Review'}
                                                         </>
                                                     )}
@@ -288,7 +289,7 @@ export default function ReviewsPage({ isAuthUser = false }) {
                                                 {editMode && (
                                                     <button
                                                         onClick={() => setEditMode(false)}
-                                                        className="w-full mt-2 px-5 py-2 rounded-lg bg-gray-700 text-white font-medium"
+                                                        className="w-full mt-2 px-4 sm:px-5 py-2 rounded-lg bg-gray-700 text-white font-medium text-sm"
                                                         disabled={submitting}
                                                     >
                                                         Cancel
@@ -297,7 +298,7 @@ export default function ReviewsPage({ isAuthUser = false }) {
                                             </>
                                         )}
                                         {submitted && (
-                                            <div className="mt-4 p-3 bg-green-900/30 border border-green-700 rounded-lg text-green-300 text-center text-sm">
+                                            <div className="mt-4 p-3 bg-green-900/30 border border-green-700 rounded-lg text-green-300 text-center text-xs sm:text-sm">
                                                 Thank you for your review! 🎉
                                             </div>
                                         )}
@@ -310,20 +311,20 @@ export default function ReviewsPage({ isAuthUser = false }) {
                         <div className={`${isAuthUser ? 'lg:col-span-2' : ''}`}>
                             {/* Filters */}
                             <div className="mb-6">
-                                <div className="flex flex-wrap items-center gap-4 mb-4">
+                                <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-4">
                                     <button
                                         onClick={() => setShowFilters(!showFilters)}
-                                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white hover:bg-gray-700 transition-all duration-200"
+                                        className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white hover:bg-gray-700 transition-all duration-200 text-xs sm:text-sm"
                                     >
-                                        <Filter className="w-4 h-4" />
+                                        <Filter className="w-3 h-3 sm:w-4 sm:h-4" />
                                         Filters
-                                        <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+                                        <ChevronDown className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
                                     </button>
 
                                     <select
                                         value={sortBy}
                                         onChange={(e) => setSortBy(e.target.value)}
-                                        className="px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                                        className="px-3 sm:px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white text-xs sm:text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
                                     >
                                         <option value="newest">Newest First</option>
                                         <option value="oldest">Oldest First</option>
@@ -333,10 +334,10 @@ export default function ReviewsPage({ isAuthUser = false }) {
                                 </div>
 
                                 {showFilters && (
-                                    <div className="flex flex-wrap gap-2 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                                    <div className="flex flex-wrap gap-2 p-3 sm:p-4 bg-gray-800/50 rounded-lg border border-gray-700">
                                         <button
                                             onClick={() => setFilterCategory('All')}
-                                            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ${filterCategory === 'All'
+                                            className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ${filterCategory === 'All'
                                                 ? 'bg-purple-700 border-purple-500 text-white'
                                                 : 'bg-gray-900 border-gray-700 text-gray-300 hover:bg-gray-800'
                                                 }`}
@@ -347,13 +348,13 @@ export default function ReviewsPage({ isAuthUser = false }) {
                                             <button
                                                 key={opt.value}
                                                 onClick={() => setFilterCategory(opt.value)}
-                                                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ${filterCategory === opt.value
+                                                className={`flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ${filterCategory === opt.value
                                                     ? 'bg-purple-700 border-purple-500 text-white'
                                                     : 'bg-gray-900 border-gray-700 text-gray-300 hover:bg-gray-800'
                                                     }`}
                                             >
                                                 {opt.icon}
-                                                {opt.label}
+                                                <span className="text-xs">{opt.label}</span>
                                             </button>
                                         ))}
                                     </div>
@@ -361,31 +362,31 @@ export default function ReviewsPage({ isAuthUser = false }) {
                             </div>
 
                             {/* Reviews List */}
-                            <div className="space-y-4">
+                            <div className="space-y-3 sm:space-y-4">
                                 {loading ? (
-                                    <div className="text-center py-12 text-gray-400">Loading reviews...</div>
+                                    <div className="text-center py-8 sm:py-12 text-gray-400 text-sm sm:text-base">Loading reviews...</div>
                                 ) : reviews.length === 0 ? (
-                                    <div className="text-center py-12 text-gray-500">
-                                        <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                                        <p>No reviews found for the selected category.</p>
+                                    <div className="text-center py-8 sm:py-12 text-gray-500">
+                                        <MessageCircle className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-4 opacity-50" />
+                                        <p className="text-sm sm:text-base">No reviews found for the selected category.</p>
                                     </div>
                                 ) : (
                                     reviews.map(review => (
                                         <div
                                             key={review.id}
-                                            className="bg-gray-800/80 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6 hover:bg-gray-800/90 transition-all duration-200 group"
+                                            className="bg-gray-800/80 backdrop-blur-sm border border-gray-700/50 rounded-xl p-4 sm:p-6 hover:bg-gray-800/90 transition-all duration-200 group"
                                         >
                                             <div className="flex items-start justify-between mb-3">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                                <div className="flex items-center gap-2 sm:gap-3">
+                                                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xs sm:text-sm">
                                                         {review.user[0].toUpperCase()}
                                                     </div>
                                                     <div>
                                                         <div className="flex items-center gap-2">
-                                                            <span className="font-semibold text-white">{review.user}</span>
+                                                            <span className="font-semibold text-white text-sm sm:text-base">{review.user}</span>
                                                             <span className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-purple-900/60 text-purple-300 border border-purple-700">
                                                                 {review.icon}
-                                                                {review.category}
+                                                                <span className="text-xs">{review.category}</span>
                                                             </span>
                                                         </div>
                                                         <div className="flex items-center gap-2 mt-1">
@@ -399,7 +400,7 @@ export default function ReviewsPage({ isAuthUser = false }) {
                                                 </div>
                                             </div>
 
-                                            <p className="text-gray-200 leading-relaxed mb-4">{review.message}</p>
+                                            <p className="text-gray-200 leading-relaxed mb-4 text-sm sm:text-base">{review.message}</p>
 
                                             <div className="flex items-center justify-between">
                                                 <button
@@ -407,7 +408,7 @@ export default function ReviewsPage({ isAuthUser = false }) {
                                                     onClick={() => handleHelpful(review.id)}
                                                     disabled={!isAuthUser}
                                                 >
-                                                    <ThumbsUp className="w-4 h-4" />
+                                                    <ThumbsUp className="w-3 h-3 sm:w-4 sm:h-4" />
                                                     Helpful ({review.helpful})
                                                 </button>
                                             </div>
@@ -417,17 +418,17 @@ export default function ReviewsPage({ isAuthUser = false }) {
                             </div>
                             {/* Pagination Controls */}
                             {pagination.totalPages > 1 && (
-                                <div className="flex justify-center mt-8 gap-2">
+                                <div className="flex justify-center mt-6 sm:mt-8 gap-2">
                                     <button
-                                        className="px-3 py-1 rounded bg-gray-700 text-white disabled:opacity-50"
+                                        className="px-2 sm:px-3 py-1 rounded bg-gray-700 text-white disabled:opacity-50 text-xs sm:text-sm"
                                         onClick={() => setPage(page - 1)}
                                         disabled={page <= 1}
                                     >
                                         Prev
                                     </button>
-                                    <span className="px-3 py-1">Page {pagination.currentPage} of {pagination.totalPages}</span>
+                                    <span className="px-2 sm:px-3 py-1 text-xs sm:text-sm">Page {pagination.currentPage} of {pagination.totalPages}</span>
                                     <button
-                                        className="px-3 py-1 rounded bg-gray-700 text-white disabled:opacity-50"
+                                        className="px-2 sm:px-3 py-1 rounded bg-gray-700 text-white disabled:opacity-50 text-xs sm:text-sm"
                                         onClick={() => setPage(page + 1)}
                                         disabled={page >= pagination.totalPages}
                                     >
@@ -439,6 +440,7 @@ export default function ReviewsPage({ isAuthUser = false }) {
                     </div>
                 </div>
             </div>
+            <Footer />
         </div>
     );
 }

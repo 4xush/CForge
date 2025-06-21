@@ -90,6 +90,12 @@ const Hero = () => {
                         >
                             Sign In
                         </button>
+                        <button
+                            className="px-6 sm:px-8 py-3 text-base sm:text-lg font-medium rounded-full bg-transparent border-2 border-gray-500 text-gray-300 hover:bg-gray-500/20 transition-all duration-300 hover:scale-105 active:scale-95"
+                            onClick={() => document.getElementById('reviews').scrollIntoView({ behavior: 'smooth' })}
+                        >
+                            See Reviews
+                        </button>
                     </div>
                 </div>
             </div>
