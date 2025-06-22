@@ -124,6 +124,9 @@ const connectWithRetry = async (retries = 5, delay = 5000) => {
 connectWithRetry();
 
 // API routes
+app.get('/ping', (req, res) => {
+  res.send('pong');
+});
 app.use('/api/health', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -132,6 +135,8 @@ app.use('/api/rooms/admin', adminRoomRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/contests', contestsRoutes);
 app.use('/api', publicRoutes);
+
+
 
 // Serve static assets in production (if frontend is hosted with backend)
 if (isProduction) {
