@@ -21,10 +21,7 @@ const CodingLeaderboard = () => {
         leetcode: [
             { value: 'platforms.leetcode.totalQuestionsSolved', label: 'Total Problems' },
             { value: 'platforms.leetcode.contestRating', label: 'Contest Rating' },
-            { value: 'platforms.leetcode.attendedContestsCount', label: 'Attended Contests' },
-            { value: 'platforms.leetcode.questionsSolvedByDifficulty.easy', label: 'Easy Solved' },
-            { value: 'platforms.leetcode.questionsSolvedByDifficulty.medium', label: 'Medium Solved' },
-            { value: 'platforms.leetcode.questionsSolvedByDifficulty.hard', label: 'Hard Solved' },
+            { value: 'platforms.leetcode.attendedContestsCount', label: 'Attended Contests' }
         ],
         codeforces: [
             { value: 'platforms.codeforces.currentRating', label: 'Current Rating' },

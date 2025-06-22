@@ -44,7 +44,7 @@ CForge is a powerful full-stack application that aggregates and analyzes coding 
 
   - WebSocket-based live updates
   - Activity heatmaps
-  - Contest notifications
+  - Contest notifications (inprocess)
   - Live user statistics
 
 - **Room-Based Competition**
@@ -91,37 +91,28 @@ CForge is a powerful full-stack application that aggregates and analyzes coding 
   - Next.js 13.4.19 integration
 - **UI Components & Styling**:
   - TailwindCSS with PostCSS and Autoprefixer
-  - Chakra UI for accessible, composable components
   - Material UI (MUI) for rich UI elements
   - Radix UI primitives for enhanced accessibility
   - Framer Motion for smooth animations
   - React Icons for comprehensive icon set
 - **Data Management & Communication**:
-  - TanStack React Query v5 for data fetching and caching
   - Socket.io-client for real-time features
   - Axios for HTTP requests
 - **Visualization & Charts**:
   - Recharts for flexible data visualization
   - React Particles for interactive backgrounds
-  - D3.js integration for custom visualizations
 - **Developer Experience**:
-  - TypeScript for type safety
-  - ESLint with custom configuration
   - Vite PWA plugin for Progressive Web App features
-  - Hot Module Replacement (HMR)
 - **Authentication & Security**:
   - @react-oauth/google for Google Sign-In
   - JWT handling with jwt-decode
-  - Secure HTTP-only cookie management
 - **User Experience**:
   - React Hot Toast for elegant notifications
   - Date-fns for comprehensive date handling
-  - Optimized bundle size with code splitting
   - Responsive design with Tailwind breakpoints
 - **Performance Optimizations**:
   - React.lazy and Suspense for code splitting
   - Vite's build optimization
-  - Asset optimization with vite-imagetools
   - Service Worker for offline capabilities
 
 ## 🚀 Getting Started
