@@ -81,10 +81,10 @@ const BasicInfo = ({ profileData, onProfileUpdate }) => {
 
             // Update AuthContext
             const contextUpdateSuccess = updateUser(updatedProfile);
-            
+
             if (contextUpdateSuccess) {
                 toast.success(`${field.charAt(0).toUpperCase() + field.slice(1)} updated successfully`);
-                
+
                 // Call the callback if provided (for backward compatibility)
                 if (onProfileUpdate) {
                     onProfileUpdate(updatedProfile);
@@ -95,7 +95,7 @@ const BasicInfo = ({ profileData, onProfileUpdate }) => {
 
         } catch (error) {
             console.error(`Error updating ${field}:`, error);
-            
+
             // Reset form data on error
             setFormData(prev => ({
                 ...prev,
@@ -103,9 +103,9 @@ const BasicInfo = ({ profileData, onProfileUpdate }) => {
             }));
 
             // Show error message
-            const errorMessage = error.response?.data?.message || 
-                               error.response?.data?.error || 
-                               `Failed to update ${field}`;
+            const errorMessage = error.response?.data?.message ||
+                error.response?.data?.error ||
+                `Failed to update ${field}`;
             toast.error(errorMessage);
         } finally {
             setLoading(prev => ({ ...prev, [field]: false }));
@@ -129,11 +129,11 @@ const BasicInfo = ({ profileData, onProfileUpdate }) => {
     };
 
     return (
-        <div className="space-y-6 bg-gray-800/50 p-6 rounded-xl">
-            <h3 className="text-lg font-medium text-white">Basic Information</h3>
+        <div className="space-y-6 bg-gray-800/50 p-4 sm:p-6 rounded-xl">
+            <h3 className="text-base sm:text-lg font-medium text-white">Basic Information</h3>
             <div className="space-y-4">
                 {/* Full Name Input */}
-                <div className="relative flex items-center gap-2">
+                <div className="relative flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                     <div className="flex-1 relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <User className="h-5 w-5 text-gray-400" />
@@ -144,14 +144,14 @@ const BasicInfo = ({ profileData, onProfileUpdate }) => {
                             value={formData.fullName}
                             onChange={handleChange}
                             placeholder="Full Name"
-                            className="w-full pl-10 pr-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white"
+                            className="w-full pl-10 pr-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white text-sm"
                             disabled={loading.fullName}
                         />
                     </div>
                     <button
                         onClick={() => updateField('fullName')}
                         disabled={loading.fullName || !isFieldValid('fullName') || !isFieldChanged('fullName')}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:bg-blue-500/50 disabled:cursor-not-allowed min-w-[120px]"
+                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:bg-blue-500/50 disabled:cursor-not-allowed min-w-[100px] text-sm"
                     >
                         {loading.fullName ? (
                             <>
@@ -165,7 +165,7 @@ const BasicInfo = ({ profileData, onProfileUpdate }) => {
                 </div>
 
                 {/* Username Input */}
-                <div className="relative flex items-center gap-2">
+                <div className="relative flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                     <div className="flex-1 relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <CircleUser className="h-5 w-5 text-gray-400" />
@@ -176,14 +176,14 @@ const BasicInfo = ({ profileData, onProfileUpdate }) => {
                             value={formData.username}
                             onChange={handleChange}
                             placeholder="Username"
-                            className="w-full pl-10 pr-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white"
+                            className="w-full pl-10 pr-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white text-sm"
                             disabled={loading.username}
                         />
                     </div>
                     <button
                         onClick={() => updateField('username')}
                         disabled={loading.username || !isFieldValid('username') || !isFieldChanged('username')}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:bg-blue-500/50 disabled:cursor-not-allowed min-w-[120px]"
+                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:bg-blue-500/50 disabled:cursor-not-allowed min-w-[100px] text-sm"
                     >
                         {loading.username ? (
                             <>
@@ -197,7 +197,7 @@ const BasicInfo = ({ profileData, onProfileUpdate }) => {
                 </div>
 
                 {/* Gender Select */}
-                <div className="relative flex items-center gap-2">
+                <div className="relative flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                     <div className="flex-1 relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             {formData.gender === 'male' ? (
@@ -212,7 +212,7 @@ const BasicInfo = ({ profileData, onProfileUpdate }) => {
                             name="gender"
                             value={formData.gender}
                             onChange={handleChange}
-                            className="w-full pl-10 pr-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white"
+                            className="w-full pl-10 pr-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white text-sm"
                             disabled={loading.gender}
                         >
                             <option value="male">Male</option>
@@ -223,7 +223,7 @@ const BasicInfo = ({ profileData, onProfileUpdate }) => {
                     <button
                         onClick={() => updateField('gender')}
                         disabled={loading.gender || !isFieldChanged('gender')}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:bg-blue-500/50 disabled:cursor-not-allowed min-w-[120px]"
+                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:bg-blue-500/50 disabled:cursor-not-allowed min-w-[100px] text-sm"
                     >
                         {loading.gender ? (
                             <>

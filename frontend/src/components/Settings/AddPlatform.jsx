@@ -109,7 +109,7 @@ const AddPlatform = ({ onPlatformsUpdate, platforms }) => {
 
             // Update AuthContext
             const contextUpdateSuccess = updateUser(updatedProfile);
-            
+
             if (contextUpdateSuccess) {
                 // Update local form state
                 const updatedFormData = {
@@ -120,7 +120,7 @@ const AddPlatform = ({ onPlatformsUpdate, platforms }) => {
                 setOriginalData(updatedFormData);
 
                 toast.success(`${platform.charAt(0).toUpperCase() + platform.slice(1)} username updated successfully`);
-                
+
                 // Call the callback if provided (for backward compatibility)
                 if (onPlatformsUpdate && updatedPlatform) {
                     onPlatformsUpdate({ ...updatedPlatform, name: platform });
@@ -131,7 +131,7 @@ const AddPlatform = ({ onPlatformsUpdate, platforms }) => {
 
         } catch (error) {
             console.error(`Error updating ${platform}:`, error);
-            
+
             // Reset form data on error
             setFormData(prev => ({
                 ...prev,
@@ -139,9 +139,9 @@ const AddPlatform = ({ onPlatformsUpdate, platforms }) => {
             }));
 
             // Show error message
-            const errorMessage = error.response?.data?.message || 
-                               error.response?.data?.error || 
-                               `Failed to update ${platform} username`;
+            const errorMessage = error.response?.data?.message ||
+                error.response?.data?.error ||
+                `Failed to update ${platform} username`;
             toast.error(errorMessage);
         } finally {
             setLoading(prev => ({ ...prev, [platform]: false }));
@@ -169,7 +169,7 @@ const AddPlatform = ({ onPlatformsUpdate, platforms }) => {
     const getPlatformStatus = (platform) => {
         const platformData = platforms?.[platform];
         if (!platformData) return null;
-        
+
         return {
             isValid: platformData.isValid,
             lastUpdated: platformData.lastUpdated,
@@ -180,9 +180,9 @@ const AddPlatform = ({ onPlatformsUpdate, platforms }) => {
     const renderPlatformField = (platform, icon, placeholder) => {
         const usernameKey = `${platform}Username`;
         const platformStatus = getPlatformStatus(platform);
-        
+
         return (
-            <div className="relative flex items-center gap-2">
+            <div className="relative flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                 <div className="flex-1 relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         {icon}
@@ -193,20 +193,20 @@ const AddPlatform = ({ onPlatformsUpdate, platforms }) => {
                         value={formData[usernameKey]}
                         onChange={handleChange}
                         placeholder={placeholder}
-                        className="w-full pl-10 pr-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white"
+                        className="w-full pl-10 pr-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white text-sm"
                         disabled={loading[platform]}
                     />
                     {platformStatus && (
                         <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                            <div className={`w-2 h-2 rounded-full ${platformStatus.isValid ? 'bg-green-500' : 'bg-red-500'}`} 
-                                 title={platformStatus.isValid ? 'Valid username' : 'Invalid username'} />
+                            <div className={`w-2 h-2 rounded-full ${platformStatus.isValid ? 'bg-green-500' : 'bg-red-500'}`}
+                                title={platformStatus.isValid ? 'Valid username' : 'Invalid username'} />
                         </div>
                     )}
                 </div>
                 <button
                     onClick={() => updatePlatform(platform)}
                     disabled={loading[platform] || !isFieldValid(platform) || !isFieldChanged(platform)}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:bg-blue-500/50 disabled:cursor-not-allowed min-w-[120px]"
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:bg-blue-500/50 disabled:cursor-not-allowed min-w-[100px] text-sm"
                 >
                     {loading[platform] ? (
                         <>
@@ -222,38 +222,38 @@ const AddPlatform = ({ onPlatformsUpdate, platforms }) => {
     };
 
     return (
-        <div className="space-y-6 bg-gray-800/50 p-6 rounded-xl">
-            <h3 className="text-lg font-medium text-white">Platform Integration</h3>
+        <div className="space-y-6 bg-gray-800/50 p-4 sm:p-6 rounded-xl">
+            <h3 className="text-base sm:text-lg font-medium text-white">Platform Integration</h3>
             <div className="space-y-4">
                 {/* LeetCode Input */}
                 {renderPlatformField(
-                    'leetcode', 
-                    <Terminal className="h-5 w-5 text-gray-400" />, 
+                    'leetcode',
+                    <Terminal className="h-5 w-5 text-gray-400" />,
                     'LeetCode Username'
                 )}
 
                 {/* GitHub Input */}
                 {renderPlatformField(
-                    'github', 
-                    <Github className="h-5 w-5 text-gray-400" />, 
+                    'github',
+                    <Github className="h-5 w-5 text-gray-400" />,
                     'GitHub Username'
                 )}
 
                 {/* Codeforces Input */}
                 {renderPlatformField(
-                    'codeforces', 
-                    <Code2 className="h-5 w-5 text-gray-400" />, 
+                    'codeforces',
+                    <Code2 className="h-5 w-5 text-gray-400" />,
                     'Codeforces Username'
                 )}
             </div>
 
             {/* Platform Status Summary */}
             {platforms && Object.keys(platforms).length > 0 && (
-                <div className="mt-4 p-3 bg-gray-700/30 rounded-lg">
-                    <h4 className="text-sm font-medium text-gray-300 mb-2">Platform Status</h4>
+                <div className="mt-4 p-2 sm:p-3 bg-gray-700/30 rounded-lg">
+                    <h4 className="text-xs sm:text-sm font-medium text-gray-300 mb-2">Platform Status</h4>
                     <div className="space-y-1">
                         {Object.entries(platforms).map(([platformName, platformData]) => (
-                            <div key={platformName} className="flex items-center justify-between text-sm">
+                            <div key={platformName} className="flex items-center justify-between text-xs sm:text-sm">
                                 <span className="text-gray-400 capitalize">{platformName}</span>
                                 <div className="flex items-center gap-2">
                                     <span className="text-gray-300">@{platformData.username}</span>
@@ -273,15 +273,15 @@ const AddPlatform = ({ onPlatformsUpdate, platforms }) => {
 
                 if (isNewUser && pendingInviteCode) {
                     return (
-                        <div className="mt-6 p-4 bg-blue-900/20 border border-blue-500 rounded-lg">
-                            <div className="flex items-start gap-3">
+                        <div className="mt-6 p-3 sm:p-4 bg-blue-900/20 border border-blue-500 rounded-lg">
+                            <div className="flex flex-col sm:flex-row items-start gap-2 sm:gap-3">
                                 <AlertCircle className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
                                 <div>
-                                    <p className="text-blue-400 font-medium">You have a pending room invite!</p>
-                                    <p className="text-gray-400 mt-1">
+                                    <p className="text-blue-400 font-medium text-sm">You have a pending room invite!</p>
+                                    <p className="text-gray-400 mt-1 text-xs sm:text-sm">
                                         After adding your platform usernames, you can join the room by:
                                     </p>
-                                    <ul className="list-disc list-inside text-gray-400 mt-2 space-y-1">
+                                    <ul className="list-disc list-inside text-gray-400 mt-2 space-y-1 text-xs sm:text-sm">
                                         <li>Navigating to the Rooms tab in your dashboard, or</li>
                                         <li>Reopening the invite link you received.</li>
                                     </ul>

@@ -81,7 +81,7 @@ const Settings = () => {
 
     return (
         <div className="min-h-screen bg-gray-900 text-white p-2 sm:p-4">
-            <div className="max-w-2xl mx-auto w-full">
+            <div className="max-w-2xl w-full mx-auto sm:mx-0 sm:ml-4">
                 <h1 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6">Settings</h1>
 
                 {/* Profile Summary */}

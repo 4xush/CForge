@@ -30,10 +30,10 @@ const SocialNetworks = ({ socialNetworks, onSocialNetworksUpdate }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        
+
         try {
             const response = await ApiService.put('/users/update/social-networks', formData);
-            
+
             let updatedProfile;
 
             // Handle different response formats
@@ -43,20 +43,20 @@ const SocialNetworks = ({ socialNetworks, onSocialNetworksUpdate }) => {
                     updatedProfile = response.data.user;
                 } else if (response.data.socialNetworks) {
                     // If response has socialNetworks object
-                    updatedProfile = { 
-                        ...response.data, 
-                        socialNetworks: response.data.socialNetworks 
+                    updatedProfile = {
+                        ...response.data,
+                        socialNetworks: response.data.socialNetworks
                     };
                 } else {
                     // If response doesn't contain expected data, merge with current profile
-                    updatedProfile = { 
-                        socialNetworks: formData 
+                    updatedProfile = {
+                        socialNetworks: formData
                     };
                 }
             } else {
                 // Fallback: use form data
-                updatedProfile = { 
-                    socialNetworks: formData 
+                updatedProfile = {
+                    socialNetworks: formData
                 };
             }
 
@@ -65,10 +65,10 @@ const SocialNetworks = ({ socialNetworks, onSocialNetworksUpdate }) => {
 
             // Update AuthContext
             const contextUpdateSuccess = updateUser(updatedProfile);
-            
+
             if (contextUpdateSuccess) {
                 toast.success('Social networks updated successfully');
-                
+
                 // Call the callback if provided (for backward compatibility)
                 if (onSocialNetworksUpdate) {
                     onSocialNetworksUpdate(updatedProfile.socialNetworks || formData);
@@ -79,14 +79,14 @@ const SocialNetworks = ({ socialNetworks, onSocialNetworksUpdate }) => {
 
         } catch (error) {
             console.error('Error updating social networks:', error);
-            
+
             // Reset form data on error
             setFormData(originalData);
 
             // Show error message
-            const errorMessage = error.response?.data?.message || 
-                               error.response?.data?.error || 
-                               'Failed to update social networks';
+            const errorMessage = error.response?.data?.message ||
+                error.response?.data?.error ||
+                'Failed to update social networks';
             toast.error(errorMessage);
         } finally {
             setLoading(false);
@@ -105,8 +105,8 @@ const SocialNetworks = ({ socialNetworks, onSocialNetworksUpdate }) => {
     const hasChanged = formData.linkedin !== originalData.linkedin || formData.twitter !== originalData.twitter;
 
     return (
-        <div className="space-y-6 bg-gray-800/50 p-6 rounded-xl">
-            <h3 className="text-lg font-medium text-white">Social Networks</h3>
+        <div className="space-y-6 bg-gray-800/50 p-4 sm:p-6 rounded-xl">
+            <h3 className="text-base sm:text-lg font-medium text-white">Social Networks</h3>
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-4">
                     {/* LinkedIn Input */}
@@ -120,7 +120,7 @@ const SocialNetworks = ({ socialNetworks, onSocialNetworksUpdate }) => {
                             value={formData.linkedin}
                             onChange={handleChange}
                             placeholder="LinkedIn Username"
-                            className="w-full pl-10 pr-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white"
+                            className="w-full pl-10 pr-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white text-sm"
                             disabled={loading}
                         />
                     </div>
@@ -136,7 +136,7 @@ const SocialNetworks = ({ socialNetworks, onSocialNetworksUpdate }) => {
                             value={formData.twitter}
                             onChange={handleChange}
                             placeholder="Twitter Username"
-                            className="w-full pl-10 pr-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white"
+                            className="w-full pl-10 pr-3 py-2 bg-gray-800/50 rounded-lg border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-20 text-white text-sm"
                             disabled={loading}
                         />
                     </div>
@@ -145,7 +145,7 @@ const SocialNetworks = ({ socialNetworks, onSocialNetworksUpdate }) => {
                 <button
                     type="submit"
                     disabled={loading || !hasChanged}
-                    className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:bg-blue-500/50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:bg-blue-500/50 disabled:cursor-not-allowed text-sm"
                 >
                     {loading ? (
                         <>
