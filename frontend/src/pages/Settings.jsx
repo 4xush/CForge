@@ -33,7 +33,7 @@ const Settings = () => {
             ...authUser.platforms,
             [updatedPlatform.name]: updatedPlatform,
         };
-    
+
         const updatedData = { ...authUser, platforms: updatedPlatforms };
         const success = updateUser(updatedData);
         if (success) {
@@ -68,8 +68,8 @@ const Settings = () => {
             <div className="min-h-screen bg-gray-900 text-white p-4 flex items-center justify-center">
                 <div className="text-center">
                     <p className="text-red-500 mb-4">Unable to load user data</p>
-                    <button 
-                        onClick={() => window.location.reload()} 
+                    <button
+                        onClick={() => window.location.reload()}
                         className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                     >
                         Retry
@@ -80,38 +80,38 @@ const Settings = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-900 text-white p-4">
-            <div className="max-w-2xl mx-auto">
-                <h1 className="text-2xl font-semibold mb-6">Settings</h1>
+        <div className="min-h-screen bg-gray-900 text-white p-2 sm:p-4">
+            <div className="max-w-2xl mx-auto w-full">
+                <h1 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6">Settings</h1>
 
                 {/* Profile Summary */}
-                <div className="mb-6 flex items-center gap-4">
+                <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
                     <img
                         src={authUser?.profilePicture || '/default-avatar.png'}
                         alt="Profile"
-                        className="w-16 h-16 rounded-full object-cover ring-2 ring-blue-500"
+                        className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover ring-2 ring-blue-500"
                     />
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <h3 className="text-lg font-medium">{authUser?.fullName}</h3>
+                    <div className="text-center sm:text-left">
+                        <div className="flex items-center gap-2 justify-center sm:justify-start">
+                            <h3 className="text-base sm:text-lg font-medium">{authUser?.fullName}</h3>
                             {authUser?.isProfileComplete && (
-                                <CheckCircle className="w-5 h-5 text-green-500" title="Profile Complete" />
+                                <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" title="Profile Complete" />
                             )}
                         </div>
-                        <p className="text-gray-400">@{authUser?.username}</p>
+                        <p className="text-gray-400 text-sm">@{authUser?.username}</p>
                         {!authUser?.isProfileComplete && (
-                            <p className="text-sm text-yellow-500">Complete your profile for a professional look!</p>
+                            <p className="text-xs sm:text-sm text-yellow-500">Complete your profile for a professional look!</p>
                         )}
                     </div>
                 </div>
-                
+
                 {/* Tabs */}
-                <div className="flex mb-6">
+                <div className="flex flex-wrap mb-4 sm:mb-6 gap-2 sm:gap-0">
                     {['basic', 'platforms', 'social', 'account'].map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
-                            className={`px-4 py-2 font-medium transition-colors
+                            className={`px-3 sm:px-4 py-2 font-medium transition-colors text-sm sm:text-base
                                 ${activeTab === tab ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-400 hover:text-white'}`}
                         >
                             {tab === 'basic' ? 'Basic Info' : tab === 'platforms' ? 'Platforms' : tab === 'social' ? 'Social Networks' : 'Account'}
@@ -120,7 +120,7 @@ const Settings = () => {
                 </div>
 
                 {/* Content */}
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                     {activeTab === 'basic' ? (
                         <BasicInfo profileData={authUser} onProfileUpdate={handleProfileUpdate} />
                     ) : activeTab === 'platforms' ? (

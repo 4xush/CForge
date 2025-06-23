@@ -106,68 +106,70 @@ const Login = () => {
 
     return (
         <AuthLayout>
-            <h2 className="text-center text-3xl font-bold text-white">Sign In</h2>
-            <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-                <div className="space-y-4">
-                    <input
-                        name="email"
-                        type="email"
-                        required
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        placeholder="Email address"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                    />
-                    <input
-                        name="password"
-                        type="password"
-                        required
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        placeholder="Password"
-                        value={formData.password}
-                        onChange={handleInputChange}
-                    />
-                </div>
-                <button
-                    type="submit"
-                    className="w-full py-2 px-4 border border-transparent rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-                    disabled={isLoading}
-                >
-                    {isLoading ? 'Signing In...' : 'Sign In'}
-                </button>
-            </form>
-
-            <div className="mt-6">
-                <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-600"></div>
+            <div className="flex flex-col items-center justify-center min-h-[60vh]">
+                <h2 className="text-center text-2xl font-bold text-white mb-2">Sign In</h2>
+                <form className="mt-4 space-y-4 w-full max-w-xs" onSubmit={handleSubmit}>
+                    <div className="space-y-3">
+                        <input
+                            name="email"
+                            type="email"
+                            required
+                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                            placeholder="Email address"
+                            value={formData.email}
+                            onChange={handleInputChange}
+                        />
+                        <input
+                            name="password"
+                            type="password"
+                            required
+                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                            placeholder="Password"
+                            value={formData.password}
+                            onChange={handleInputChange}
+                        />
                     </div>
-                    <div className="relative flex justify-center text-sm">
-                        <span className="px-2 bg-gray-800 text-gray-300">Or continue with</span>
+                    <button
+                        type="submit"
+                        className="w-full py-2 px-4 border border-transparent rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 text-sm"
+                        disabled={isLoading}
+                    >
+                        {isLoading ? 'Signing In...' : 'Sign In'}
+                    </button>
+                </form>
+
+                <div className="mt-4 w-full max-w-xs">
+                    <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-gray-600"></div>
+                        </div>
+                        <div className="relative flex justify-center text-xs">
+                            <span className="px-2 bg-gray-800 text-gray-300">Or continue with</span>
+                        </div>
+                    </div>
+
+                    <div className="mt-4 flex justify-center">
+                        <GoogleLogin
+                            clientId={clientId}
+                            onSuccess={handleGoogleSuccess}
+                            onError={handleGoogleError}
+                            useOneTap
+                            theme="filled_black"
+                            shape="pill"
+                            text="signin_with"
+                            size="large"
+                        />
                     </div>
                 </div>
 
-                <div className="mt-6 flex justify-center">
-                    <GoogleLogin
-                        clientId={clientId}
-                        onSuccess={handleGoogleSuccess}
-                        onError={handleGoogleError}
-                        useOneTap
-                        theme="filled_black"
-                        shape="pill"
-                        text="signin_with"
-                        size="large"
-                    />
+                <div className="mt-4 text-center">
+                    <button
+                        onClick={() => navigate('/signup')}
+                        className="font-medium text-purple-400 hover:text-purple-500 text-sm"
+                    >
+                        Need an account? Sign Up
+                    </button>
                 </div>
-            </div>
-
-            <div className="mt-6 text-center">
-                <button
-                    onClick={() => navigate('/signup')}
-                    className="font-medium text-purple-400 hover:text-purple-500"
-                >
-                    Need an account? Sign Up
-                </button>
             </div>
         </AuthLayout>
     );

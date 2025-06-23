@@ -173,22 +173,22 @@ const HelpFAQ = () => {
 
     return (
         <div className="bg-gradient-to-br from-gray-900 to-gray-800 text-white px-4 py-4 rounded-xl shadow-2xl w-full h-full overflow-hidden flex flex-col">
-            <h1 className="text-3xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">Help & FAQs</h1>
+            <h1 className="text-2xl md:text-3xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">Help & FAQs</h1>
             <div className="space-y-4 overflow-y-auto p-3 flex-grow custom-scrollbar">
                 {faqData.map((faq, index) => (
                     <div key={index} className="border-b border-gray-700 pb-4">
                         <motion.div
-                            className="flex justify-between items-center cursor-pointer py-4"
+                            className="flex justify-between items-center cursor-pointer py-3 md:py-4"
                             onClick={() => toggleQuestion(index)}
                             whileHover={{ scale: 1.02 }}
                             transition={{ type: "spring", stiffness: 400, damping: 10 }}
                         >
-                            <h2 className="text-xl font-semibold">{faq.question}</h2>
+                            <h2 className="text-base md:text-xl font-semibold">{faq.question}</h2>
                             <motion.div
                                 animate={{ rotate: openQuestions.includes(index) ? 180 : 0 }}
                                 transition={{ duration: 0.3 }}
                             >
-                                <ChevronDownIcon size={24} className="text-blue-400" />
+                                <ChevronDownIcon size={20} className="text-blue-400 md:w-6 md:h-6 w-5 h-5" />
                             </motion.div>
                         </motion.div>
                         <AnimatePresence>
@@ -199,7 +199,7 @@ const HelpFAQ = () => {
                                     exit={{ opacity: 0, height: 0 }}
                                     transition={{ duration: 0.3 }}
                                 >
-                                    <p className="mt-2 text-gray-300 leading-relaxed whitespace-pre-line">
+                                    <p className="mt-2 text-sm md:text-base text-gray-300 leading-relaxed whitespace-pre-line">
                                         {faq.answer}
                                     </p>
                                 </motion.div>

@@ -5,7 +5,7 @@ import { AuthProvider, useAuthContext } from './context/AuthContext';
 import { MessageProvider } from './context/MessageContext';
 import { WebSocketProvider } from './context/WebSocketContext';
 import { Toaster } from 'react-hot-toast';
-import Layout from './components/Layout';
+import Layout from './components/Layout/Layout.jsx';
 import PrivateRoute from './components/PrivateRoute.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import FullScreenLoader from './components/FullScreenLoader';

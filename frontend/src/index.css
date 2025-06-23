@@ -34,3 +34,31 @@
     opacity: 1;
   }
 }
+
+/* Custom Scrollbar Styles (WebKit + Firefox) */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #4b2563 #101014;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #4b2563;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #6d28d9;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* For elements with overflow-y-auto, apply minimal scrollbar */
+.overflow-y-auto {
+  scrollbar-width: thin;
+  scrollbar-color: #4b2563 transparent;
+}

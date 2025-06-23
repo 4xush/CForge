@@ -1,11 +1,11 @@
 import { useRef, useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { PanelRightIcon, SettingsIcon, HelpCircleIcon, LayoutDashboardIcon, MenuIcon, XIcon, MessageCircle } from 'lucide-react';
-import { useAuthContext } from '../context/AuthContext';
-import DashboardButton from './ui/DashboardButtons';
-import RoomList from './Rooms/RoomList';
-import UserProfileModal from './UserProfileModal';
-import CreateJoinModal from './CreateRoom/CreateJoinRoomModal';
+import { PanelRightIcon, SettingsIcon, HelpCircleIcon, LayoutDashboardIcon, MenuIcon, XIcon, MessageCircle, TrophyIcon } from 'lucide-react';
+import { useAuthContext } from '../../context/AuthContext';
+import DashboardButton from '../ui/DashboardButtons';
+import RoomList from '../Rooms/RoomList';
+import UserProfileModal from './UserMiniProfileModal';
+import CreateJoinModal from '../CreateRoom/CreateJoinRoomModal';
 import toast from 'react-hot-toast';
 
 const LeftSidebar = () => {
@@ -66,86 +66,93 @@ const LeftSidebar = () => {
     }, [isMobileMenuOpen]);
 
     const SidebarContent = ({ isMobile = false }) => (
-        <div className="flex flex-col h-full">
-            {/* Header with close button for mobile */}
-            {isMobile && (
-                <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-700">
-                    <Link
-                        to="/?force=true"
-                        className="text-2xl font-bold tracking-tight bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent hover:drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)] transition-shadow duration-200"
-                        onClick={() => setMobileMenuOpen(false)}
-                    >
-                        CForge
-                    </Link>
-                    <button
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="p-2 rounded-lg hover:bg-gray-700 transition-colors"
-                        aria-label="Close menu"
-                    >
-                        <XIcon className="w-5 h-5 text-gray-400" />
-                    </button>
-                </div>
-            )}
+  <div className="flex flex-col h-full">
+    {/* Top non-scrollable or logo section */}
+    {isMobile ? (
+      <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-700">
+        <Link
+          to="/?force=true"
+          className="text-2xl font-bold tracking-tight bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent hover:drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)] transition-shadow duration-200"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          CForge
+        </Link>
+        <button
+          onClick={() => setMobileMenuOpen(false)}
+          className="p-2 rounded-lg hover:bg-gray-700 transition-colors"
+          aria-label="Close menu"
+        >
+          <XIcon className="w-5 h-5 text-gray-400" />
+        </button>
+      </div>
+    ) : (
+      <Link
+        to="/?force=true"
+        className="text-2xl font-bold pl-2 mb-8 tracking-tight bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent hover:drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)] transition-shadow duration-200"
+      >
+        CForge
+      </Link>
+    )}
 
-            {/* Desktop header */}
-            {!isMobile && (
-                <Link
-                    to="/?force=true"
-                    className="text-2xl font-bold mb-8 tracking-tight bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent hover:drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)] transition-shadow duration-200"
-                >
-                    CForge
-                </Link>
-            )}
+    {/* Scrollable area */}
+    <div className="flex-1 overflow-y-auto space-y-2">
+      <DashboardButton
+        icon={LayoutDashboardIcon}
+        label="Dashboard"
+        isActive={isActive('/dashboard')}
+        onClick={() => navigate('/dashboard')}
+        className="w-full transition-all duration-300 hover:bg-gray-700"
+      />
+      <DashboardButton
+        icon={TrophyIcon}
+        label="Contests Central"
+        isActive={isActive('/contests-central')}
+        onClick={() => navigate('/contests-central')}
+        className="w-full transition-all duration-300 hover:bg-gray-700"
+      />
+      <DashboardButton
+        icon={PanelRightIcon}
+        label="Rooms"
+        isActive={isActive('/rooms')}
+        onClick={() => navigate('/rooms')}
+        className="w-full transition-all duration-300 hover:bg-gray-700"
+      />
+      <div className="mt-2">
+        <RoomList setRoomFormVisible={setRoomFormVisible} />
+      </div>
+      <DashboardButton
+        ref={settingsButtonRef}
+        icon={SettingsIcon}
+        label="Settings"
+        isActive={isActive('/settings')}
+        onClick={() => navigate('/settings')}
+        className="w-full transition-all duration-300 hover:bg-gray-700"
+      />
+      <DashboardButton
+        icon={HelpCircleIcon}
+        label="Help"
+        isActive={isActive('/help')}
+        onClick={() => navigate('/help')}
+        className="w-full transition-all duration-300 hover:bg-gray-700"
+      />
+    </div>
 
-            <div className="flex-1 space-y-2">
-                <DashboardButton
-                    icon={LayoutDashboardIcon}
-                    label="Dashboard"
-                    isActive={isActive('/dashboard')}
-                    onClick={() => navigate('/dashboard')}
-                    className="w-full transition-all duration-300 hover:bg-gray-700"
-                />
-                <DashboardButton
-                    icon={PanelRightIcon}
-                    label="Rooms"
-                    isActive={isActive('/rooms')}
-                    onClick={() => navigate('/rooms')}
-                    className="w-full transition-all duration-300 hover:bg-gray-700"
-                />
-                <div className="mt-2">
-                    <RoomList setRoomFormVisible={setRoomFormVisible} />
-                </div>
-                <DashboardButton
-                    ref={settingsButtonRef}
-                    icon={SettingsIcon}
-                    label="Settings"
-                    isActive={isActive('/settings')}
-                    onClick={() => navigate('/settings')}
-                    className="w-full transition-all duration-300 hover:bg-gray-700"
-                />
-                <DashboardButton
-                    icon={HelpCircleIcon}
-                    label="Help"
-                    isActive={isActive('/help')}
-                    onClick={() => navigate('/help')}
-                    className="w-full transition-all duration-300 hover:bg-gray-700"
-                />
-            </div>
-            <div className="mt-auto pt-4 border-t border-gray-700">
-                <div className="mt-4 mb-2 flex items-center justify-center">
-                    <button
-                        onClick={() => navigate('/reviews')}
-                        className="flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 transition-colors focus:outline-none"
-                        style={{ fontWeight: 500 }}
-                    >
-                        <MessageCircle className="w-4 h-4 mr-1" />
-                        Give us feedback
-                    </button>
-                </div>
-                <UserProfileModal onLogout={handleLogout} />
-            </div>
-        </div>
-    );
+    {/* Fixed footer */}
+    <div className="pt-4 border-t border-gray-700">
+      <div className="mb-2 flex items-center justify-center">
+        <button
+          onClick={() => navigate('/reviews')}
+          className="flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 transition-colors focus:outline-none font-medium"
+        >
+          <MessageCircle className="w-4 h-4 mr-1" />
+          Give us feedback
+        </button>
+      </div>
+      <UserProfileModal onLogout={handleLogout} />
+    </div>
+  </div>
+);
+
 
     return (
         <>
@@ -169,7 +176,7 @@ const LeftSidebar = () => {
             </div>
 
             {/* Desktop Sidebar */}
-            <div className="w-64 bg-gray-800 p-3 flex-col justify-between hidden md:flex border-r border-gray-700 relative h-full overflow-y-auto shadow-lg">
+            <div className="w-[18rem] bg-gray-800 p-3 flex-col justify-between hidden md:flex border-r border-gray-700 relative h-full overflow-y-auto shadow-lg">
                 <SidebarContent />
             </div>
 

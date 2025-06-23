@@ -89,99 +89,101 @@ const SignUp = () => {
 
     return (
         <AuthLayout>
-            <h2 className="text-center text-3xl font-bold text-white">Sign Up</h2>
-            <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-                <div className="space-y-4">
-                    <input
-                        name="fullName"
-                        type="text"
-                        required
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        placeholder="Full Name"
-                        value={formData.fullName}
-                        onChange={handleInputChange}
-                    />
-                    <input
-                        name="email"
-                        type="email"
-                        required
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        placeholder="Email address"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                    />
-                    <input
-                        name="password"
-                        type="password"
-                        required
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        placeholder="Password"
-                        value={formData.password}
-                        onChange={handleInputChange}
-                    />
-                    <input
-                        name="confirmPassword"
-                        type="password"
-                        required
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        placeholder="Confirm Password"
-                        value={formData.confirmPassword}
-                        onChange={handleInputChange}
-                    />
-                    <select
-                        name="gender"
-                        required
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        value={formData.gender}
-                        onChange={handleInputChange}
+            <div className="flex flex-col items-center justify-center min-h-[50vh]">
+                <h2 className="text-center text-2xl font-bold text-white mb-2">Sign Up</h2>
+                <form className="mt-4 space-y-3 w-full max-w-xs" onSubmit={handleSubmit}>
+                    <div className="space-y-2">
+                        <input
+                            name="fullName"
+                            type="text"
+                            required
+                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                            placeholder="Full Name"
+                            value={formData.fullName}
+                            onChange={handleInputChange}
+                        />
+                        <input
+                            name="email"
+                            type="email"
+                            required
+                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                            placeholder="Email address"
+                            value={formData.email}
+                            onChange={handleInputChange}
+                        />
+                        <input
+                            name="password"
+                            type="password"
+                            required
+                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                            placeholder="Password"
+                            value={formData.password}
+                            onChange={handleInputChange}
+                        />
+                        <input
+                            name="confirmPassword"
+                            type="password"
+                            required
+                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                            placeholder="Confirm Password"
+                            value={formData.confirmPassword}
+                            onChange={handleInputChange}
+                        />
+                        <select
+                            name="gender"
+                            required
+                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                            value={formData.gender}
+                            onChange={handleInputChange}
+                        >
+                            <option value="">Select Gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <button
+                        type="submit"
+                        className="w-full py-2 px-4 border border-transparent rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 text-sm"
+                        disabled={isLoading}
                     >
-                        <option value="">Select Gender</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Other</option>
-                    </select>
-                </div>
+                        {isLoading ? 'Signing Up...' : 'Sign Up'}
+                    </button>
+                </form>
 
-                <button
-                    type="submit"
-                    className="w-full py-2 px-4 border border-transparent rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-                    disabled={isLoading}
-                >
-                    {isLoading ? 'Signing Up...' : 'Sign Up'}
-                </button>
-            </form>
-
-            <div className="mt-6">
-                <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-600"></div>
+                <div className="mt-4 w-full max-w-xs">
+                    <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-gray-600"></div>
+                        </div>
+                        <div className="relative flex justify-center text-xs">
+                            <span className="px-2 bg-gray-800 text-gray-300">Or sign up with</span>
+                        </div>
                     </div>
-                    <div className="relative flex justify-center text-sm">
-                        <span className="px-2 bg-gray-800 text-gray-300">Or sign up with</span>
+
+                    <div className="mt-4 flex justify-center">
+                        <GoogleLogin
+                            clientId={clientId}
+                            onSuccess={handleGoogleSuccess}
+                            onError={handleGoogleError}
+                            useOneTap
+                            theme="filled_black"
+                            shape="pill"
+                            text="signup_with"
+                            size="large"
+                        />
                     </div>
                 </div>
 
-                <div className="mt-6 flex justify-center">
-                    <GoogleLogin
-                        clientId={clientId}
-                        onSuccess={handleGoogleSuccess}
-                        onError={handleGoogleError}
-                        useOneTap
-                        theme="filled_black"
-                        shape="pill"
-                        text="signup_with"
-                        size="large"
-                    />
+                <div className="mt-4 text-center">
+                    <button
+                        onClick={() => navigate('/login')}
+                        className="font-medium text-purple-400 hover:text-purple-500 text-sm"
+                    >
+                        Already have an account? Sign In
+                    </button>
                 </div>
-            </div>
-
-            <div className="mt-6 text-center">
-                <button
-                    onClick={() => navigate('/login')}
-                    className="font-medium text-purple-400 hover:text-purple-500"
-                >
-                    Already have an account? Sign In
-                </button>
             </div>
         </AuthLayout>
     );

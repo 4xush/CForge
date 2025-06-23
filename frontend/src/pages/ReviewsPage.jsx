@@ -3,7 +3,7 @@ import { MessageCircle, Send, Star, ThumbsUp, Lightbulb, AlertTriangle, Filter, 
 import ApiService from '../services/ApiService';
 import toast from 'react-hot-toast';
 import PropTypes from 'prop-types';
-import useMyReview from './useMyReview';
+import useMyReview from '../hooks/useMyReview';
 import { Footer } from './Landing/NavBar';
 
 const categoryOptions = [

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { ChevronRight, LogOut, LogIn } from 'lucide-react'
 import { CardContent } from '@/components/ui/card';
-import { useAuthContext } from '../context/AuthContext';
+import { useAuthContext } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const UserProfileModal = ({ onLogout }) => {

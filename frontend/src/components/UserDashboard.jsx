@@ -339,13 +339,6 @@ const UserProfile = () => {
                         >
                             LeetCode Stats
                         </TabButton>
-                        <TabButton
-                            active={activeTab === 'contests'}
-                            onClick={() => navigate('/contests-central')}
-                            icon={Trophy}
-                        >
-                            Contests Central
-                        </TabButton>
                     </div>
                     <RefreshButton
                         onClick={handleRefresh}

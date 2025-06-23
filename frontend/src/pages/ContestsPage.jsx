@@ -310,7 +310,7 @@ const ContestsPage = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [lastUpdated, setLastUpdated] = useState(null)
-  const [activeTab, setActiveTab] = useState("ongoing")
+  const [activeTab, setActiveTab] = useState("upcoming")
   const [selectedPlatforms, setSelectedPlatforms] = useState(Object.keys(PLATFORMS))
   const [notes, setNotes] = useState([])
 

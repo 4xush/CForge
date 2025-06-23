@@ -92,8 +92,8 @@ const TerminalBrandingPanel = () => {
     const [currentTypedChars, setCurrentTypedChars] = useState('');
     const [isInitialTypingComplete, setIsInitialTypingComplete] = useState(false);
 
-    const TYPING_SPEED = 15;
-    const SHORT_LINE_DELAY = 50;
+    const TYPING_SPEED = 10;
+    const SHORT_LINE_DELAY = 5;
     const LONG_LINE_DELAY = 150;
 
     const scrollToBottom = () => {
