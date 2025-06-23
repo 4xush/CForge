@@ -95,7 +95,7 @@ const App = () => {
 
                 {/* Protected routes inside layout */}
                 <Route element={<Layout />}>
-                  <Route path="/contests-central" element={<ContestsPage />} />
+                  <Route path="/contest-central" element={<ContestsPage />} />
                   <Route
                     path="/u/:username"
                     element={

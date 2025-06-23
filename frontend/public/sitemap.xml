@@ -3,99 +3,70 @@
 
   <url>
     <loc>https://www.cforge.live/</loc>
-    <!-- Title (not standard, just for readability or internal use) -->
-    <title>CForge - Coding Platform Analytics | Track your coding progress and grow with your peers.</title>
-    <lastmod>2025-06-20T22:40:10.062Z</lastmod>
+    <lastmod>2025-06-23T13:25:08.632Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
 
   <url>
     <loc>https://www.cforge.live/login</loc>
-    <!-- Title (not standard, just for readability or internal use) -->
-    <title>Login - CForge | Track your coding progress and grow with your peers.</title>
-    <lastmod>2025-06-20T22:40:10.062Z</lastmod>
+    <lastmod>2025-06-23T13:25:08.632Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
     <loc>https://www.cforge.live/signup</loc>
-    <!-- Title (not standard, just for readability or internal use) -->
-    <title>Sign Up - CForge | Track your coding progress and grow with your peers.</title>
-    <lastmod>2025-06-20T22:40:10.062Z</lastmod>
+    <lastmod>2025-06-23T13:25:08.632Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
     <loc>https://www.cforge.live/dashboard</loc>
-    <!-- Title (not standard, just for readability or internal use) -->
-    <title>Dashboard - Track Your Coding Progress</title>
-    <lastmod>2025-06-20T22:40:10.062Z</lastmod>
+    <lastmod>2025-06-23T13:25:08.632Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
     <loc>https://www.cforge.live/rooms</loc>
-    <!-- Title (not standard, just for readability or internal use) -->
-    <title>Rooms - Join Coding Groups</title>
-    <lastmod>2025-06-20T22:40:10.062Z</lastmod>
+    <lastmod>2025-06-23T13:25:08.632Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
     <loc>https://www.cforge.live/settings</loc>
-    <!-- Title (not standard, just for readability or internal use) -->
-    <title>Settings - Manage Account</title>
-    <lastmod>2025-06-20T22:40:10.062Z</lastmod>
+    <lastmod>2025-06-23T13:25:08.632Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
     <loc>https://www.cforge.live/help</loc>
-    <!-- Title (not standard, just for readability or internal use) -->
-    <title>Help and FAQ - CForge | Track your coding progress and grow with your peers.</title>
-    <lastmod>2025-06-20T22:40:10.062Z</lastmod>
+    <lastmod>2025-06-23T13:25:08.632Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
     <loc>https://www.cforge.live/about</loc>
-    <!-- Title (not standard, just for readability or internal use) -->
-    <title>About - CForge | Learn more about the platform</title>
-    <lastmod>2025-06-20T22:40:10.062Z</lastmod>
+    <lastmod>2025-06-23T13:25:08.632Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
     <loc>https://www.cforge.live/logout</loc>
-    <!-- Title (not standard, just for readability or internal use) -->
-    <title>Logout - CForge</title>
-    <lastmod>2025-06-20T22:40:10.062Z</lastmod>
+    <lastmod>2025-06-23T13:25:08.632Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://www.cforge.live/contests-central</loc>
-    <!-- Title (not standard, just for readability or internal use) -->
-    <title>Contests - CForge Coding Contests Central</title>
-    <lastmod>2025-06-20T22:40:10.062Z</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://www.cforge.live/404</loc>
-    <!-- Title (not standard, just for readability or internal use) -->
-    <title>Page Not Found - CForge | Track your coding progress and grow with your peers.</title>
-    <lastmod>2025-06-20T22:40:10.062Z</lastmod>
+    <loc>https://www.cforge.live/contest-central</loc>
+    <lastmod>2025-06-23T13:25:08.632Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
