@@ -1,11 +1,12 @@
 import { useRef, useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { PanelRightIcon, SettingsIcon, HelpCircleIcon, LayoutDashboardIcon, MenuIcon, XIcon, MessageCircle, TrophyIcon } from 'lucide-react';
+import { PanelRightIcon, SettingsIcon, HelpCircleIcon, LayoutDashboardIcon, XIcon, MessageCircle, TrophyIcon } from 'lucide-react';
 import { useAuthContext } from '../../context/AuthContext';
 import DashboardButton from '../ui/DashboardButtons';
 import RoomList from '../Rooms/RoomList';
 import UserProfileModal from './UserMiniProfileModal';
 import CreateJoinModal from '../CreateRoom/CreateJoinRoomModal';
+import WideMenuIcon from '../ui/WideMenuIcon';
 
 const LeftSidebar = () => {
   const { logout } = useAuthContext();
@@ -63,18 +64,25 @@ const LeftSidebar = () => {
     };
   }, [isMobileMenuOpen]);
 
+  const LogoWithTitle = ({ onClick }) => (
+    <div className="flex items-center gap-1 cursor-pointer select-none" onClick={onClick}>
+      <img
+        src="/cforge.png"
+        alt="CForge Icon"
+        className="h-5 w-5 sm:h-6 sm:w-6 rounded-full"
+      />
+      <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
+        CForge
+      </span>
+    </div>
+  );
+
   const SidebarContent = ({ isMobile = false }) => (
     <div className="flex flex-col h-full">
       {/* Top non-scrollable or logo section */}
       {isMobile ? (
         <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-700">
-          <Link
-            to="/?force=true"
-            className="text-2xl font-bold tracking-tight bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent hover:drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)] transition-shadow duration-200"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            CForge
-          </Link>
+          <LogoWithTitle onClick={() => setMobileMenuOpen(false)} />
           <button
             onClick={() => setMobileMenuOpen(false)}
             className="p-2 rounded-lg hover:bg-gray-700 transition-colors"
@@ -84,12 +92,9 @@ const LeftSidebar = () => {
           </button>
         </div>
       ) : (
-        <Link
-          to="/?force=true"
-          className="text-2xl font-bold pl-2 mb-8 tracking-tight bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent hover:drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)] transition-shadow duration-200"
-        >
-          CForge
-        </Link>
+        <div className="pl-2 mb-8">
+          <LogoWithTitle />
+        </div>
       )}
 
       {/* Scrollable area */}
@@ -162,13 +167,17 @@ const LeftSidebar = () => {
             className="mobile-menu-button p-2 rounded-lg hover:bg-gray-700 transition-colors"
             aria-label="Open menu"
           >
-            <MenuIcon className="w-6 h-6 text-gray-300" />
+            <WideMenuIcon className="text-gray-300" isOpen={isMobileMenuOpen} />
           </button>
-          <Link
-            to="/?force=true"
-            className="text-xl font-bold tracking-tight bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent"
-          >
-            CForge
+          <Link to="/?force=true" className="flex items-center gap-1 group" style={{ textDecoration: 'none' }}>
+            <img
+              src="/cforge.png"
+              alt="CForge Icon"
+              className="h-5 w-5 sm:h-6 sm:w-6 rounded-full"
+            />
+            <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
+              CForge
+            </span>
           </Link>
         </div>
       </div>

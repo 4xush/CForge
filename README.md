@@ -1,4 +1,4 @@
-# CForge - Enhanced Coding Platform Analytics 🚀
+# CForge: Coding Community Platform with Progress Analytics 🚀
 
 <div align="center">
 
@@ -15,48 +15,60 @@
 
 </div>
 
-CForge is a powerful full-stack application that aggregates and analyzes coding statistics across multiple platforms (LeetCode, Codeforces, GitHub). Built with performance and scalability in mind, it features real-time updates, Redis caching, and intelligent rate limiting.
+CForge is a powerful full-stack coding community platform that aggregates and analyzes coding statistics across multiple platforms (LeetCode, Codeforces, GitHub). Built with performance and scalability in mind, it features community rooms, real-time leaderboards, Redis caching, and intelligent rate limiting to foster peer learning and healthy competition.
 
 ## ✨ Key Features
 
-- **Multi-Platform Integration**
+### Multi-Platform Integration
 
-  - LeetCode statistics and contest ratings
-  - Codeforces performance metrics
-  - GitHub contribution analytics
-  - Real-time platform data synchronization
+- LeetCode statistics and contest ratings
+- Codeforces performance metrics
+- GitHub contribution analytics
+- Real-time platform data synchronization
 
-- **Advanced Caching System**
+### Community & Collaboration
 
-  - Redis-powered caching layer
-  - Optimized data retrieval
-  - Configurable cache invalidation
-  - Reduced API load
+- Room-Based Communities: Create private/public rooms for peer groups
+- Real-time Leaderboards: Compare progress with room members
+- Interactive Chat: Discuss problems, share resources, and collaborate
+- Peer Mentorship: Connect with higher-ranked members for guidance
+- Contest Tracking: Stay updated on LeetCode and Codeforces contests
 
-- **Intelligent Rate Limiting**
+### Advanced Analytics
 
-  - Platform-specific rate limits
-  - Redis-based rate limiting storage
-  - Configurable limits per endpoint
-  - Development mode bypass options
+- Progress Tracking: Unified dashboard showing growth across platforms
+- Performance Insights: Topic-wise problem analysis and solving patterns
+- Activity Heatmaps: Visual representation of coding activity
+- Comparative Analytics: Benchmarking against peer performance
 
-- **Real-Time Features**
+### Technical Excellence
 
-  - WebSocket-based live updates
-  - Activity heatmaps
-  - Contest notifications (inprocess)
-  - Live user statistics
+#### Advanced Caching System
 
-- **Room-Based Competition**
-  - Create private/public rooms
-  - Real-time leaderboards
-  - Platform-specific rankings
-  - Member management
-- **Leaderboards**: Compare progress with room members.
-- **Public Profiles**: Share your coding journey and stats.
-- **Rate Limiting**: Protects against abuse and ensures fair usage.
-- **Caching**: Improves response times for frequently accessed data.
-- **Health Monitoring**: Provides insights into system status and performance.
+- Redis-powered caching layer
+- Optimized data retrieval
+- Configurable cache invalidation
+- Reduced API load
+
+#### Intelligent Rate Limiting
+
+- Platform-specific rate limits
+- Redis-based rate limiting storage
+- Configurable limits per endpoint
+- Development mode bypass options
+
+#### Real-Time Features
+
+- WebSocket-based live updates
+- Live user statistics
+- Contest notifications (in process)
+
+#### Additional Features
+
+- Public Profiles: Share your coding journey and stats
+- Health Monitoring: System status and performance insights
+- Fair Usage Protection: Rate limiting prevents abuse
+- Optimized Performance: Caching improves response times for frequently accessed data
 
 ## 🛠 Technology Stack
 

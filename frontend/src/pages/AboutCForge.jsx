@@ -1,5 +1,5 @@
-import { Footer } from './Landing/NavBar';
-import { motion } from 'framer-motion';
+import { Footer } from "./Landing/NavBar";
+import { motion } from "framer-motion";
 
 const AboutCForge = () => {
   // Animation variants for fade-in effect
@@ -11,9 +11,9 @@ const AboutCForge = () => {
       transition: {
         duration: 1,
         ease: "easeOut",
-        staggerChildren: 0.2
-      }
-    }
+        staggerChildren: 0.2,
+      },
+    },
   };
 
   const childFade = {
@@ -21,8 +21,8 @@ const AboutCForge = () => {
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.4 }
-    }
+      transition: { duration: 0.4 },
+    },
   };
 
   return (
@@ -34,7 +34,7 @@ const AboutCForge = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          About CForge
+          About & Motivation — CForge
         </motion.h1>
         <motion.section
           className="space-y-4 sm:space-y-6 text-gray-300 text-base sm:text-lg leading-relaxed"
@@ -43,39 +43,80 @@ const AboutCForge = () => {
           animate="visible"
         >
           <motion.p variants={childFade} className="text-sm sm:text-base">
-            <strong>CForge</strong> was born out of a simple observation — many students are actively building projects,
-            solving problems on platforms like LeetCode, GitHub, or Codeforces, yet their efforts often go unnoticed by peers.
-            At the same time, others remain unaware of these platforms or how to get started, creating an invisible gap in motivation and collaboration.
+            <strong>CForge</strong> is a coding community platform with progress
+            analytics designed to solve a fundamental problem in the coding
+            community: the disconnect between individual progress on coding
+            platforms and peer awareness. While many students actively solve
+            problems on LeetCode, GitHub, and Codeforces, their efforts often
+            remain invisible to their peers, creating missed opportunities for
+            motivation, collaboration, and mentorship.
           </motion.p>
           <motion.p variants={childFade} className="text-sm sm:text-base">
-            This disconnect inspired the creation of CForge: a collaborative space where developers can come together,
-            create rooms, track their progress, and stay aware of each other's journeys — no matter where they are in their coding path.
+            This disconnect inspired the creation of CForge: a collaborative
+            space where developers can come together, create rooms, track their
+            progress, and stay aware of each other's journeys — no matter where
+            they are in their coding path.
           </motion.p>
           <motion.p variants={childFade} className="text-sm sm:text-base">
-            CForge empowers coders by providing a unified dashboard to monitor growth across popular platforms,
-            while enabling healthy peer competition through real-time leaderboards and insightful statistics.
+            <span className="font-semibold text-purple-300">Motivation:</span>{" "}
+            At the heart of CForge lies the belief that visibility and community
+            are key drivers of growth. When you see your peers striving,
+            building, and overcoming challenges, it sparks a sense of healthy
+            competition and shared ambition. CForge is built to transform
+            isolated coding journeys into a collective experience—where every
+            milestone is celebrated, and every setback is met with support.
           </motion.p>
           <motion.p variants={childFade} className="text-sm sm:text-base">
-            Whether you're preparing for interviews, grinding contests, or just starting out, CForge helps bring visibility to your efforts,
-            fosters community-driven learning, and transforms scattered progress into shared momentum.
+            CForge empowers coders by providing a unified dashboard to monitor
+            growth across popular platforms, while enabling healthy peer
+            competition through real-time leaderboards and insightful
+            statistics.
           </motion.p>
           <motion.p variants={childFade} className="text-sm sm:text-base">
-            <a href="/signup" className="underline text-blue-600 hover:text-blue-400 transition-colors">
+            Whether you're preparing for interviews, grinding contests, or just
+            starting out, CForge helps bring visibility to your efforts, fosters
+            community-driven learning, and transforms scattered progress into
+            shared momentum.
+          </motion.p>
+          <motion.p variants={childFade} className="text-sm sm:text-base">
+            <a
+              href="/signup"
+              className="underline text-blue-600 hover:text-blue-400 transition-colors"
+            >
               Join CForge
-            </a>{' '}
-            — not just to track your coding, but to connect with like-minded peers, grow together, and stay inspired on the journey.
+            </a>{" "}
+            — not just to track your coding, but to connect with like-minded
+            peers, grow together, and stay inspired on the journey.
           </motion.p>
 
           <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="pt-2 sm:pt-4 mt-6 sm:mt-10"
+            className="border-t border-purple-900/30 pt-6 mt-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.3 }}
           >
+            <h2 className="text-lg sm:text-xl font-bold text-purple-300 mb-2">
+              About the Developer
+            </h2>
+            <p className="text-sm sm:text-base text-gray-400">
+              <span className="font-semibold text-white">Ayush Kumar</span> is a
+              B.Tech student at{" "}
+              <a
+                href="https://www.iiitg.ac.in/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-blue-400 transition-colors"
+              >
+                IIIT Guwahati
+              </a>{" "}
+              specializing in Electronics and Communication Engineering. With a
+              passion for problem-solving and building robust application.
+            </p>
             <a
               href="https://4xush.github.io/portfolio/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full text-white font-medium shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300 text-sm sm:text-base"
+              className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full text-white font-medium shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300 text-sm sm:text-base mt-4"
             >
               Visit Developer Page
             </a>
