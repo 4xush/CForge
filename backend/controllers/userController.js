@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const redisClient = require("../services/cache/redisClient.js");
 const {
     checkLeetCodeUsername,
     checkGitHubUsername,
@@ -13,19 +14,39 @@ const {
     getActiveUsersLastNDays
 } = require("../utils/activeUsers.js");
 
+
+const USER_DETAILS_TTL = 600; // 10 minutes
+const ACTIVE_USERS_TTL = 600; // 10 minutes
+
 exports.getUserDetails = async (req, res) => {
+    const userId = req.user.id;
+    const cacheKey = `user:${userId}:details`;
+
     try {
-        const user = await User.findById(req.user.id).select("-password");
+        if (redisClient.isReady()) {
+            const cachedUser = await redisClient.get(cacheKey);
+            if (cachedUser) {
+                console.log(`Cache HIT for ${cacheKey}`);
+                return res.status(200).json(JSON.parse(cachedUser));
+            }
+            console.log(`Cache MISS for ${cacheKey}`);
+        }
+
+        const user = await User.findById(userId).select("-password");
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
+
+        if (redisClient.isReady()) {
+            await redisClient.set(cacheKey, JSON.stringify(user), USER_DETAILS_TTL);
+        }
+
         res.status(200).json(user);
     } catch (error) {
-        console.error("Error fetching user details:", error);
+        console.error(`Error fetching user details for ${userId}:`, error);
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
-
 exports.searchUser = async (req, res) => {
     const { query } = req.query; // `query` parameter from the request URL (e.g., `/search?query=johndoe`).
 
@@ -245,45 +266,70 @@ exports.setupCodeforces = async (req, res) => {
         });
     }
 };
+// --- Active Users caching ---
 
 exports.getActiveUsers = async (req, res) => {
-    try {
-        const { days } = req.query;
-        let activeUsers;
+    const { days } = req.query;
+    const daysParam = (days && !isNaN(days)) ? parseInt(days) : 7;
+    const cacheKey = `activeUsers:last${daysParam}days`;
 
-        if (days && !isNaN(days)) {
-            activeUsers = await getActiveUsersLastNDays(parseInt(days));
-        } else {
-            activeUsers = await getActiveUsersLast7Days();
+    try {
+        if (redisClient.isReady()) {
+            const cachedData = await redisClient.get(cacheKey);
+            if (cachedData) {
+                // console.log(`Cache HIT for ${cacheKey}`);
+                return res.status(200).json(JSON.parse(cachedData));
+            }
+            // console.log(`Cache MISS for ${cacheKey}`);
         }
 
-        res.status(200).json({
+        const activeUsersList = (days && !isNaN(days))
+            ? await getActiveUsersLastNDays(parseInt(days))
+            : await getActiveUsersLast7Days();
+
+        const responseData = {
             message: "Active users fetched successfully",
-            count: activeUsers.length,
-            users: activeUsers
-        });
+            count: activeUsersList.length,
+            users: activeUsersList
+        };
+
+        if (redisClient.isReady()) {
+            await redisClient.set(cacheKey, JSON.stringify(responseData), ACTIVE_USERS_TTL);
+        }
+
+        res.status(200).json(responseData);
     } catch (error) {
         console.error("Error fetching active users:", error);
-        res.status(500).json({
-            message: "Server error",
-            error: error.message
-        });
+        res.status(500).json({ message: "Server error", error: error.message });
     }
 };
 
 exports.getActiveUsersCount = async (req, res) => {
-    try {
-        const count = await getActiveUsersCount();
+    const cacheKey = `activeUsers:count`;
 
-        res.status(200).json({
+    try {
+        if (redisClient.isReady()) {
+            const cachedData = await redisClient.get(cacheKey);
+            if (cachedData) {
+                // console.log(`Cache HIT for ${cacheKey}`);
+                return res.status(200).json(JSON.parse(cachedData));
+            }
+            // console.log(`Cache MISS for ${cacheKey}`);
+        }
+
+        const count = await getActiveUsersCount();
+        const responseData = {
             message: "Active users count fetched successfully",
             count: count
-        });
+        };
+
+        if (redisClient.isReady()) {
+            await redisClient.set(cacheKey, JSON.stringify(responseData), ACTIVE_USERS_TTL);
+        }
+
+        res.status(200).json(responseData);
     } catch (error) {
         console.error("Error fetching active users count:", error);
-        res.status(500).json({
-            message: "Server error",
-            error: error.message
-        });
+        res.status(500).json({ message: "Server error", error: error.message });
     }
 };

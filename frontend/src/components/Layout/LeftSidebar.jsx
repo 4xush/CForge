@@ -6,7 +6,6 @@ import DashboardButton from '../ui/DashboardButtons';
 import RoomList from '../Rooms/RoomList';
 import UserProfileModal from './UserMiniProfileModal';
 import CreateJoinModal from '../CreateRoom/CreateJoinRoomModal';
-import toast from 'react-hot-toast';
 
 const LeftSidebar = () => {
   const { logout } = useAuthContext();
@@ -18,7 +17,6 @@ const LeftSidebar = () => {
 
   const handleLogout = () => {
     logout();
-    toast.success('You have been logged out successfully');
     navigate('/login', {
       replace: true,
       state: {
