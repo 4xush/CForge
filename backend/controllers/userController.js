@@ -7,10 +7,10 @@ const {
 const { updateUserLeetCodeStats } = require("../services/leetcode/leetcodeStatsService.js");
 const { updateUserGitHubStats } = require("../services/github/githubStatsServices.js");
 const { updateUserCodeforcesStats } = require("../services/codeforces/codeforcesStatsService.js");
-const { 
-    getActiveUsersLast7Days, 
-    getActiveUsersCount, 
-    getActiveUsersLastNDays 
+const {
+    getActiveUsersLast7Days,
+    getActiveUsersCount,
+    getActiveUsersLastNDays
 } = require("../utils/activeUsers.js");
 
 exports.getUserDetails = async (req, res) => {
@@ -143,7 +143,7 @@ exports.setupGitHub = async (req, res) => {
             }
         } catch (error) {
             return res.status(400).json({
-                message: "Invalid GitHub username"
+                message: error.message || "Unable to verify GitHub username"
             });
         }
 
@@ -264,9 +264,9 @@ exports.getActiveUsers = async (req, res) => {
         });
     } catch (error) {
         console.error("Error fetching active users:", error);
-        res.status(500).json({ 
-            message: "Server error", 
-            error: error.message 
+        res.status(500).json({
+            message: "Server error",
+            error: error.message
         });
     }
 };
@@ -274,16 +274,16 @@ exports.getActiveUsers = async (req, res) => {
 exports.getActiveUsersCount = async (req, res) => {
     try {
         const count = await getActiveUsersCount();
-        
+
         res.status(200).json({
             message: "Active users count fetched successfully",
             count: count
         });
     } catch (error) {
         console.error("Error fetching active users count:", error);
-        res.status(500).json({ 
-            message: "Server error", 
-            error: error.message 
+        res.status(500).json({
+            message: "Server error",
+            error: error.message
         });
     }
 };
