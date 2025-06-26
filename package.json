@@ -7,9 +7,20 @@
     "dev": "nodemon backend/server.js",
     "build": "npm install && npm install --prefix frontend && npm run build --prefix frontend",
     "start": "node backend/server.js",
-    "postinstall": "cd frontend && npm install"
+    "postinstall": "cd frontend && npm install",
+    "test": "jest"
   },
-  "keywords": ["platform", "stats", "codeforces", "leetcode", "github", "api", "mongodb", "redis", "websocket"],
+  "keywords": [
+    "platform",
+    "stats",
+    "codeforces",
+    "leetcode",
+    "github",
+    "api",
+    "mongodb",
+    "redis",
+    "websocket"
+  ],
   "author": "CForge Team",
   "license": "MIT",
   "dependencies": {
@@ -38,7 +49,7 @@
     "eslint": "^8.57.0",
     "jest": "^29.7.0",
     "nodemon": "^3.1.9",
-    "supertest": "^7.0.0"
+    "supertest": "^7.1.1"
   },
   "engines": {
     "node": ">=16.0.0",

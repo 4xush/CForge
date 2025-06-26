@@ -1,4 +1,5 @@
 node_modules/
 testRedis.js
+dev-helpers/
 *.env
 *.log
