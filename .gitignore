@@ -3,3 +3,4 @@ testRedis.js
 dev-helpers/
 *.env
 *.log
+Backup/

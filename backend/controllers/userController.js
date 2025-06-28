@@ -26,7 +26,7 @@ exports.getUserDetails = async (req, res) => {
         if (redisClient.isReady()) {
             const cachedUser = await redisClient.get(cacheKey);
             if (cachedUser) {
-                console.log(`Cache HIT for ${cacheKey}`);
+                // console.log(`Cache HIT for ${cacheKey}`);
                 return res.status(200).json(JSON.parse(cachedUser));
             }
             console.log(`Cache MISS for ${cacheKey}`);

@@ -11,48 +11,6 @@ const generateUsername = require("../utils/usernameGenerator");
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-/**
- * Format complete user response with all necessary fields
- * This ensures consistent response format across all auth endpoints
- */
-const formatCompleteUserResponse = (user) => {
-  return {
-    _id: user._id,
-    fullName: user.fullName,
-    username: user.username,
-    email: user.email,
-    gender: user.gender || null,
-    isGoogleAuth: user.isGoogleAuth || false,
-    profilePicture: user.profilePicture,
-    isProfileComplete: user.isProfileComplete || false,
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt,
-    lastActiveAt: user.lastActiveAt || user.lastLogin || new Date(),
-
-    // Platform data
-    platforms: user.platforms || {
-      leetcode: { username: null },
-      github: { username: null },
-      codeforces: { username: null }
-    },
-
-    // Social networks
-    socialNetworks: user.socialNetworks || {
-      linkedin: "",
-      twitter: ""
-    },
-
-    // Rate limit info
-    rateLimitInfo: {
-      dailyApiCalls: user.rateLimitInfo?.dailyApiCalls || 0,
-      lastApiCallReset: user.rateLimitInfo?.lastApiCallReset || new Date(),
-      platformRefreshCount: user.rateLimitInfo?.platformRefreshCount || 0,
-      lastPlatformRefresh: user.rateLimitInfo?.lastPlatformRefresh || new Date()
-    },
-
-    id: user._id.toString() // Include both _id and id for consistency
-  };
-};
 
 /**
  * Generate JWT token with consistent payload
@@ -168,11 +126,19 @@ const googleAuth = async (req, res) => {
     // Generate JWT token
     const token = generateToken(user);
 
-    // Return complete user data
+    // Return minimal user data for Google authentication
     res.status(200).json({
       message: "Google authentication successful",
       token,
-      user: formatCompleteUserResponse(user)
+      user: {
+        _id: user._id,
+        fullName: user.fullName,
+        username: user.username,
+        email: user.email,
+        profilePicture: user.profilePicture,
+        platforms: user.platforms,
+        isProfileComplete: user.isProfileComplete
+      }
     });
 
   } catch (error) {
@@ -290,11 +256,19 @@ const signupUser = async (req, res) => {
     // Generate JWT token
     const token = generateToken(newUser);
 
-    // Send complete response
+    // Send minimal response (no extra data)
     res.status(201).json({
       message: "User registered successfully",
       token,
-      user: formatCompleteUserResponse(newUser)
+      user: {
+        _id: newUser._id,
+        fullName: newUser.fullName,
+        username: newUser.username,
+        email: newUser.email,
+        profilePicture: newUser.profilePicture,
+        platforms: newUser.platforms,
+        isProfileComplete: newUser.isProfileComplete
+      }
     });
 
   } catch (error) {
@@ -359,11 +333,19 @@ const login = async (req, res) => {
     // Generate JWT token
     const token = generateToken(user);
 
-    // Send complete response with fresh platform data
+    // Send minimal response (no extra data)
     res.status(200).json({
       message: "Login successful",
       token,
-      user: formatCompleteUserResponse(user)
+      user: {
+        _id: user._id,
+        fullName: user.fullName,
+        username: user.username,
+        email: user.email,
+        profilePicture: user.profilePicture,
+        platforms: user.platforms,
+        isProfileComplete: user.isProfileComplete
+      }
     });
 
   } catch (error) {
