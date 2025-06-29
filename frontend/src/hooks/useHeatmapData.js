@@ -6,7 +6,7 @@ const CACHE_DURATION = 30 * 60 * 1000;
 
 const getCachedData = (username) => {
   try {
-    const cached = localStorage.getItem(`heatmap_${username}`);
+    const cached = sessionStorage.getItem(`heatmap_${username}`);
     if (cached) {
       const { data, timestamp } = JSON.parse(cached);
       const now = Date.now();
@@ -23,7 +23,7 @@ const getCachedData = (username) => {
 
 const setCachedData = (username, data) => {
   try {
-    localStorage.setItem(`heatmap_${username}`, JSON.stringify({
+    sessionStorage.setItem(`heatmap_${username}`, JSON.stringify({
       data,
       timestamp: Date.now()
     }));

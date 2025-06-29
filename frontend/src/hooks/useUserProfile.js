@@ -7,7 +7,7 @@ const CACHE_DURATION = 2 * 60 * 60 * 1000;
 // Function to get cached user data
 const getCachedUser = (username) => {
     try {
-        const cached = localStorage.getItem(`user_profile_${username}`);
+        const cached = sessionStorage.getItem(`user_profile_${username}`);
         if (cached) {
             const { data, timestamp } = JSON.parse(cached);
             const now = Date.now();
@@ -25,7 +25,7 @@ const getCachedUser = (username) => {
 // Function to cache user data
 const setCachedUser = (username, data) => {
     try {
-        localStorage.setItem(`user_profile_${username}`, JSON.stringify({
+        sessionStorage.setItem(`user_profile_${username}`, JSON.stringify({
             data,
             timestamp: Date.now()
         }));
@@ -53,7 +53,7 @@ export const useUserProfile = (username, options = {}) => {
 
         const fetchProfile = async () => {
             const currentUsername = usernameRef.current;
-            
+
             // If we already have cached data, don't show loading state
             const cachedUser = getCachedUser(currentUsername);
             if (cachedUser) {

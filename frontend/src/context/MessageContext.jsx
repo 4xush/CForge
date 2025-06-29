@@ -21,7 +21,7 @@ const getCacheKey = (roomId) => `${CACHE_CONFIG.KEY_PREFIX}${roomId}`
 const getCachedMessages = (roomId) => {
     try {
         const cacheKey = getCacheKey(roomId)
-        const cached = localStorage.getItem(cacheKey)
+        const cached = sessionStorage.getItem(cacheKey)
 
         if (!cached) return null
 
@@ -29,7 +29,7 @@ const getCachedMessages = (roomId) => {
 
         // Check if cache is expired
         if (Date.now() > data.expiresAt) {
-            localStorage.removeItem(cacheKey)
+            sessionStorage.removeItem(cacheKey)
             return null
         }
 
@@ -57,11 +57,11 @@ const setCachedMessages = (roomId, messages, hasMore = true) => {
             version: "1.0",
         }
 
-        localStorage.setItem(cacheKey, JSON.stringify(cacheData))
+        sessionStorage.setItem(cacheKey, JSON.stringify(cacheData))
         // //console.log(`Cached ${limitedMessages.length} messages for room ${roomId}`)
     } catch (error) {
         console.error("Error caching messages:", error)
-        // If localStorage is full, try to clear old caches
+        // If sessionStorage is full, try to clear old caches
         if (error.name === "QuotaExceededError") {
             clearExpiredCaches()
             // Try again with fewer messages
@@ -75,7 +75,7 @@ const setCachedMessages = (roomId, messages, hasMore = true) => {
                     expiresAt: Date.now() + CACHE_CONFIG.EXPIRY_DURATION,
                     version: "1.0",
                 }
-                localStorage.setItem(cacheKey, JSON.stringify(cacheData))
+                sessionStorage.setItem(cacheKey, JSON.stringify(cacheData))
             } catch (retryError) {
                 console.error("Failed to cache even reduced messages:", retryError)
             }
@@ -86,7 +86,7 @@ const setCachedMessages = (roomId, messages, hasMore = true) => {
 const clearCachedMessages = (roomId) => {
     try {
         const cacheKey = getCacheKey(roomId)
-        localStorage.removeItem(cacheKey)
+        sessionStorage.removeItem(cacheKey)
     } catch (error) {
         console.error("Error clearing cached messages:", error)
     }
@@ -94,10 +94,10 @@ const clearCachedMessages = (roomId) => {
 
 const clearAllCaches = () => {
     try {
-        const keys = Object.keys(localStorage)
+        const keys = Object.keys(sessionStorage)
         keys.forEach((key) => {
             if (key.startsWith(CACHE_CONFIG.KEY_PREFIX)) {
-                localStorage.removeItem(key)
+                sessionStorage.removeItem(key)
             }
         })
     } catch (error) {
@@ -108,21 +108,21 @@ const clearAllCaches = () => {
 // FIXED: Add function to clear expired caches
 const clearExpiredCaches = () => {
     try {
-        const keys = Object.keys(localStorage)
+        const keys = Object.keys(sessionStorage)
         keys.forEach((key) => {
             if (key.startsWith(CACHE_CONFIG.KEY_PREFIX)) {
                 try {
-                    const cached = localStorage.getItem(key)
+                    const cached = sessionStorage.getItem(key)
                     if (cached) {
                         const data = JSON.parse(cached)
                         if (Date.now() > data.expiresAt) {
-                            localStorage.removeItem(key)
+                            sessionStorage.removeItem(key)
                             //console.log(`Cleared expired cache: ${key}`)
                         }
                     }
                 } catch (error) {
                     // If we can't parse it, remove it
-                    localStorage.removeItem(key)
+                    sessionStorage.removeItem(key)
                 }
             }
         })
@@ -165,7 +165,7 @@ export const MessageProvider = ({ children }) => {
                     // FIXED: Get hasMore from cache if available
                     try {
                         const cacheKey = getCacheKey(newRoomId)
-                        const cached = localStorage.getItem(cacheKey)
+                        const cached = sessionStorage.getItem(cacheKey)
                         if (cached) {
                             const data = JSON.parse(cached)
                             setHasMore(data.hasMore !== undefined ? data.hasMore : true)
@@ -397,7 +397,7 @@ export const MessageProvider = ({ children }) => {
 
         try {
             const cacheKey = getCacheKey(currentRoomDetails._id)
-            const cached = localStorage.getItem(cacheKey)
+            const cached = sessionStorage.getItem(cacheKey)
 
             if (!cached) return { exists: false }
 
@@ -419,7 +419,7 @@ export const MessageProvider = ({ children }) => {
     // FIXED: Add function to get cache storage usage
     const getCacheStorageInfo = useCallback(() => {
         try {
-            const keys = Object.keys(localStorage)
+            const keys = Object.keys(sessionStorage)
             const cacheKeys = keys.filter((key) => key.startsWith(CACHE_CONFIG.KEY_PREFIX))
 
             let totalSize = 0
@@ -427,7 +427,7 @@ export const MessageProvider = ({ children }) => {
 
             cacheKeys.forEach((key) => {
                 try {
-                    const value = localStorage.getItem(key)
+                    const value = sessionStorage.getItem(key)
                     if (value) {
                         totalSize += value.length
                         const data = JSON.parse(value)

@@ -8,28 +8,36 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.svg", "robots.txt", "apple-touch-icon.png"],
+      includeAssets: [
+        "favicon/favicon.svg",
+        "favicon/favicon.ico",
+        "favicon/apple-touch-icon.png"
+      ],
       manifest: {
         name: "CForge",
         short_name: "CForge",
-        description: "Your Collaborative Coding Platform",
-        theme_color: "#ffffff",
-        background_color: "#ffffff",
+        description: "Coding community platform with progress analytics.",
+        theme_color: "#6b46c1",
+        background_color: "#6b46c1",
         display: "standalone",
         start_url: "/",
+        orientation: "portrait-primary",
+        scope: "/",
+        // 🔁 This dummy version forces SW to update on every deploy
+        version: Date.now().toString(),
         icons: [
           {
-            src: "pwa-192x192.png",
+            src: "favicon/web-app-manifest-192x192.png",
             sizes: "192x192",
             type: "image/png",
           },
           {
-            src: "pwa-512x512.png",
+            src: "favicon/web-app-manifest-512x512.png",
             sizes: "512x512",
             type: "image/png",
           },
           {
-            src: "pwa-512x512.png",
+            src: "favicon/web-app-manifest-512x512.png",
             sizes: "512x512",
             type: "image/png",
             purpose: "any maskable",
@@ -37,10 +45,25 @@ export default defineConfig({
         ],
       },
       workbox: {
+        navigateFallback: '/index.html',
+        cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
+            // Never cache API calls
             urlPattern: /^https:\/\/cforge\.onrender\.com\/api\//,
-            handler: "NetworkOnly", // ✅ API calls should never be cached
+            handler: "NetworkOnly",
+          },
+          {
+            // Cache images for 7 days
+            urlPattern: ({ request }) => request.destination === 'image',
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'images-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
+              }
+            }
           },
         ],
       },
