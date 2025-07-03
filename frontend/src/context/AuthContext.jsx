@@ -41,12 +41,35 @@ export const AuthProvider = ({ children }) => {
     return false;
   }, []);
 
+  // Helper function to fetch complete user profile data
+  const fetchCompleteUserProfile = useCallback(async () => {
+    try {
+      const profileResponse = await ApiService.get('users/profile');
+      if (profileResponse.data) {
+        setValidatedUser(profileResponse.data);
+        console.log('Fetched complete user profile data');
+        return profileResponse.data;
+      }
+    } catch (error) {
+      console.error('Error fetching complete user profile:', error);
+      // Don't throw error - keep existing user data if profile fetch fails
+    }
+  }, [setValidatedUser]);
+
   const refreshPlatformData = useCallback(async () => {
     try {
-      const response = await ApiService.put('users/platform/refresh');
-      if (response.data && response.data.user) {
-        setValidatedUser(response.data.user);
+      // Step 1: Refresh platform data
+      const refreshResponse = await ApiService.put('users/platform/refresh');
+      
+      // Step 2: Fetch updated user data from /profile (this will get fresh data since backend invalidated cache)
+      const profileResponse = await ApiService.get('users/profile');
+      
+      if (profileResponse.data) {
+        setValidatedUser(profileResponse.data);
       }
+      
+      // Return the refresh response for any additional info (warnings, metadata, etc.)
+      return refreshResponse.data;
     } catch (error) {
       console.error("Failed to refresh platform data:", error);
 
@@ -60,8 +83,6 @@ export const AuthProvider = ({ children }) => {
       throw error;
     }
   }, [setValidatedUser]);
-
-
 
   const loginUser = useCallback(async (email, password, googleToken = null) => {
     setError(null);
@@ -77,11 +98,19 @@ export const AuthProvider = ({ children }) => {
       // Set token first
       localStorage.setItem("app-token", token);
 
-      // Then set user data
+      // Set initial user data from login response
       if (!setValidatedUser(user)) {
         localStorage.removeItem("app-token");
         throw new Error("Received invalid user data from server");
       }
+
+      // Fetch complete profile data in background to get joinDate, etc.
+      // Don't await this - let it update in background
+      fetchCompleteUserProfile().catch(error => {
+        console.warn('Background profile fetch failed:', error);
+        // Don't affect login flow if this fails
+      });
+
       return user;
     } catch (error) {
       console.error("Login error in AuthContext:", error);
@@ -99,7 +128,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [setValidatedUser]); // OPTIMIZATION: Removed refreshPlatformData dependency
+  }, [setValidatedUser, fetchCompleteUserProfile]);
 
   const registerUser = useCallback(async (userData) => {
     setError(null);
@@ -116,6 +145,12 @@ export const AuthProvider = ({ children }) => {
       }
 
       localStorage.setItem("app-token", token);
+
+      // Fetch complete profile data in background
+      fetchCompleteUserProfile().catch(error => {
+        console.warn('Background profile fetch failed:', error);
+      });
+
       return user;
     } catch (error) {
       console.error("Registration error in AuthContext:", error);
@@ -133,7 +168,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [setValidatedUser]);
+  }, [setValidatedUser, fetchCompleteUserProfile]);
 
   const logout = useCallback(() => {
     setAuthUser(null);
@@ -202,7 +237,18 @@ export const AuthProvider = ({ children }) => {
             if (tokenData.exp * 1000 < Date.now()) {
               throw new Error("Token expired");
             }
+            
+            // Set stored user data immediately
             setAuthUser(userData);
+            
+            // Check if stored data might be incomplete (missing joinDate, etc.)
+            // If it's missing key fields, fetch fresh profile data
+            if (!userData.createdAt || !userData.updatedAt) {
+              console.log('Stored user data incomplete, fetching fresh profile...');
+              fetchCompleteUserProfile().catch(error => {
+                console.warn('Failed to fetch fresh profile on init:', error);
+              });
+            }
           } catch (error) {
             console.error("Token validation error:", error);
             throw new Error("Invalid token format");
@@ -219,7 +265,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     initializeAuth();
-  }, []);
+  }, [fetchCompleteUserProfile]);
 
   // Memoize the context value to prevent unnecessary re-renders
   const contextValue = useMemo(() => ({
@@ -231,7 +277,8 @@ export const AuthProvider = ({ children }) => {
     logout,
     updateUser,
     updatePlatformData,
-    refreshPlatformData, // Keep this for manual refresh when needed
+    refreshPlatformData, // Enhanced method that fetches fresh user data
+    fetchCompleteUserProfile, // New method to manually fetch complete profile
   }), [
     memoizedAuthUser,
     isLoading,
@@ -242,6 +289,7 @@ export const AuthProvider = ({ children }) => {
     updateUser,
     updatePlatformData,
     refreshPlatformData,
+    fetchCompleteUserProfile,
   ]);
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;

@@ -21,6 +21,32 @@ if (process.env.NODE_ENV !== 'production') {
     logger.add(new winston.transports.Console({ format: winston.format.simple() }));
 }
 
+// Helper function to invalidate user-related caches after platform updates
+const invalidateUserPlatformCaches = async (userId, username, platforms = []) => {
+    try {
+        if (redisClient.isReady()) {
+            // Invalidate user details cache
+            await redisClient.del(`user:${userId}:details`);
+            
+            // Invalidate public profile cache
+            if (username) {
+                await redisClient.del(`public:profile:${username}`);
+                await redisClient.del(`public:heatmap:${username}`);
+            }
+            
+            // Invalidate platform-specific caches
+            for (const platform of platforms) {
+                await redisClient.deletePlatformData(userId, platform);
+            }
+            
+            console.log(`Platform caches invalidated for user ${userId} (platforms: ${platforms.join(', ')})`);
+        }
+    } catch (error) {
+        console.error("Error invalidating user platform caches:", error);
+        // Don't throw error - cache invalidation failure shouldn't break the update
+    }
+};
+
 exports.getUserQuestionStats = async (req, res) => {
     try {
         const username = req.params.username;
@@ -182,6 +208,9 @@ exports.refreshUserPlatforms = async (req, res) => {
             });
         }
 
+        // Invalidate user caches after successful platform update
+        await invalidateUserPlatformCaches(userId, user.username, platformsToUpdate);
+
         logger.info('Platform refresh completed for user', {
             userId,
             username: user.username,
@@ -322,6 +351,14 @@ exports.bulkRefreshPlatformStats = async (req, res) => {
             });
         }
 
+        // Invalidate caches for all successfully updated users
+        if (result.success && result.results.successful > 0) {
+            const invalidationPromises = users.map(user => 
+                invalidateUserPlatformCaches(user._id, user.username, [platform])
+            );
+            await Promise.allSettled(invalidationPromises);
+        }
+
         logger.info('Bulk platform refresh completed', {
             platform,
             roomId,
@@ -371,6 +408,19 @@ exports.invalidateUserCache = async (req, res) => {
     const { platform } = req.query;
 
     try {
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        // Use our enhanced cache invalidation
+        const platforms = platform ? [platform] : ['leetcode', 'github', 'codeforces'];
+        await invalidateUserPlatformCaches(userId, user.username, platforms);
+        
+        // Also use the service's invalidation method
         const success = await enhancedPlatformService.invalidateCache(userId, platform);
         
         if (success) {

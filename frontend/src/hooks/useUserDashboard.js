@@ -16,6 +16,7 @@ export const useUserDashboard = () => {
             setLoading(true);
             setError(null);
             const response = await ApiService.get('users/profile');
+            console.log('Fetched user profile:', response.data);
             setUser(response.data);
             
             // Check if we should show the verification modal
@@ -118,4 +119,4 @@ export const useUserDashboard = () => {
         // Error handling
         clearError: () => setError(null),
     };
-}; 
+};

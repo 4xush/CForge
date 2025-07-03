@@ -4,7 +4,6 @@ import toast from 'react-hot-toast';
 import AuthLayout from './AuthPage';
 import { GoogleLogin } from '@react-oauth/google';
 import { useNavigate, useLocation } from 'react-router-dom';
-import ApiService from '../services/ApiService';
 
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -47,7 +46,6 @@ const Login = () => {
             await loginUser(formData.email, formData.password);
             toast.success('Login successful!');
 
-
             // Check for pending invite code in sessionStorage
             const pendingInviteCode = sessionStorage.getItem('app-pendingInviteCode');
             if (pendingInviteCode) {
@@ -55,15 +53,8 @@ const Login = () => {
                 navigate(`/rooms/join/${pendingInviteCode}`);
                 return;
             }
-            // Perform initial platform data refresh
-            try {
-                await ApiService.put('users/platform/refresh');
-            } catch (refreshError) {
-                console.error('Initial refresh error:', refreshError);
-                // Don't show error to user, just log it
-            }
 
-            // Default redirect
+            // Default redirect - removed automatic platform refresh
             navigate('/dashboard');
         } catch (error) {
             toast.error(error.message || 'Login failed. Please check your credentials.');
@@ -77,14 +68,6 @@ const Login = () => {
             await loginUser(null, null, credentialResponse.credential);
             toast.success('Google login successful!');
 
-            // Perform initial platform data refresh
-            try {
-                await ApiService.put('users/platform/refresh');
-            } catch (refreshError) {
-                console.error('Initial refresh error:', refreshError);
-                // Don't show error to user, just log it
-            }
-
             // Check for pending invite code in sessionStorage
             const pendingInviteCode = sessionStorage.getItem('app-pendingInviteCode');
             if (pendingInviteCode) {
@@ -93,6 +76,7 @@ const Login = () => {
                 return;
             }
 
+            // Default redirect - removed automatic platform refresh
             navigate('/dashboard');
         } catch (error) {
             toast.error(error.message || 'Google login failed. Please try again.');

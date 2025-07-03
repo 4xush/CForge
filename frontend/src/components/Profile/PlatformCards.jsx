@@ -37,7 +37,7 @@ export const PlatformCard = ({ platform, stats, icon: Icon, color, className = '
                             {/* metric.icon is already sized below */}
                             {React.cloneElement(metric.icon, { className: metric.icon.props.className.replace('h-5', 'h-4 sm:h-5').replace('w-5', 'w-4 sm:w-5') })}
                             <div className="text-base sm:text-xl font-bold mt-1 sm:mt-2 text-white">{metric.value}</div>
-                            <div className="text-xs text-gray-400">{metric.label}</div>
+                            <div className="text-xs text-gray-400 overflow-hidden">{metric.label}</div>
                         </div>
                     ))}
                 </div>
@@ -62,12 +62,12 @@ export const getPlatformStats = (user) => ({
             {
                 icon: <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400 mx-auto" />,
                 value: user?.platforms?.leetcode?.contestRating || 0,
-                label: 'Contest Rating'
+                label: 'Rating'
             },
             {
                 icon: <Book className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400 mx-auto" />,
                 value: user?.platforms?.leetcode?.totalQuestionsSolved || 0,
-                label: 'Problems Solved'
+                label: 'Solved'
             },
             {
                 icon: <Medal className="h-4 w-4 sm:h-5 sm:w-5 text-purple-400 mx-auto" />,
@@ -81,19 +81,19 @@ export const getPlatformStats = (user) => ({
                     <div className="text-base sm:text-lg font-semibold text-green-400">
                         {user?.platforms?.leetcode?.questionsSolvedByDifficulty?.easy || 0}
                     </div>
-                    <div className="text-xs sm:text-sm text-gray-400">Easy</div>
+                    <div className="text-xs sm:text-sm text-gray-400 break-words leading-tight">Easy</div>
                 </div>
                 <div className="text-center p-2 sm:p-3 bg-gray-800 border border-yellow-500 rounded-lg">
                     <div className="text-base sm:text-lg font-semibold text-yellow-400">
                         {user?.platforms?.leetcode?.questionsSolvedByDifficulty?.medium || 0}
                     </div>
-                    <div className="text-xs sm:text-sm text-gray-400">Medium</div>
+                    <div className="text-xs sm:text-sm text-gray-400 break-words leading-tight">Medium</div>
                 </div>
                 <div className="text-center p-2 sm:p-3 bg-gray-800 border border-red-500 rounded-lg">
                     <div className="text-base sm:text-lg font-semibold text-red-400">
                         {user?.platforms?.leetcode?.questionsSolvedByDifficulty?.hard || 0}
                     </div>
-                    <div className="text-xs sm:text-sm text-gray-400">Hard</div>
+                    <div className="text-xs sm:text-sm text-gray-400 break-words leading-tight">Hard</div>
                 </div>
             </div>
         )
@@ -104,12 +104,12 @@ export const getPlatformStats = (user) => ({
             {
                 icon: <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400 mx-auto" />,
                 value: user?.platforms?.codeforces?.currentRating || 0,
-                label: 'Current Rating'
+                label: 'Rating'
             },
             {
                 icon: <Award className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400 mx-auto" />,
                 value: user?.platforms?.codeforces?.maxRating || 0,
-                label: 'Max Rating'
+                label: 'Max'
             },
             {
                 icon: <Star className="h-4 w-4 sm:h-5 sm:w-5 text-purple-400 mx-auto" />,
@@ -122,7 +122,7 @@ export const getPlatformStats = (user) => ({
                 <div className="text-base sm:text-lg font-semibold text-white">
                     {user?.platforms?.codeforces?.rank || 'Unrated'}
                 </div>
-                <div className="text-xs sm:text-sm text-gray-400">Current Rank</div>
+                <div className="text-xs sm:text-sm text-gray-400 break-words leading-tight">Rank</div>
             </div>
         )
     },
@@ -132,7 +132,7 @@ export const getPlatformStats = (user) => ({
             {
                 icon: <Layout className="h-4 w-4 sm:h-5 sm:w-5 text-gray-300 mx-auto" />,
                 value: user?.platforms?.github?.publicRepos || 0,
-                label: 'Repositories'
+                label: 'Repos'
             },
             {
                 icon: <Users className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400 mx-auto" />,

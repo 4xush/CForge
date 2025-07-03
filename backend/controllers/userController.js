@@ -18,6 +18,32 @@ const {
 const USER_DETAILS_TTL = 600; // 10 minutes
 const ACTIVE_USERS_TTL = 600; // 10 minutes
 
+// Helper function to invalidate user-related caches
+const invalidateUserCaches = async (userId, username, platform = null) => {
+    try {
+        if (redisClient.isReady()) {
+            // Invalidate user details cache
+            await redisClient.del(`user:${userId}:details`);
+            
+            // Invalidate public profile cache if username is available
+            if (username) {
+                await redisClient.del(`public:profile:${username}`);
+                await redisClient.del(`public:heatmap:${username}`);
+            }
+            
+            // Invalidate platform-specific cache if platform is specified
+            if (platform) {
+                await redisClient.deletePlatformData(userId, platform);
+            }
+            
+            console.log(`Cache invalidated for user ${userId}${platform ? ` (${platform} platform)` : ''}`);
+        }
+    } catch (error) {
+        console.error("Error invalidating user caches:", error);
+        // Don't throw error - cache invalidation failure shouldn't break the update
+    }
+};
+
 exports.getUserDetails = async (req, res) => {
     const userId = req.user.id;
     const cacheKey = `user:${userId}:details`;
@@ -26,7 +52,7 @@ exports.getUserDetails = async (req, res) => {
         if (redisClient.isReady()) {
             const cachedUser = await redisClient.get(cacheKey);
             if (cachedUser) {
-                // console.log(`Cache HIT for ${cacheKey}`);
+                console.log(`Cache HIT for ${cacheKey}`);
                 return res.status(200).json(JSON.parse(cachedUser));
             }
             console.log(`Cache MISS for ${cacheKey}`);
@@ -47,6 +73,7 @@ exports.getUserDetails = async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
 exports.searchUser = async (req, res) => {
     const { query } = req.query; // `query` parameter from the request URL (e.g., `/search?query=johndoe`).
 
@@ -116,6 +143,9 @@ exports.setupLeetCode = async (req, res) => {
         user.isProfileComplete = true;
         await user.save();
 
+        // Invalidate caches after successful update
+        await invalidateUserCaches(userId, user.username, 'leetcode');
+
         // Update LeetCode stats
         let updatedUser = user;
         try {
@@ -178,6 +208,9 @@ exports.setupGitHub = async (req, res) => {
 
         user.isProfileComplete = true;
         await user.save();
+
+        // Invalidate caches after successful update
+        await invalidateUserCaches(userId, user.username, 'github');
 
         // Update GitHub stats
         let updatedUser = user;
@@ -245,6 +278,9 @@ exports.setupCodeforces = async (req, res) => {
         user.isProfileComplete = true;
         await user.save();
 
+        // Invalidate caches after successful update
+        await invalidateUserCaches(userId, user.username, 'codeforces');
+
         // Update Codeforces stats
         let updatedUser = user;
         try {
@@ -266,6 +302,7 @@ exports.setupCodeforces = async (req, res) => {
         });
     }
 };
+
 // --- Active Users caching ---
 
 exports.getActiveUsers = async (req, res) => {

@@ -1,7 +1,7 @@
-
 import { Camera, Mail, GitBranch, User, Zap } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import SocialLinks from '@/components/Profile/SocialLinks';
+import PropTypes from 'prop-types';
 
 const getUserTag = (totalQuestions) => {
     if (totalQuestions >= 1000) {
@@ -23,10 +23,10 @@ export const ProfileHeader = ({ user }) => {
 
     return (
         <Card className="w-full bg-gradient-to-r from-blue-50 to-indigo-50">
-            <CardContent className="pt-4 sm:pt-6 pb-4">
-                <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+            <CardContent className="pt-3 sm:pt-6 pb-3 sm:pb-4">
+                <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-6">
                     <div className="relative group flex-shrink-0">
-                        <div className="w-20 h-20 sm:w-32 sm:h-32 rounded-full bg-gradient-to-r from-blue-100 to-indigo-100 p-0.5 sm:p-1">
+                        <div className="w-16 h-16 sm:w-32 sm:h-32 rounded-full bg-gradient-to-r from-blue-100 to-indigo-100 p-0.5 sm:p-1">
                             <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
                                 {user?.profilePicture ? (
                                     <img
@@ -35,17 +35,17 @@ export const ProfileHeader = ({ user }) => {
                                         className="w-full h-full object-cover"
                                     />
                                 ) : (
-                                    <Camera className="h-8 w-8 sm:h-12 sm:w-12 text-gray-400" />
+                                    <Camera className="h-7 w-7 sm:h-12 sm:w-12 text-gray-400" />
                                 )}
                             </div>
                         </div>
                     </div>
                     <div className="flex-1 w-full">
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 sm:gap-0">
                             <div>
-                                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
-                                    <h2 className="text-lg sm:text-2xl font-bold text-gray-900 break-all">{user?.fullName || 'Unknown User'}</h2>
-                                    <div className={`bg-blue-500/10 backdrop-blur-sm px-2 sm:px-3 py-1 rounded-full border border-blue-400/30 flex items-center ${userTag.color}`}>
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-4">
+                                    <h2 className="text-base sm:text-2xl font-bold text-gray-900 break-all">{user?.fullName || 'Unknown User'}</h2>
+                                    <div className={`bg-blue-500/10 backdrop-blur-sm px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border border-blue-400/30 flex items-center ${userTag.color}`}>
                                         <Zap className={`h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 ${userTag.color}`} />
                                         <span className={`text-xs font-medium ${userTag.color}`}>{userTag.label}</span>
                                     </div>
@@ -60,7 +60,7 @@ export const ProfileHeader = ({ user }) => {
                                 </span>
                             </div>
                         </div>
-                        <div className="mt-3 sm:mt-4 flex flex-wrap items-center gap-2 sm:gap-4 text-gray-600">
+                        <div className="mt-2 sm:mt-4 flex flex-wrap items-center gap-1 sm:gap-4 text-gray-600">
                             <div className="flex items-center space-x-1 sm:space-x-2">
                                 <Mail className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500" />
                                 <span className="text-xs sm:text-base break-all">{user?.email || ''}</span>
@@ -75,4 +75,30 @@ export const ProfileHeader = ({ user }) => {
             </CardContent>
         </Card>
     );
+};
+
+ProfileHeader.propTypes = {
+    user: PropTypes.shape({
+        fullName: PropTypes.string,
+        username: PropTypes.string,
+        email: PropTypes.string,
+        gender: PropTypes.string,
+        createdAt: PropTypes.string,
+        profilePicture: PropTypes.string,
+        socialNetworks: PropTypes.object,
+        platforms: PropTypes.shape({
+            leetcode: PropTypes.shape({
+                totalQuestionsSolved: PropTypes.number,
+                username: PropTypes.string,
+                questionsSolvedByDifficulty: PropTypes.object,
+            }),
+            codeforces: PropTypes.shape({
+                username: PropTypes.string,
+                rank: PropTypes.string,
+            }),
+            github: PropTypes.shape({
+                username: PropTypes.string,
+            })
+        })
+    })
 };

@@ -16,24 +16,24 @@ const PlatformCard = ({ platform, stats, icon: Icon, color }) => {
             className="w-full cursor-pointer transition-shadow hover:shadow-lg"
             onClick={() => profileUrl !== "#" && window.open(profileUrl, "_blank")}
         >
-            <CardHeader className="flex flex-row items-center space-x-2">
-                <Icon className={`h-6 w-6 ${color}`} />
-                <CardTitle className="text-xl">{platform}</CardTitle>
+            <CardHeader className="flex flex-row items-center space-x-2 p-3 sm:p-6">
+                <Icon className={`h-5 w-5 sm:h-6 sm:w-6 ${color}`} />
+                <CardTitle className="text-base sm:text-xl">{platform}</CardTitle>
             </CardHeader>
-            <CardContent>
-                <div className="space-y-4">
-                    <div className="flex items-center space-x-2">
-                        <User className="h-4 w-4 text-gray-500" />
-                        <span className="text-sm text-gray-600">
+            <CardContent className="p-3 sm:p-6 pt-0">
+                <div className="space-y-3 sm:space-y-4">
+                    <div className="flex items-center space-x-1 sm:space-x-2">
+                        <User className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500" />
+                        <span className="text-xs sm:text-sm text-gray-600">
                             @{stats.username || 'Not connected'}
                         </span>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4">
                         {stats.metrics.map((metric, index) => (
-                            <div key={index} className="bg-gray-50 p-4 rounded-lg text-center">
+                            <div key={index} className="bg-gray-50 p-2 sm:p-4 rounded-lg text-center">
                                 {metric.icon}
-                                <div className="text-2xl font-bold mt-2">{metric.value}</div>
-                                <div className="text-sm text-gray-600">{metric.label}</div>
+                                <div className="text-lg sm:text-2xl font-bold mt-1 sm:mt-2">{metric.value}</div>
+                                <div className="text-xs sm:text-sm text-gray-600">{metric.label}</div>
                             </div>
                         ))}
                     </div>
@@ -66,24 +66,24 @@ export const getPlatformStats = (user) => ({
             }
         ],
         additionalContent: (
-            <div className="grid grid-cols-3 gap-4 mt-4">
-                <div className="text-center p-3 bg-green-50 rounded-lg">
-                    <div className="text-lg font-semibold text-green-600">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-2 sm:mt-4">
+                <div className="text-center p-2 sm:p-3 bg-green-50 rounded-lg">
+                    <div className="text-base sm:text-lg font-semibold text-green-600">
                         {user?.platforms?.leetcode?.questionsSolvedByDifficulty?.easy || 0}
                     </div>
-                    <div className="text-sm text-gray-600">Easy</div>
+                    <div className="text-xs sm:text-sm text-gray-600">Easy</div>
                 </div>
-                <div className="text-center p-3 bg-yellow-50 rounded-lg">
-                    <div className="text-lg font-semibold text-yellow-600">
+                <div className="text-center p-2 sm:p-3 bg-yellow-50 rounded-lg">
+                    <div className="text-base sm:text-lg font-semibold text-yellow-600">
                         {user?.platforms?.leetcode?.questionsSolvedByDifficulty?.medium || 0}
                     </div>
-                    <div className="text-sm text-gray-600">Medium</div>
+                    <div className="text-xs sm:text-sm text-gray-600">Medium</div>
                 </div>
-                <div className="text-center p-3 bg-red-50 rounded-lg">
-                    <div className="text-lg font-semibold text-red-600">
+                <div className="text-center p-2 sm:p-3 bg-red-50 rounded-lg">
+                    <div className="text-base sm:text-lg font-semibold text-red-600">
                         {user?.platforms?.leetcode?.questionsSolvedByDifficulty?.hard || 0}
                     </div>
-                    <div className="text-sm text-gray-600">Hard</div>
+                    <div className="text-xs sm:text-sm text-gray-600">Hard</div>
                 </div>
             </div>
         )
@@ -108,11 +108,11 @@ export const getPlatformStats = (user) => ({
             }
         ],
         additionalContent: (
-            <div className="text-center p-4 bg-gray-50 rounded-lg mt-4">
-                <div className="text-lg font-semibold text-gray-700">
+            <div className="text-center p-2 sm:p-4 bg-gray-50 rounded-lg mt-2 sm:mt-4">
+                <div className="text-base sm:text-lg font-semibold text-gray-700">
                     {user?.platforms?.codeforces?.rank || 'Unrated'}
                 </div>
-                <div className="text-sm text-gray-600">Current Rank</div>
+                <div className="text-xs sm:text-sm text-gray-600">Current Rank</div>
             </div>
         )
     },

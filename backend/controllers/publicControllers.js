@@ -1,20 +1,30 @@
 const User = require('../models/User');
 const axios = require("axios");
 const winston = require('winston');
-const redisClient = require('../services/cache/redisClient'); // Adjust path as needed
+const redisClient = require('../services/cache/redisClient');
 
-// Logger setup (remains the same)
+// Logger setup
 const logger = winston.createLogger({
-    // ... your logger config ...
+    level: 'info',
+    format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.json()
+    ),
+    transports: [
+        new winston.transports.File({ filename: 'logs/public-controller-error.log', level: 'error' }),
+        new winston.transports.File({ filename: 'logs/public-controller-combined.log' })
+    ]
 });
+
 if (process.env.NODE_ENV !== 'production') {
     logger.add(new winston.transports.Console({ format: winston.format.simple() }));
 }
 
 // TTLs (Time-To-Live) for our caches in seconds
-const PUBLIC_PROFILE_TTL = redisClient.ttlConfig.public_profile || 600; // 10 minutes
-const HEATMAP_TTL = redisClient.ttlConfig.heatmap || 43200; // 12 hours
+const PUBLIC_PROFILE_TTL = redisClient.ttlConfig?.public_profile || 600; // 10 minutes
+const HEATMAP_TTL = redisClient.ttlConfig?.heatmap || 43200; // 12 hours
 const NEGATIVE_CACHE_TTL = 60; // 1 minute for "not found" results
+const HEATMAP_REFRESH_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 exports.getPublicUserProfile = async (req, res) => {
     const { username } = req.params;
@@ -63,56 +73,141 @@ exports.getPublicUserHeatMaps = async (req, res) => {
     const cacheKey = `public:heatmap:${username}`;
 
     try {
-        // 1. Try to fetch the entire heatmap object from Redis
+        // 1. Try to fetch from Redis cache first
         if (redisClient.isReady()) {
             const cachedHeatmaps = await redisClient.get(cacheKey);
             if (cachedHeatmaps) {
-                // Cache HIT
+                logger.info(`Cache HIT for heatmaps of user: ${username}`);
                 return res.status(200).json({ success: true, heatmaps: JSON.parse(cachedHeatmaps) });
             }
         }
 
-        // 2. If cache miss, fetch from source
+        // 2. Fetch user with platform data including heatmaps
         const user = await User.findOne({ username }).select('platforms');
         if (!user) {
-            // Note: We don't need to set a negative cache here because getPublicUserProfile would have already done it.
             return res.status(404).json({ success: false, message: "User not found" });
         }
 
-        const platformPromises = [];
-        const platformNames = [];
-
-        // Create promises for all available platforms
-        if (user.platforms?.leetcode?.username) {
-            platformPromises.push(getLeetCodeHeatmap(user.platforms.leetcode.username));
-            platformNames.push('leetcode');
-        }
-        if (user.platforms?.github?.username) {
-            platformPromises.push(getGitHubHeatmap(user.platforms.github.username));
-            platformNames.push('github');
-        }
-        if (user.platforms?.codeforces?.username) {
-            platformPromises.push(getCodeforcesHeatmap(user.platforms.codeforces.username));
-            platformNames.push('codeforces');
-        }
-
-        // Use Promise.allSettled to ensure we get results even if one API fails
-        const results = await Promise.allSettled(platformPromises);
         const heatmaps = {};
+        const platformsToUpdate = [];
 
-        results.forEach((result, index) => {
-            const platformName = platformNames[index];
-            if (result.status === 'fulfilled') {
-                heatmaps[platformName] = result.value;
-            } else {
-                logger.error(`Failed to fetch ${platformName} heatmap for ${username}:`, result.reason);
-                heatmaps[platformName] = []; // Return empty array on failure for this platform
+        // 3. Check each platform and decide whether to use cached data or fetch fresh
+        const platforms = ['leetcode', 'github', 'codeforces'];
+        
+        for (const platform of platforms) {
+            const platformData = user.platforms?.[platform];
+            
+            if (!platformData?.username) {
+                continue; // Skip if platform not configured
             }
-        });
 
-        // 3. Store the newly compiled heatmap object in Redis
+            // Check if we have recent heatmap data in database
+            const hasRecentHeatmapData = platformData.heatmapLastUpdated && 
+                platformData.heatmapData && 
+                Object.keys(convertMapToObject(platformData.heatmapData)).length > 0 &&
+                (Date.now() - new Date(platformData.heatmapLastUpdated).getTime()) < HEATMAP_REFRESH_INTERVAL;
+
+            if (hasRecentHeatmapData) {
+                // Use existing heatmap data from database
+                heatmaps[platform] = convertMapToObject(platformData.heatmapData);
+                logger.info(`Using cached heatmap data for ${platform} (user: ${username})`);
+            } else {
+                // Mark for fresh fetch
+                platformsToUpdate.push(platform);
+                logger.info(`Heatmap data stale for ${platform} (user: ${username}), will fetch fresh`);
+            }
+        }
+
+        // 4. Fetch fresh heatmap data for stale platforms
+        if (platformsToUpdate.length > 0) {
+            const platformPromises = platformsToUpdate.map(platform => {
+                const platformData = user.platforms[platform];
+                switch (platform) {
+                    case 'leetcode':
+                        return getLeetCodeHeatmap(platformData.username);
+                    case 'github':
+                        return getGitHubHeatmap(platformData.username);
+                    case 'codeforces':
+                        return getCodeforcesHeatmap(platformData.username);
+                    default:
+                        return Promise.resolve({});
+                }
+            });
+
+            // Use Promise.allSettled to handle failures gracefully
+            const results = await Promise.allSettled(platformPromises);
+            
+            // Process results and update database
+            const updatePromises = [];
+            
+            results.forEach((result, index) => {
+                const platform = platformsToUpdate[index];
+                
+                if (result.status === 'fulfilled' && result.value && Object.keys(result.value).length > 0) {
+                    heatmaps[platform] = result.value;
+                    
+                    // Store as plain object - MongoDB will handle Map conversion based on schema
+                    const updateData = {
+                        [`platforms.${platform}.heatmapData`]: result.value,
+                        [`platforms.${platform}.heatmapLastUpdated`]: new Date()
+                    };
+                    
+                    // Add detailed logging to debug
+                    logger.info(`Saving ${platform} heatmap data for user: ${username}`, {
+                        platform,
+                        dataType: typeof result.value,
+                        isArray: Array.isArray(result.value),
+                        // dataKeys: Object.keys(result.value || {}),
+                        dataSize: JSON.stringify(result.value).length
+                    });
+                    
+                    updatePromises.push(
+                        User.findOneAndUpdate(
+                            { username }, 
+                            { $set: updateData },
+                            { new: true }
+                        ).then(updatedUser => {
+                            if (updatedUser) {
+                                logger.info(`Successfully updated ${platform} heatmap in database for user: ${username}`);
+                                // Log what was actually saved
+                                const savedData = updatedUser.platforms?.[platform]?.heatmapData;
+                                logger.info(`Verified ${platform} heatmap data saved:`, {
+                                    type: typeof savedData,
+                                    isMap: savedData instanceof Map,
+                                    hasData: savedData && Object.keys(convertMapToObject(savedData)).length > 0
+                                });
+                            } else {
+                                logger.error(`Failed to find user ${username} for ${platform} heatmap update`);
+                            }
+                            return updatedUser;
+                        }).catch(updateError => {
+                            logger.error(`Error updating ${platform} heatmap for ${username}:`, updateError);
+                            throw updateError;
+                        })
+                    );
+                    
+                    logger.info(`Successfully fetched and will save ${platform} heatmap for user: ${username}`);
+                } else {
+                    logger.error(`Failed to fetch ${platform} heatmap for ${username}:`, result.reason);
+                    heatmaps[platform] = {}; // Return empty object on failure
+                }
+            });
+
+            // Execute all database updates
+            if (updatePromises.length > 0) {
+                try {
+                    await Promise.allSettled(updatePromises);
+                    logger.info(`Updated heatmap data in database for user: ${username}`);
+                } catch (updateError) {
+                    logger.error(`Error updating heatmap data in database for ${username}:`, updateError);
+                }
+            }
+        }
+
+        // 5. Store the compiled heatmap object in Redis cache
         if (redisClient.isReady() && Object.keys(heatmaps).length > 0) {
             await redisClient.set(cacheKey, JSON.stringify(heatmaps), HEATMAP_TTL);
+            logger.info(`Cached heatmap data in Redis for user: ${username}`);
         }
 
         res.status(200).json({ success: true, heatmaps });
@@ -123,108 +218,178 @@ exports.getPublicUserHeatMaps = async (req, res) => {
     }
 };
 
-async function getLeetCodeHeatmap(leetcodeUsername) {
-    const response = await axios.post('https://leetcode.com/graphql', {
-        query: `
-            query submissionCalendar($username: String!) {
-                matchedUser(username: $username) {
-                    submissionCalendar
-                }
-            }
-        `,
-        variables: { username: leetcodeUsername },
-    }, {
-        headers: { "Content-Type": "application/json" },
-    });
-
-    // Add null checks before accessing submissionCalendar
-    const matchedUser = response.data?.data?.matchedUser;
-    const submissionCalendar = matchedUser?.submissionCalendar;
-
-    if (!submissionCalendar) {
-        console.warn(`No submissionCalendar found for LeetCode user: ${leetcodeUsername}`);
-        return {}; // Return empty object if data is missing
+// Helper function to convert MongoDB Map to plain object
+const convertMapToObject = (mapData) => {
+    if (!mapData) {
+        return {};
     }
+    
+    // If it's already a plain object, return as-is
+    if (typeof mapData === 'object' && !mapData.toObject && !(mapData instanceof Map)) {
+        return mapData;
+    }
+    
+    // If it's a MongoDB Map, convert to object
+    if (mapData && typeof mapData.toObject === 'function') {
+        return mapData.toObject();
+    }
+    
+    // If it's a JavaScript Map, convert to object
+    if (mapData instanceof Map) {
+        return Object.fromEntries(mapData);
+    }
+    
+    return {};
+};
 
+// Enhanced LeetCode heatmap fetcher
+async function getLeetCodeHeatmap(leetcodeUsername) {
     try {
-        return JSON.parse(submissionCalendar); // Returns { "timestamp": "count", ... }
-    } catch (parseError) {
-        console.error(`Error parsing submissionCalendar for LeetCode user ${leetcodeUsername}:`, parseError);
-        return {}; // Return empty object on parsing error
+        logger.info(`Fetching LeetCode heatmap for: ${leetcodeUsername}`);
+        
+        const response = await axios.post('https://leetcode.com/graphql', {
+            query: `
+                query submissionCalendar($username: String!) {
+                    matchedUser(username: $username) {
+                        submissionCalendar
+                    }
+                }
+            `,
+            variables: { username: leetcodeUsername },
+        }, {
+            headers: { 
+                "Content-Type": "application/json",
+                "User-Agent": "Mozilla/5.0 (compatible; HeatmapBot/1.0)"
+            },
+            timeout: 10000 // 10 second timeout
+        });
+
+        const matchedUser = response.data?.data?.matchedUser;
+        const submissionCalendar = matchedUser?.submissionCalendar;
+
+        if (!submissionCalendar) {
+            logger.warn(`No submissionCalendar found for LeetCode user: ${leetcodeUsername}`);
+            return {};
+        }
+
+        const parsedData = JSON.parse(submissionCalendar);
+        logger.info(`Successfully fetched LeetCode heatmap for: ${leetcodeUsername} (${Object.keys(parsedData).length} entries)`);
+        return parsedData;
+
+    } catch (error) {
+        logger.error(`Error fetching LeetCode heatmap for ${leetcodeUsername}:`, error);
+        return {};
     }
 }
 
+// Enhanced GitHub heatmap fetcher
+
 async function getGitHubHeatmap(githubUsername) {
     try {
-        // Add authentication and proper headers
+        logger.info(`Fetching GitHub heatmap for: ${githubUsername}`);
+
         const headers = {
-            'Authorization': `token ${process.env.GITHUB_TOKEN}`,
-            'Accept': 'application/vnd.github.v3+json'
+            'Content-Type': 'application/json',
+            'User-Agent': 'HeatmapBot/1.0',
         };
 
-        // Get events with authentication
-        const response = await axios.get(
-            `https://api.github.com/users/${githubUsername}/events`,
-            { headers }
-        );
-
-        // Validate response
-        if (!response.data || !Array.isArray(response.data)) {
-            throw new Error('Invalid response format from GitHub API');
+        if (process.env.GITHUB_TOKEN) {
+            headers['Authorization'] = `Bearer ${process.env.GITHUB_TOKEN}`;
+        } else {
+            throw new Error('GITHUB_TOKEN not set in environment');
         }
 
-        const events = response.data;
+        const query = `
+            query {
+                user(login: "${githubUsername}") {
+                    contributionsCollection {
+                        contributionCalendar {
+                            totalContributions
+                            weeks {
+                                contributionDays {
+                                    date
+                                    contributionCount
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        `;
+
+        const response = await axios.post(
+            'https://api.github.com/graphql',
+            { query },
+            {
+                headers,
+                timeout: 10000, // 10 second timeout
+            }
+        );
+
+        const weeks = response.data?.data?.user?.contributionsCollection?.contributionCalendar?.weeks;
+
+        if (!weeks || !Array.isArray(weeks)) {
+            throw new Error('Invalid response format from GitHub GraphQL API');
+        }
+
         const dailyContributions = {};
 
-        // Process events into daily contributions
-        events.forEach(event => {
-            if (!event.created_at) return; // Skip invalid events
-
-            const date = new Date(event.created_at).toISOString().split('T')[0];
-
-            // Count different types of contributions differently
-            let contributionCount = 0;
-            switch (event.type) {
-                case 'PushEvent':
-                    contributionCount = event.payload?.commits?.length || 1;
-                    break;
-                case 'PullRequestEvent':
-                case 'IssuesEvent':
-                    contributionCount = 1;
-                    break;
-                default:
-                    contributionCount = 0.5; // Other events count as partial contributions
+        for (const week of weeks) {
+            for (const day of week.contributionDays) {
+                dailyContributions[day.date] = day.contributionCount;
             }
+        }
 
-            dailyContributions[date] = (dailyContributions[date] || 0) + contributionCount;
-        });
-
-        // Convert to array format with dates and counts
-        return Object.entries(dailyContributions).map(([date, count]) => ({
-            date,
-            count: Math.round(count * 10) / 10 // Round to 1 decimal place
-        }));
+        logger.info(`Successfully fetched GitHub heatmap for: ${githubUsername} (${Object.keys(dailyContributions).length} days)`);
+        return dailyContributions;
 
     } catch (error) {
-        console.error(`Error fetching GitHub heatmap for user ${githubUsername}:`, error);
+        logger.error(`Error fetching GitHub heatmap for ${githubUsername}:`, error);
+
         if (error.response?.status === 403) {
             throw new Error('GitHub API rate limit exceeded');
         } else if (error.response?.status === 404) {
             throw new Error('GitHub user not found');
         }
-        throw new Error('Failed to fetch GitHub contribution data');
+
+        return {};
     }
 }
 
+// Enhanced Codeforces heatmap fetcher
 async function getCodeforcesHeatmap(codeforcesHandle) {
-    const response = await axios.get(`https://codeforces.com/api/user.status?handle=${codeforcesHandle}`);
-    const data = response.data;
+    try {
+        logger.info(`Fetching Codeforces heatmap for: ${codeforcesHandle}`);
+        
+        const response = await axios.get(
+            `https://codeforces.com/api/user.status?handle=${codeforcesHandle}`,
+            { timeout: 10000 } // 10 second timeout
+        );
 
-    const dailySubmissions = {};
-    data.result.forEach(submission => {
-        const date = new Date(submission.creationTimeSeconds * 1000).toISOString().split('T')[0];
-        dailySubmissions[date] = (dailySubmissions[date] || 0) + 1;
-    });
+        if (!response.data || response.data.status !== 'OK' || !response.data.result) {
+            throw new Error('Invalid response from Codeforces API');
+        }
 
-    return Object.entries(dailySubmissions).map(([date, count]) => ({ date, count }));
+        const submissions = response.data.result;
+        const dailySubmissions = {};
+
+        submissions.forEach(submission => {
+            if (!submission.creationTimeSeconds) return;
+            
+            const date = new Date(submission.creationTimeSeconds * 1000).toISOString().split('T')[0];
+            dailySubmissions[date] = (dailySubmissions[date] || 0) + 1;
+        });
+
+        logger.info(`Successfully fetched Codeforces heatmap for: ${codeforcesHandle} (${Object.keys(dailySubmissions).length} days)`);
+        return dailySubmissions;
+
+    } catch (error) {
+        logger.error(`Error fetching Codeforces heatmap for ${codeforcesHandle}:`, error);
+        
+        if (error.response?.status === 400) {
+            throw new Error('Invalid Codeforces handle');
+        }
+        
+        return {};
+    }
 }

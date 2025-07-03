@@ -1,199 +1,192 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import ApiService from '../services/ApiService';
 
-// Cache duration in milliseconds (30 minutes)
-const CACHE_DURATION = 30 * 60 * 1000;
-
-const getCachedData = (username) => {
-  try {
-    const cached = sessionStorage.getItem(`heatmap_${username}`);
-    if (cached) {
-      const { data, timestamp } = JSON.parse(cached);
-      const now = Date.now();
-      // Return data if it's less than CACHE_DURATION old
-      if (now - timestamp < CACHE_DURATION) {
-        return data;
-      }
-    }
-  } catch (err) {
-    console.warn('Error reading cached heatmap data:', err);
-  }
-  return null;
-};
-
-const setCachedData = (username, data) => {
-  try {
-    sessionStorage.setItem(`heatmap_${username}`, JSON.stringify({
-      data,
-      timestamp: Date.now()
-    }));
-  } catch (err) {
-    console.warn('Error caching heatmap data:', err);
-  }
-};
-
 export const useHeatmapData = (username, options = {}) => {
-  const [data, setData] = useState(() => getCachedData(username));
-  const [loading, setLoading] = useState(!data); // Only show loading if no cached data
-  const [error, setError] = useState(null);
-  const [retryCount, setRetryCount] = useState(0);
-  const abortControllerRef = useRef(null);
-  const lastFetchAttemptRef = useRef(0);
-  const usernameRef = useRef(username);
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const usernameRef = useRef(username);
+    const abortControllerRef = useRef(null);
 
-  const MAX_RETRIES = 2;
-  const MIN_RETRY_INTERVAL = 30000; // 30 seconds between retries
-  const {
-    skipFetch = false,
-    onError = () => { },
-    enableRetry = true
-  } = options;
+    const { onNotFound } = options;
 
-  // Stabilize the onError callback to prevent infinite loops
-  const stableOnError = useCallback(onError, []);
-
-  // Helper function to check if we should retry based on time interval
-  const canRetryNow = () => {
-    const now = Date.now();
-    return now - lastFetchAttemptRef.current > MIN_RETRY_INTERVAL;
-  };
-
-  // Helper function to determine if error suggests server unavailability
-  const isServerError = (err) => {
-    const errorMessage = err.message || '';
-    const errorCode = err.code || '';
-
-    return (
-      errorMessage.includes('network') ||
-      errorMessage.includes('Failed to fetch') ||
-      errorMessage.includes('ERR_NETWORK') ||
-      errorMessage.includes('ERR_INTERNET_DISCONNECTED') ||
-      errorMessage.includes('ERR_CONNECTION_REFUSED') ||
-      errorCode === 'ERR_NETWORK' ||
-      err.name === 'NetworkError' ||
-      (err.response && err.response.status >= 500)
-    );
-  };
-
-  const fetchData = useCallback(async (forceRefresh = false) => {
-    const currentUsername = usernameRef.current;
-    
-    // Skip fetch if explicitly told to skip (offline mode)
-    if (skipFetch && !forceRefresh) {
-      setLoading(false);
-      return;
-    }
-
-    // Check cache first if not forcing refresh
-    if (!forceRefresh) {
-      const cachedData = getCachedData(currentUsername);
-      if (cachedData) {
-        setData(cachedData);
-        setLoading(false);
-        return;
-      }
-    }
-
-    // Prevent too frequent retry attempts
-    if (!forceRefresh && !canRetryNow()) {
-      setLoading(false);
-      return;
-    }
-
-    // Cancel any ongoing request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    // Create new abort controller for this request
-    abortControllerRef.current = new AbortController();
-    lastFetchAttemptRef.current = Date.now();
-
-    try {
-      setLoading(true);
-
-      // Check if we're online
-      if (!navigator.onLine) {
-        throw new Error('No internet connection available');
-      }
-
-      const response = await ApiService.get(`/u/hmap/${currentUsername}`, {
-        signal: abortControllerRef.current.signal,
-        timeout: 10000 // 10 second timeout
-      });
-
-      // Validate response format
-      if (!response.data || !response.data.success || !response.data.heatmaps) {
-        throw new Error("Invalid data format received from API");
-      }
-
-      // Cache the new data
-      setCachedData(currentUsername, response.data.heatmaps);
-      setData(response.data.heatmaps);
-      setError(null);
-      setRetryCount(0); // Reset retry count on success
-
-    } catch (err) {
-      // Don't set error if request was aborted (component unmounted or new request started)
-      if (err.name === 'AbortError') {
-        return;
-      }
-
-      const errorMessage = err.message || "Failed to load heatmap data";
-      setError(errorMessage);
-      console.error('Error fetching heatmap data:', err);
-
-      // Call the error callback
-      stableOnError(errorMessage);
-
-      // Implement retry logic only for network errors and if retries are enabled
-      if (enableRetry && retryCount < MAX_RETRIES && isServerError(err)) {
-        setRetryCount(prev => prev + 1);
-        // Exponential backoff with jitter
-        const backoffDelay = Math.min(1000 * Math.pow(2, retryCount) + Math.random() * 1000, 30000);
-        setTimeout(() => fetchData(forceRefresh), backoffDelay);
-      }
-
-    } finally {
-      setLoading(false);
-      abortControllerRef.current = null;
-    }
-  }, [skipFetch, enableRetry, stableOnError]);
-
-  useEffect(() => {
-    // Only update if username actually changed
-    if (username !== usernameRef.current) {
-      usernameRef.current = username;
-      // Reset state for new username
-      setData(null);
-      setError(null);
-      setRetryCount(0);
-    }
-    
-    if (username) {
-      fetchData();
-    }
-
-    // Cleanup function to abort ongoing requests
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
+    // Helper function to convert Unix timestamp to YYYY-MM-DD format
+    const convertTimestampToDate = (timestamp) => {
+        try {
+            // Convert string timestamp to number and then to date
+            const date = new Date(parseInt(timestamp) * 1000);
+            return date.toISOString().split('T')[0];
+        } catch (error) {
+            console.warn('Invalid timestamp:', timestamp);
+            return null;
+        }
     };
-  }, [username]);
 
-  // Provide a retry function for the consumer
-  const refetch = useCallback((forceRefresh = false) => {
-    setRetryCount(0);
-    setError(null);
-    fetchData(forceRefresh);
-  }, [fetchData]);
+    // Helper function to process platform-specific data formats
+    const processPlatformData = (platformData, platform) => {
+        if (!platformData || typeof platformData !== 'object') {
+            return {};
+        }
 
-  return {
-    data,
-    loading,
-    error,
-    refetch,
-    isRetrying: retryCount > 0 && loading
-  };
+        let processedData = {};
+
+        if (platform === 'leetcode') {
+            // LeetCode uses Unix timestamps as keys
+            Object.entries(platformData).forEach(([timestamp, count]) => {
+                const dateStr = convertTimestampToDate(timestamp);
+                if (dateStr) {
+                    processedData[dateStr] = count;
+                }
+            });
+        } else if (platform === 'github' || platform === 'codeforces') {
+            // GitHub and Codeforces already use YYYY-MM-DD format
+            if (Array.isArray(platformData)) {
+                // Handle array format
+                platformData.forEach(item => {
+                    if (item && item.date && typeof item.count !== 'undefined') {
+                        processedData[item.date] = item.count;
+                    }
+                });
+            } else {
+                // Handle object format
+                processedData = { ...platformData };
+            }
+        } else {
+            // Default handling for other platforms
+            if (Array.isArray(platformData)) {
+                platformData.forEach(item => {
+                    if (item && item.date && typeof item.count !== 'undefined') {
+                        processedData[item.date] = item.count;
+                    }
+                });
+            } else {
+                processedData = { ...platformData };
+            }
+        }
+
+        return processedData;
+    };
+
+    const fetchHeatmapData = useCallback(async (currentUsername) => {
+        if (!currentUsername) {
+            setLoading(false);
+            return;
+        }
+
+        // Cancel previous request if it exists
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+
+        // Create new abort controller for this request
+        abortControllerRef.current = new AbortController();
+
+        try {
+            setLoading(true);
+            setError(null);
+
+            const response = await ApiService.get(`/u/hmap/${currentUsername}`, {
+                signal: abortControllerRef.current.signal,
+                timeout: 30000 // 30 second timeout for heatmap data
+            });
+
+            if (response.data?.success && response.data?.heatmaps) {
+                const heatmaps = response.data.heatmaps;
+
+                // Process and validate heatmap data
+                const processedData = {};
+
+                Object.keys(heatmaps).forEach(platform => {
+                    const platformData = heatmaps[platform];
+
+                    if (platformData && typeof platformData === 'object') {
+                        processedData[platform] = processPlatformData(platformData, platform);
+                    } else {
+                        console.warn(`Invalid ${platform} heatmap data:`, platformData);
+                        processedData[platform] = {};
+                    }
+                });
+
+                setData(processedData);
+
+            } else {
+                console.warn('Invalid heatmap response format:', response.data);
+                setData({});
+            }
+        } catch (err) {
+            // Don't set error for aborted requests
+            if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') {
+                return;
+            }
+
+            console.error('Error fetching heatmap data:', err);
+
+            if (err.response?.status === 404) {
+                if (onNotFound) {
+                    onNotFound();
+                }
+                setError('User not found');
+            } else if (err.response?.status >= 500) {
+                setError('Server error while fetching heatmap data');
+            } else {
+                setError('Failed to fetch heatmap data');
+            }
+
+            setData({});
+        } finally {
+            setLoading(false);
+            abortControllerRef.current = null;
+        }
+    }, [onNotFound]);
+
+    // Effect to handle username changes
+    useEffect(() => {
+        // Only update if username actually changed
+        if (username !== usernameRef.current) {
+            usernameRef.current = username;
+            // Reset state for new username
+            setData(null);
+            setError(null);
+            setLoading(true);
+        }
+
+        if (username) {
+            fetchHeatmapData(username);
+        } else {
+            setLoading(false);
+            setData({});
+        }
+
+        // Cleanup function
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
+    }, [username, fetchHeatmapData]);
+
+    // Refetch function for manual refresh
+    const refetch = useCallback(() => {
+        const currentUsername = usernameRef.current;
+        if (currentUsername) {
+            fetchHeatmapData(currentUsername);
+        }
+    }, [fetchHeatmapData]);
+
+    // Clear error function
+    const clearError = useCallback(() => {
+        setError(null);
+    }, []);
+
+    return {
+        data,
+        loading,
+        error,
+        refetch,
+        clearError,
+        // Helper function to check if platform has data
+        hasPlatformData: useCallback((platform) => {
+            return data && data[platform] && Object.keys(data[platform]).length > 0;
+        }, [data])
+    };
 };

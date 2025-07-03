@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import PropTypes from "prop-types";
 import { useUserDashboard } from "../hooks/useUserDashboard";
+import { useAuthContext } from "../context/AuthContext";
+import toast from "react-hot-toast";
 import { ProfileHeader } from "./Profile/ProfileHeader";
 import { PlatformCard, getPlatformStats } from "./Profile/PlatformCards";
 import ActivityHeatmap from "./Profile/ActivityHeatmap";
@@ -204,18 +206,17 @@ HeatmapErrorBoundary.propTypes = {
 };
 
 const UserProfile = () => {
-  // Use the new useUserDashboard hook instead of AuthContext
-  const {
-    user,
-    loading: authLoading,
-    refreshing,
-    showVerificationModal,
-    refreshPlatformData,
-    closeVerificationModal,
-    isProfileComplete,
+  // Solution 1: Use AuthContext as single source of truth for user data
+  const { authUser: user, isLoading: authLoading, refreshPlatformData } = useAuthContext();
+  
+  // Keep only non-user related functionality from useUserDashboard
+  const { 
+    showVerificationModal, 
+    closeVerificationModal 
   } = useUserDashboard();
 
   const [activeTab, setActiveTab] = useState("overview");
+  const [refreshing, setRefreshing] = useState(false);
   const navigate = useNavigate();
 
   // Modified heatmap data hook call
@@ -226,15 +227,35 @@ const UserProfile = () => {
     refetch: refetchHeatmap,
   } = useHeatmapData(user?.username);
 
-  // Use the hook's refreshPlatformData method
+  // Use AuthContext's refreshPlatformData method with toast message
   const handleRefresh = async () => {
     try {
-      // Try to refresh platform data first
-      await refreshPlatformData();
+      setRefreshing(true);
+      
+      // Use AuthContext's method which updates global user state and returns response data
+      const refreshResult = await refreshPlatformData();
+      
+      // Display success message from backend response
+      if (refreshResult?.message) {
+        toast.success(refreshResult.message);
+      } else {
+        toast.success("Platform data refreshed successfully");
+      }
+      
+      // Show additional info if available
+      if (refreshResult?.warnings && refreshResult.warnings.length > 0) {
+        refreshResult.warnings.forEach(warning => {
+          toast.warning(`${warning.platform}: ${warning.message}`);
+        });
+      }
+      
       // Retry heatmap
       refetchHeatmap();
     } catch (err) {
       console.error("Failed to refresh platform data:", err);
+      // Error toast is already handled in AuthContext
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -282,7 +303,7 @@ const UserProfile = () => {
   }
 
   // Handle incomplete profile
-  if (!isProfileComplete) {
+  if (!user.isProfileComplete) {
     return (
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
         <div className="bg-gray-800 rounded-xl p-4 sm:p-6 max-w-xs sm:max-w-md w-full mx-2 sm:mx-4 border border-gray-700 shadow-xl">
@@ -364,7 +385,7 @@ const UserProfile = () => {
           </h1>
           <p className="text-gray-400 mt-1 sm:mt-2 text-xs sm:text-base">
             Below are your coding platform details and activity statistics.
-            Click the &apos;Refresh Data&apos; button to retrieve the lastest data.
+            Click the 'Refresh Data' button to retrieve the lastest data.
           </p>
         </div>
         <div className="mb-4 sm:mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 sm:gap-4">
@@ -436,12 +457,6 @@ const UserProfile = () => {
                   key={platform}
                   className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl shadow-lg p-3 sm:p-6 transform transition-all duration-300 hover:shadow-xl hover:border-indigo-500"
                 >
-                  <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-6">
-                    <Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${color}`} />
-                    <h3 className="text-lg sm:text-xl font-bold text-white capitalize">
-                      {platform} Activity
-                    </h3>
-                  </div>
                   <HeatmapErrorBoundary
                     platform={platform}
                     error={heatmapError}

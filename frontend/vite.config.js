@@ -23,7 +23,6 @@ export default defineConfig({
         start_url: "/",
         orientation: "portrait-primary",
         scope: "/",
-        // 🔁 This dummy version forces SW to update on every deploy
         version: Date.now().toString(),
         icons: [
           {
@@ -49,22 +48,34 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
-            // Never cache API calls
             urlPattern: /^https:\/\/cforge\.onrender\.com\/api\//,
             handler: "NetworkOnly",
           },
           {
-            // Cache images for 7 days
             urlPattern: ({ request }) => request.destination === 'image',
-            handler: 'CacheFirst',
+            handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'images-cache',
               expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
+                maxEntries: 30,
+                maxAgeSeconds: 60 * 60 * 24 * 1
               }
             }
           },
+          {
+            urlPattern: ({ request }) => 
+              request.destination === 'script' || 
+              request.destination === 'style' ||
+              request.destination === 'font',
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'static-assets',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 7
+              }
+            }
+          }
         ],
       },
     }),
@@ -77,6 +88,13 @@ export default defineConfig({
   base: "/",
   build: {
     outDir: "dist",
+    rollupOptions: {
+      output: {
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]'
+      }
+    }
   },
   define: {
     "process.env": {},

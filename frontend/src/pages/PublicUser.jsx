@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Code2, Github } from 'lucide-react';
+import { useMemo, useCallback } from 'react';
 import { ProfileHeader } from './pulicUser/ProfileHeader';
 import { PlatformCard, getPlatformStats } from './pulicUser/PlatformCards';
 import ActivityHeatmap from '../components/Profile/ActivityHeatmap';
@@ -10,12 +11,17 @@ const UserProfile = () => {
     const navigate = useNavigate();
     const username = window.location.pathname.split('/').pop();
 
+    // Memoize the onNotFound callback to prevent infinite re-renders
+    const handleNotFound = useCallback(() => {
+        navigate('/404');
+    }, [navigate]);
+
     const {
         user,
         loading: userLoading,
         error: userError
     } = useUserProfile(username, {
-        onNotFound: () => navigate('/404')
+        onNotFound: handleNotFound
     });
 
     const {
@@ -23,6 +29,17 @@ const UserProfile = () => {
         loading: heatmapLoading,
         error: heatmapError
     } = useHeatmapData(username);
+
+    // Memoize the heatmap data to prevent unnecessary re-renders
+    const memoizedHeatmapData = useMemo(() => {
+        if (!heatmapData) return null;
+        
+        return {
+            leetcode: heatmapData.leetcode ? { ...heatmapData.leetcode } : null,
+            github: heatmapData.github ? { ...heatmapData.github } : null,
+            codeforces: heatmapData.codeforces ? { ...heatmapData.codeforces } : null
+        };
+    }, [heatmapData]);
 
     if (userLoading || heatmapLoading) {
         return (
@@ -39,10 +56,10 @@ const UserProfile = () => {
     const platformStats = getPlatformStats(user);
 
     return (
-        <div className="max-w-7xl mx-auto p-2 sm:p-4 space-y-6 sm:space-y-8">
+        <div className="max-w-7xl mx-auto p-2 sm:p-4 space-y-4 sm:space-y-8">
             <ProfileHeader user={user} />
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
                 <PlatformCard
                     platform="LeetCode"
                     stats={platformStats.leetcode}
@@ -63,27 +80,27 @@ const UserProfile = () => {
                 />
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:gap-6">
-                {heatmapData?.leetcode && Object.keys(heatmapData.leetcode).length > 0 && (
-                    <div className="flex justify-center">
+            <div className="grid grid-cols-1 gap-3 sm:gap-6">
+                {memoizedHeatmapData?.leetcode && Object.keys(memoizedHeatmapData.leetcode).length > 0 && (
+                    <div className="flex justify-center overflow-x-auto">
                         <ActivityHeatmap
-                            data={heatmapData.leetcode}
+                            data={memoizedHeatmapData.leetcode}
                             platform="leetcode"
                         />
                     </div>
                 )}
-                {heatmapData?.github && heatmapData.github.length > 0 && (
-                    <div className="flex justify-center">
+                {memoizedHeatmapData?.github && Object.keys(memoizedHeatmapData.github).length > 0 && (
+                    <div className="flex justify-center overflow-x-auto">
                         <ActivityHeatmap
-                            data={heatmapData.github}
+                            data={memoizedHeatmapData.github}
                             platform="github"
                         />
                     </div>
                 )}
-                {heatmapData?.codeforces && heatmapData.codeforces.length > 0 && (
-                    <div className="flex justify-center">
+                {memoizedHeatmapData?.codeforces && Object.keys(memoizedHeatmapData.codeforces).length > 0 && (
+                    <div className="flex justify-center overflow-x-auto">
                         <ActivityHeatmap
-                            data={heatmapData.codeforces}
+                            data={memoizedHeatmapData.codeforces}
                             platform="codeforces"
                         />
                     </div>
