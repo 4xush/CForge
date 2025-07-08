@@ -46,6 +46,7 @@ const publicRoutes = require('./routes/publicRoutes');
 const healthRoutes = require('./routes/healthRoutes');
 const contestsRoutes = require('./routes/contests');
 const reviewRoutes = require('./routes/reviewRoutes');
+const problemTrackerRoutes = require("./routes/problemTrackerRoutes");
 // Enhanced services
 const serviceInitializer = require('./services/initialization/serviceInitializer');
 
@@ -134,6 +135,7 @@ app.use('/api/rooms', roomRoutes);
 app.use('/api/rooms/admin', adminRoomRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/contests', contestsRoutes);
+app.use('/api/leetcode-tracker', problemTrackerRoutes);
 app.use('/api', publicRoutes);
 
 

@@ -40,15 +40,6 @@ const ActivityHeatmap = ({ data, platform }) => {
       normalizedData = data;
     }
 
-    console.log(`Processing ${platform} heatmap data:`, {
-      originalType: Array.isArray(data) ? "array" : "object",
-      originalLength: Array.isArray(data)
-        ? data.length
-        : Object.keys(data).length,
-      processedLength: Object.keys(normalizedData).length,
-      sampleData: Object.entries(normalizedData).slice(0, 3),
-    });
-
     return normalizedData;
   }, [data, platform]);
 

@@ -354,7 +354,7 @@ const UserProfile = () => {
           onClose={closeVerificationModal}
         />
       )}
-      <div className="max-w-7xl mx-auto p-2 sm:p-4 md:p-8">
+      <div className="max-w-7xl mx-auto p-2 sm:p-4 md:p-4">
         {showLeetCodeStaleDialog && (
           <div className="mb-4 flex items-center justify-between bg-yellow-900/80 border border-yellow-600 rounded-xl px-4 py-3 shadow-lg animate-fade-in">
             <div className="flex items-center gap-3">
@@ -385,7 +385,7 @@ const UserProfile = () => {
           </h1>
           <p className="text-gray-400 mt-1 sm:mt-2 text-xs sm:text-base">
             Below are your coding platform details and activity statistics.
-            Click the 'Refresh Data' button to retrieve the lastest data.
+            Click the 'Refresh Data' button to retrieve the updated stats.
           </p>
         </div>
         <div className="mb-4 sm:mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 sm:gap-4">

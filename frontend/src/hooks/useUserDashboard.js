@@ -16,9 +16,8 @@ export const useUserDashboard = () => {
             setLoading(true);
             setError(null);
             const response = await ApiService.get('users/profile');
-            console.log('Fetched user profile:', response.data);
             setUser(response.data);
-            
+
             // Check if we should show the verification modal
             if (response.data?.email) {
                 const modalShown = sessionStorage.getItem(`platform_usernameCheck_${response.data.email}`);
@@ -28,18 +27,18 @@ export const useUserDashboard = () => {
             }
         } catch (err) {
             console.error('Error fetching user profile:', err);
-            
+
             // Handle different error scenarios
             if (err.response?.status === 404) {
                 navigate('/404');
                 return;
             }
-            
+
             // Extract error message from API response
-            const errorMessage = err.response?.data?.message || 
-                               err.message || 
-                               'Failed to fetch user profile. Please try again later.';
-            
+            const errorMessage = err.response?.data?.message ||
+                err.message ||
+                'Failed to fetch user profile. Please try again later.';
+
             setError(errorMessage);
             throw new Error(errorMessage);
         } finally {
@@ -52,9 +51,9 @@ export const useUserDashboard = () => {
         try {
             setRefreshing(true);
             setError(null);
-            
+
             const response = await ApiService.put('users/platform/refresh');
-            
+
             // Update user data if the API returns updated user info
             if (response.data?.user) {
                 setUser(response.data.user);
@@ -62,16 +61,16 @@ export const useUserDashboard = () => {
                 // If no user data returned, refetch the profile
                 await fetchProfile();
             }
-            
+
             return response.data;
         } catch (err) {
             console.error('Error refreshing platform data:', err);
-            
+
             // Extract error message from API response
-            const errorMessage = err.response?.data?.message || 
-                               err.message || 
-                               'Failed to refresh platform data. Please try again later.';
-            
+            const errorMessage = err.response?.data?.message ||
+                err.message ||
+                'Failed to refresh platform data. Please try again later.';
+
             setError(errorMessage);
             throw new Error(errorMessage);
         } finally {
@@ -106,16 +105,16 @@ export const useUserDashboard = () => {
         refreshing,
         error,
         showVerificationModal,
-        
+
         // Actions
         fetchProfile,
         refreshPlatformData,
         closeVerificationModal,
-        
+
         // Computed values
         isProfileComplete: user?.isProfileComplete || false,
         hasPlatforms: user?.platforms && Object.values(user.platforms).some(platform => platform?.username),
-        
+
         // Error handling
         clearError: () => setError(null),
     };

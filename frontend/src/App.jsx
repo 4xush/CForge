@@ -34,6 +34,9 @@ const NotFoundPage = React.lazy(() => import("./pages/Error404"));
 const Settings = React.lazy(() => import("./pages/Settings"));
 const ContestsPage = React.lazy(() => import("./pages/ContestsPage.jsx"));
 const ReviewsPage = React.lazy(() => import("./pages/ReviewsPage.jsx"));
+const ProblemTrackerPage = React.lazy(() =>
+  import("./components/ProblemTracker/ProblemTrackerDashboard.jsx")
+);
 
 // Smart landing route handler
 const AuthLanding = () => {
@@ -197,6 +200,16 @@ const App = () => {
                       <PrivateRoute>
                         <ErrorBoundary>
                           <Settings />
+                        </ErrorBoundary>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/leetcode-tracker"
+                    element={
+                      <PrivateRoute>
+                        <ErrorBoundary>
+                          <ProblemTrackerPage />
                         </ErrorBoundary>
                       </PrivateRoute>
                     }

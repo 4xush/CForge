@@ -1,12 +1,21 @@
-import { useRef, useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { PanelRightIcon, SettingsIcon, HelpCircleIcon, LayoutDashboardIcon, XIcon, MessageCircle, TrophyIcon } from 'lucide-react';
-import { useAuthContext } from '../../context/AuthContext';
-import DashboardButton from '../ui/DashboardButtons';
-import RoomList from '../Rooms/RoomList';
-import UserProfileModal from './UserMiniProfileModal';
-import CreateJoinModal from '../CreateRoom/CreateJoinRoomModal';
-import WideMenuIcon from '../ui/WideMenuIcon';
+import { useRef, useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import {
+  PanelRightIcon,
+  SettingsIcon,
+  HelpCircleIcon,
+  LayoutDashboardIcon,
+  XIcon,
+  MessageCircle,
+  TrophyIcon,
+  Code2,
+} from "lucide-react";
+import { useAuthContext } from "../../context/AuthContext";
+import DashboardButton from "../ui/DashboardButtons";
+import RoomList from "../Rooms/RoomList";
+import UserProfileModal from "./UserMiniProfileModal";
+import CreateJoinModal from "../CreateRoom/CreateJoinRoomModal";
+import WideMenuIcon from "../ui/WideMenuIcon";
 
 const LeftSidebar = () => {
   const { logout } = useAuthContext();
@@ -18,12 +27,12 @@ const LeftSidebar = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login', {
+    navigate("/login", {
       replace: true,
       state: {
-        message: 'You have been logged out successfully',
-        type: 'success'
-      }
+        message: "You have been logged out successfully",
+        type: "success",
+      },
     });
   };
 
@@ -42,30 +51,37 @@ const LeftSidebar = () => {
   // Close mobile menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (isMobileMenuOpen && !event.target.closest('.mobile-sidebar') && !event.target.closest('.mobile-menu-button')) {
+      if (
+        isMobileMenuOpen &&
+        !event.target.closest(".mobile-sidebar") &&
+        !event.target.closest(".mobile-menu-button")
+      ) {
         setMobileMenuOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isMobileMenuOpen]);
 
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
     if (isMobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
 
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [isMobileMenuOpen]);
 
   const LogoWithTitle = ({ onClick }) => (
-    <div className="flex items-center gap-1 cursor-pointer select-none" onClick={onClick}>
+    <div
+      className="flex items-center gap-1 cursor-pointer select-none"
+      onClick={onClick}
+    >
       <img
         src="/cforge.png"
         alt="CForge Icon"
@@ -102,22 +118,28 @@ const LeftSidebar = () => {
         <DashboardButton
           icon={LayoutDashboardIcon}
           label="Dashboard"
-          isActive={isActive('/dashboard')}
-          onClick={() => navigate('/dashboard')}
+          isActive={isActive("/dashboard")}
+          onClick={() => navigate("/dashboard")}
           className="w-full transition-all duration-300 hover:bg-gray-700"
         />
         <DashboardButton
           icon={TrophyIcon}
           label="Contest Central"
-          isActive={isActive('/contest-central')}
-          onClick={() => navigate('/contest-central')}
+          isActive={isActive("/contest-central")}
+          onClick={() => navigate("/contest-central")}
+        />
+        <DashboardButton
+          icon={Code2}
+          label="LeetCode Tracker"
+          isActive={isActive("/leetcode-tracker")}
+          onClick={() => navigate("/leetcode-tracker")}
           className="w-full transition-all duration-300 hover:bg-gray-700"
         />
         <DashboardButton
           icon={PanelRightIcon}
           label="Rooms"
-          isActive={isActive('/rooms')}
-          onClick={() => navigate('/rooms')}
+          isActive={isActive("/rooms")}
+          onClick={() => navigate("/rooms")}
           className="w-full transition-all duration-300 hover:bg-gray-700"
         />
         <div className="mt-2">
@@ -127,15 +149,15 @@ const LeftSidebar = () => {
           ref={settingsButtonRef}
           icon={SettingsIcon}
           label="Settings"
-          isActive={isActive('/settings')}
-          onClick={() => navigate('/settings')}
+          isActive={isActive("/settings")}
+          onClick={() => navigate("/settings")}
           className="w-full transition-all duration-300 hover:bg-gray-700"
         />
         <DashboardButton
           icon={HelpCircleIcon}
           label="Help"
-          isActive={isActive('/help')}
-          onClick={() => navigate('/help')}
+          isActive={isActive("/help")}
+          onClick={() => navigate("/help")}
           className="w-full transition-all duration-300 hover:bg-gray-700"
         />
       </div>
@@ -144,7 +166,7 @@ const LeftSidebar = () => {
       <div className="pt-4 border-t border-gray-700">
         <div className="mb-2 flex items-center justify-center">
           <button
-            onClick={() => navigate('/reviews')}
+            onClick={() => navigate("/reviews")}
             className="flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 transition-colors focus:outline-none font-medium"
           >
             <MessageCircle className="w-4 h-4 mr-1" />
@@ -155,7 +177,6 @@ const LeftSidebar = () => {
       </div>
     </div>
   );
-
 
   return (
     <>
@@ -169,7 +190,11 @@ const LeftSidebar = () => {
           >
             <WideMenuIcon className="text-gray-300" isOpen={isMobileMenuOpen} />
           </button>
-          <Link to="/?force=true" className="flex items-center gap-1 group" style={{ textDecoration: 'none' }}>
+          <Link
+            to="/?force=true"
+            className="flex items-center gap-1 group"
+            style={{ textDecoration: "none" }}
+          >
             <img
               src="/cforge.png"
               alt="CForge Icon"
@@ -189,12 +214,20 @@ const LeftSidebar = () => {
 
       {/* Mobile Sidebar Overlay - always rendered for smooth transition */}
       <div
-        className={`fixed inset-0 z-50 md:hidden flex transition-opacity duration-300 ${isMobileMenuOpen ? 'bg-black bg-opacity-50 pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}
-        style={{ transitionProperty: 'opacity, background-color' }}
+        className={`fixed inset-0 z-50 md:hidden flex transition-opacity duration-300 ${
+          isMobileMenuOpen
+            ? "bg-black bg-opacity-50 pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0"
+        }`}
+        style={{ transitionProperty: "opacity, background-color" }}
       >
         <div
           className={`mobile-sidebar w-80 max-w-[85vw] h-full p-4 shadow-2xl transform transition-transform duration-300 ease-in-out overflow-y-auto rounded-r-xl
-                        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+                        ${
+                          isMobileMenuOpen
+                            ? "translate-x-0"
+                            : "-translate-x-full"
+                        }
                         bg-gradient-to-br from-gray-800 via-gray-900 to-gray-800`}
         >
           <SidebarContent isMobile={true} />
