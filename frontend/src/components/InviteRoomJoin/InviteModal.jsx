@@ -105,7 +105,7 @@ const InviteModal = () => {
             if (data.success) {
                 toast.success('Successfully joined room!');
                 handleClose();
-                handleRoomJoinedViaInvite();
+                await handleRoomJoinedViaInvite();
             } else {
                 toast.error(data.message);
             }
@@ -117,8 +117,12 @@ const InviteModal = () => {
         }
     };
 
-    const handleRoomJoinedViaInvite = () => {
-        refreshRoomList();
+    const handleRoomJoinedViaInvite = async () => {
+        try {
+            await refreshRoomList(true); // Force refresh from server
+        } catch (error) {
+            console.error("Failed to refresh room list after joining via invite:", error);
+        }
     };
 
     return (

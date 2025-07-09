@@ -182,7 +182,7 @@ export const LeaderboardTable = ({
                         <tr>
                             <td colSpan={currentColumns.length} className="p-4 text-center">
                                 <div className="flex justify-center items-center text-gray-400">
-                                    <Spinner size="small" className="mr-2" />
+                                    <Spinner size="sm" className="mr-2" />
                                     <span>Loading data...</span>
                                 </div>
                             </td>

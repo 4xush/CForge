@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useRoomContext } from '../context/RoomContext';
 import api from '../config/api';
 
 const useJoinRoom = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
+    const { refreshRoomList } = useRoomContext();
 
     const joinRoom = async (roomId) => {
         const formattedRoomId = roomId.trim().toLowerCase();
@@ -21,6 +23,14 @@ const useJoinRoom = () => {
         try {
             const response = await api.post(`/rooms/${formattedRoomId}/join`);
             setSuccess(response.data.message);
+            
+            // Immediately refresh the room list
+            try {
+                await refreshRoomList(true);
+            } catch (refreshError) {
+                console.error('Failed to refresh room list after joining:', refreshError);
+            }
+            
             return response.data;
         } catch (err) {
             let errorMessage;
@@ -40,4 +50,3 @@ const useJoinRoom = () => {
 };
 
 export default useJoinRoom;
-

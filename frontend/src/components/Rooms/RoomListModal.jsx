@@ -37,22 +37,24 @@ const RoomListModal = ({ isOpen, onClose }) => {
 
     return (
         <div 
-            className="fixed inset-0 z-50 flex items-center justify-start bg-black/40 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
             onClick={handleBackdropClick}
         >
-            {/* Modal positioned within sidebar area */}
+            {/* Modal positioned for both mobile and desktop */}
             <div 
                 className={`
-                    ml-4 mt-4 mb-4 w-[16rem] max-h-[calc(100vh-2rem)]
+                    w-full max-w-md mx-auto
+                    max-h-[80vh] md:max-h-[70vh]
                     bg-gradient-to-br from-gray-800 via-gray-850 to-gray-900
                     border border-gray-700/50 rounded-xl shadow-2xl
                     transform transition-all duration-300 ease-out
-                    ${isOpen ? 'scale-100 opacity-100 translate-x-0' : 'scale-95 opacity-0 -translate-x-4'}
+                    ${isOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4'}
+                    flex flex-col
                 `}
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-gray-700/50">
+                <div className="flex items-center justify-between p-4 border-b border-gray-700/50 flex-shrink-0">
                     <div className="flex items-center space-x-2">
                         <Users className="text-orange-500" size={18} />
                         <h2 className="text-lg font-semibold text-white">All Rooms</h2>
@@ -69,7 +71,7 @@ const RoomListModal = ({ isOpen, onClose }) => {
                 </div>
 
                 {/* Search */}
-                <div className="p-4 border-b border-gray-700/30">
+                <div className="p-4 border-b border-gray-700/30 flex-shrink-0">
                     <input
                         type="text"
                         placeholder="Search rooms..."
@@ -82,8 +84,8 @@ const RoomListModal = ({ isOpen, onClose }) => {
                     />
                 </div>
 
-                {/* Room List */}
-                <div className="flex-1 overflow-y-auto max-h-[60vh] custom-scrollbar">
+                {/* Room List - Scrollable with fixed height */}
+                <div className="flex-1 overflow-y-auto min-h-0">
                     <div className="p-2 space-y-1">
                         {filteredRooms.length > 0 ? (
                             filteredRooms.map((room, index) => (
@@ -170,7 +172,7 @@ const RoomListModal = ({ isOpen, onClose }) => {
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 border-t border-gray-700/30">
+                <div className="p-4 border-t border-gray-700/30 flex-shrink-0">
                     <div className="text-center">
                         <span className="text-xs text-gray-400">
                             {filteredRooms.length} of {rooms.length} rooms

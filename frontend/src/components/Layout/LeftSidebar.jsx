@@ -38,9 +38,16 @@ const LeftSidebar = () => {
     });
   };
 
-  const handleRoomCreatedOrJoined = () => {
+  const handleRoomCreatedOrJoined = (roomDetails) => {
     setRoomFormVisible(false);
-    window.location.reload();
+    
+    if (roomDetails && roomDetails.roomId) {
+      // Navigate to the newly created/joined room
+      navigate(`/rooms/${roomDetails.roomId}/leaderboard`);
+    } else {
+      // Fallback: navigate to rooms page
+      navigate("/rooms");
+    }
   };
 
   const isActive = (path) => location.pathname.startsWith(path);

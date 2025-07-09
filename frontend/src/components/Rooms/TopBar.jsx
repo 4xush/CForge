@@ -24,6 +24,7 @@ const TopBar = ({ roomId }) => {
   const { authUser } = useAuthContext();
 
   const [activeComponent, setActiveComponent] = useState(null);
+  const [isLeavingRoom, setIsLeavingRoom] = useState(false);
   const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
   const [updatingRoom, setUpdatingRoom] = useState(false);
   const topBarRef = useRef(null);
@@ -83,6 +84,9 @@ const TopBar = ({ roomId }) => {
   }, []);
 
   const onLeaveRoom = async () => {
+    if (isLeavingRoom) return; // Prevent multiple calls
+    
+    setIsLeavingRoom(true);
     try {
       const response = await ApiService.delete(`/rooms/${roomId}/leave`);
       setShowLeaveConfirmation(false);
@@ -93,6 +97,8 @@ const TopBar = ({ roomId }) => {
       navigate("/rooms", { replace: true });
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to leave room.");
+    } finally {
+      setIsLeavingRoom(false);
     }
   };
 
@@ -303,6 +309,10 @@ const TopBar = ({ roomId }) => {
           isOpen={showLeaveConfirmation}
           onClose={() => setShowLeaveConfirmation(false)}
           onConfirm={onLeaveRoom}
+          loading={isLeavingRoom}
+          confirmButtonText={isLeavingRoom ? "Leaving..." : "Leave Room"}
+          loading={isLeavingRoom}
+          confirmButtonText={isLeavingRoom ? "Leaving..." : "Leave Room"}
           title="Leave Room"
           message="Are you sure you want to leave this room?"
         />

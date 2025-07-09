@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import  { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Sparkles, Check, Copy, MessageSquare } from 'lucide-react';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
@@ -10,6 +10,7 @@ import { validateRoomData } from '../../utils/roomValidation';
 
 const CreateRoomForm = ({ onClose, onRoomCreated }) => {
     const { createRoom, loading: isCreatingRoom, error: createError } = useCreateRoom();
+    const [createdRoomDetails, setCreatedRoomDetails] = useState(null);
     const [copied, setCopied] = useState(false);
     const [inviteLink, setInviteLink] = useState('');
     const [errors, setErrors] = useState({});
@@ -55,12 +56,14 @@ const CreateRoomForm = ({ onClose, onRoomCreated }) => {
             const result = await createRoom(roomSettings);
             if (result && result.room && result.room.roomId) {
                 const roomId = result.room.roomId;
+                setCreatedRoomDetails(result.room); // Store room details
                 const inviteResponse = await generateInviteLink(roomId);
                 if (inviteResponse && inviteResponse.data.inviteLink) {
                     setInviteLink(inviteResponse.data.inviteLink);
                 }
             }
-        } catch (err) {
+            }
+        catch (err) {
             console.error('Room creation failed', err);
         }
     };
@@ -98,7 +101,7 @@ const CreateRoomForm = ({ onClose, onRoomCreated }) => {
                     <Button
                         className="w-full bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center"
                         onClick={() => {
-                            onRoomCreated();
+                            onRoomCreated(createdRoomDetails);
                             onClose();
                         }}
                     >

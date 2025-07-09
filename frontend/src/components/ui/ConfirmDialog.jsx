@@ -1,6 +1,15 @@
 import React from 'react';
 
-const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, message }) => {
+const ConfirmDialog = ({ 
+    isOpen, 
+    onClose, 
+    onConfirm, 
+    title, 
+    message, 
+    loading = false, 
+    confirmButtonText = "Confirm",
+    cancelButtonText = "Cancel"
+}) => {
     if (!isOpen) return null;
 
     return (
@@ -11,15 +20,20 @@ const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, message }) => {
                 <div className="flex justify-end space-x-4">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+                        disabled={loading}
+                        className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Cancel
+                        {cancelButtonText}
                     </button>
                     <button
                         onClick={onConfirm}
-                        className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                        disabled={loading}
+                        className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                     >
-                        Confirm
+                        {loading && (
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        )}
+                        {confirmButtonText}
                     </button>
                 </div>
             </div>

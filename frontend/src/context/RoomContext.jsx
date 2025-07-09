@@ -41,6 +41,23 @@ const storage = {
     }
 };
 
+// Helper function to sort rooms logically
+const sortRooms = (rooms) => {
+    return rooms.sort((a, b) => {
+        // First priority: Most recent activity (createdAt or updatedAt)
+        const aDate = new Date(a.updatedAt || a.createdAt || 0);
+        const bDate = new Date(b.updatedAt || b.createdAt || 0);
+        
+        // If dates are different, sort by most recent first
+        if (aDate.getTime() !== bDate.getTime()) {
+            return bDate.getTime() - aDate.getTime();
+        }
+        
+        // If dates are same, sort alphabetically by name
+        return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+    });
+};
+
 const isCacheValid = (lastSync) => {
     if (!lastSync) return false;
     return Date.now() - lastSync < CACHE_DURATION;
@@ -94,7 +111,7 @@ export const RoomProvider = ({ children }) => {
         const cachedLastSync = storage.get(STORAGE_KEYS.LAST_SYNC);
 
         if (cachedRooms) {
-            setRooms(cachedRooms);
+            setRooms(sortRooms(cachedRooms || []));
             setLastSync(cachedLastSync);
         }
 
@@ -125,7 +142,7 @@ export const RoomProvider = ({ children }) => {
             // Use cached data when offline
             const cachedRooms = storage.get(STORAGE_KEYS.ROOMS);
             if (cachedRooms) {
-                setRooms(cachedRooms);
+                setRooms(sortRooms(cachedRooms || []));
                 return;
             }
         }
@@ -134,7 +151,7 @@ export const RoomProvider = ({ children }) => {
             // Use cached data if still valid
             const cachedRooms = storage.get(STORAGE_KEYS.ROOMS);
             if (cachedRooms) {
-                setRooms(cachedRooms);
+                setRooms(sortRooms(cachedRooms || []));
                 return;
             }
         }
@@ -151,10 +168,25 @@ export const RoomProvider = ({ children }) => {
             const response = await ApiService.get('/rooms');
 
             const roomsData = response.data.rooms;
-            setRooms(roomsData);
+            
+            // Sort rooms logically: most recently joined/created first, then alphabetical
+            const sortedRooms = roomsData.sort((a, b) => {
+                // First priority: Most recent activity (createdAt or updatedAt)
+                const aDate = new Date(a.updatedAt || a.createdAt || 0);
+                const bDate = new Date(b.updatedAt || b.createdAt || 0);
+                
+                // If dates are different, sort by most recent first
+                if (aDate.getTime() !== bDate.getTime()) {
+                    return bDate.getTime() - aDate.getTime();
+                }
+                
+                // If dates are same, sort alphabetically by name
+                return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+            });
+            setRooms(sortedRooms);
 
             // Cache the data
-            storage.set(STORAGE_KEYS.ROOMS, roomsData);
+            storage.set(STORAGE_KEYS.ROOMS, sortedRooms);
             const now = Date.now();
             storage.set(STORAGE_KEYS.LAST_SYNC, now);
             setLastSync(now);
@@ -165,7 +197,7 @@ export const RoomProvider = ({ children }) => {
             // Try to use cached data on error
             const cachedRooms = storage.get(STORAGE_KEYS.ROOMS);
             if (cachedRooms) {
-                setRooms(cachedRooms);
+                setRooms(sortRooms(cachedRooms || []));
                 setListError('Unable to sync with server. Showing cached data.');
             } else {
                 setListError('Unable to load rooms. Please try again.');

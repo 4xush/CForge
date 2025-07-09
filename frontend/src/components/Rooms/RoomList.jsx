@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useRoomContext } from '../../context/RoomContext';
-import { Plus, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import RoomListModal from './RoomListModal';
@@ -12,11 +12,9 @@ const RoomList = ({ setRoomFormVisible }) => {
     } = useRoomContext();
     
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isExpanded, setIsExpanded] = useState(false);
     const navigate = useNavigate();
 
-    const isMobile = () => window.innerWidth < 768;
-    const visibleRooms = isExpanded ? rooms : rooms.slice(0, 2);
+    const visibleRooms = rooms.slice(0, 2);
     const hasMoreRooms = rooms.length > 2;
 
     const handleRoomClick = (room) => {
@@ -24,12 +22,7 @@ const RoomList = ({ setRoomFormVisible }) => {
     };
 
     const handleShowMoreClick = () => {
-        // Check if it's mobile view (screen width < 768px)
-        if (isMobile()) {
-            setIsExpanded(!isExpanded); // Toggle expansion on mobile
-        } else {
-            setIsModalOpen(true); // Show modal on desktop
-        }
+        setIsModalOpen(true);
     };
 
     return (
@@ -41,7 +34,7 @@ const RoomList = ({ setRoomFormVisible }) => {
                 {/* Room list with branching connections */}
                 <div className="space-y-2">
                     {/* Scrollable container for mobile when expanded */}
-                    <div className={`${isExpanded && isMobile() ? 'max-h-60 overflow-y-auto space-y-2 pr-2' : 'space-y-2'}`}>
+                    <div className="space-y-2">
                         {visibleRooms.map((room, index) => (
                             <div key={room.id || index} className="relative">
                                 {/* Horizontal branch to room */}
@@ -70,27 +63,13 @@ const RoomList = ({ setRoomFormVisible }) => {
                                 className="ml-6 flex items-center space-x-2 px-2 py-1 rounded-lg
                                          hover:bg-orange-500/10 transition-all duration-200 group"
                             >
-                                {isExpanded && isMobile() ? (
-                                    <>
-                                        <ChevronUp
-                                            className="text-orange-500 group-hover:text-orange-400 transition-colors"
-                                            size={16}
-                                        />
-                                        <span className="text-xs text-orange-500 group-hover:text-orange-400 transition-colors">
-                                            Show Less
-                                        </span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <ChevronDown
-                                            className="text-orange-500 group-hover:text-orange-400 transition-colors"
-                                            size={16}
-                                        />
-                                        <span className="text-xs text-orange-500 group-hover:text-orange-400 transition-colors">
-                                            Show {rooms.length - 2} More
-                                        </span>
-                                    </>
-                                )}
+                                <ChevronDown
+                                    className="text-orange-500 group-hover:text-orange-400 transition-colors"
+                                    size={16}
+                                />
+                                <span className="text-xs text-orange-500 group-hover:text-orange-400 transition-colors">
+                                    Show {rooms.length - 2} More
+                                </span>
                             </button>
                         </div>
                     )}
@@ -110,7 +89,7 @@ const RoomList = ({ setRoomFormVisible }) => {
                 </div>
             </div>
 
-            {/* Room List Modal - only for desktop */}
+            {/* Room List Modal */}
             <RoomListModal 
                 isOpen={isModalOpen} 
                 onClose={() => setIsModalOpen(false)} 

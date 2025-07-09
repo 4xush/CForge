@@ -170,9 +170,19 @@ const CodingLeaderboard = () => {
     const closeProfileModal = () => setProfileModal({ isOpen: false, username: null });
 
     const handlePlatformChange = (newPlatform) => {
+        // Clear existing data and show loading state immediately
+        setUsers([]);
+        setTopUsers([]);
+        setTotalCount(0);
+        setError(null);
+        setHighlightedUserId(null);
+        setLoading(true);
+        
+        // Update platform and sort settings
         setSelectedPlatform(newPlatform);
         setSortBy(platformSortOptions[newPlatform][0].value);
-        setSortDirection('desc'); setPage(1); setHighlightedUserId(null);
+        setSortDirection('desc');
+        setPage(1);
     };
 
     if (currentRoomLoading) {
