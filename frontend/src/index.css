@@ -62,3 +62,28 @@ html {
   scrollbar-width: thin;
   scrollbar-color: #4b2563 transparent;
 }
+
+/* Custom scrollbar for room modal */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #ea580c #374151;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #374151;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #ea580c;
+  border-radius: 3px;
+  transition: background 0.2s;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #f97316;
+}

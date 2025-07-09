@@ -10,6 +10,7 @@ import { RoomProvider } from "./context/RoomContext";
 import { AuthProvider, useAuthContext } from "./context/AuthContext";
 import { MessageProvider } from "./context/MessageContext";
 import { WebSocketProvider } from "./context/WebSocketContext";
+import { ReminderProvider } from "./context/ReminderContext";
 import { Toaster } from "react-hot-toast";
 import Layout from "./components/Layout/Layout.jsx";
 import PrivateRoute from "./components/PrivateRoute.jsx";
@@ -110,18 +111,19 @@ const App = () => {
     <ErrorBoundary>
       <Router>
         <AuthProvider>
-          <RoomProvider>
-            <Toaster
-              position="top-right"
-              reverseOrder={false}
-              toastOptions={{
-                duration: 5000,
-                style: {
-                  background: "#333",
-                  color: "#fff",
-                },
-              }}
-            />
+          <ReminderProvider>
+            <RoomProvider>
+              <Toaster
+                position="top-right"
+                reverseOrder={false}
+                toastOptions={{
+                  duration: 5000,
+                  style: {
+                    background: "#333",
+                    color: "#fff",
+                  },
+                }}
+              />
             <Suspense
               fallback={
                 <div className="fixed inset-0 flex items-center justify-center bg-gray-900">
@@ -240,7 +242,8 @@ const App = () => {
                 <Route path="*" element={<Navigate to="/404" replace />} />
               </Routes>
             </Suspense>
-          </RoomProvider>
+            </RoomProvider>
+          </ReminderProvider>
         </AuthProvider>
       </Router>
     </ErrorBoundary>

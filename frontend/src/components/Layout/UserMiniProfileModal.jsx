@@ -37,13 +37,13 @@ const UserProfileModal = ({ onLogout }) => {
             className={`
                 mt-auto bg-gray-900 rounded-xl border border-gray-700
                 transition-all duration-300 ease-in-out 
-                ${isExpanded ? 'h-auto' : 'h-16'}
+                ${isExpanded ? 'h-auto' : 'h-14'}
                 hover:bg-gray-800 cursor-pointer
             `}
             onClick={() => setIsExpanded(!isExpanded)}
         >
             {/* Collapsed View */}
-            <div className="flex items-center px-4 h-16 mb-2">
+            <div className="flex items-center px-4 h-14 mb-2">
                 <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-800 mr-3 ring-2 ring-gray-700 transition-all hover:ring-gray-600">
                     {authUser?.profilePicture ? (
                         <img
@@ -87,7 +87,7 @@ const UserProfileModal = ({ onLogout }) => {
                                 onClick={handleLogoutClick}
                                 className="
                                     w-full bg-red-900/20 hover:bg-red-900/30 
-                                    text-red-400 py-2 px-4 rounded-lg 
+                                    text-red-400 py-1 px-4 rounded-lg 
                                     flex items-center justify-between 
                                     transition-colors group
                                 "

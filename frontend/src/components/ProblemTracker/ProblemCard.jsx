@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { problemTrackerApi } from '../../api/problemTrackerApi';
+import ReminderSetupModal from './ReminderSetupModal';
 
 const ProblemCard = ({ problem, onUpdate, onDelete }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -19,8 +20,7 @@ const ProblemCard = ({ problem, onUpdate, onDelete }) => {
     notes: problem.notes || ''
   });
 
-  const [showReminders, setShowReminders] = useState(false);
-  const [creatingReminders, setCreatingReminders] = useState(false);
+  const [showReminderModal, setShowReminderModal] = useState(false);
 
   const difficultyColors = {
     Easy: 'bg-green-500/20 text-green-400 border-green-500/30',
@@ -62,17 +62,18 @@ const ProblemCard = ({ problem, onUpdate, onDelete }) => {
     }
   };
 
-  const handleCreateReminders = async () => {
+  const handleCreateReminders = async (intervals) => {
     try {
-      setCreatingReminders(true);
-      await problemTrackerApi.createReminders(problem.id);
-      toast.success('Reminders created successfully!');
-      setShowReminders(false);
+      await problemTrackerApi.createReminders(problem.id, intervals);
+      toast.success(`Created ${intervals.length} reminder${intervals.length !== 1 ? 's' : ''} successfully!`);
+      // Trigger a refresh of the problem data
+      if (onUpdate) {
+        onUpdate(problem.id, { hasReminders: true, reminderCount: intervals.length });
+      }
     } catch (error) {
       console.error('Error creating reminders:', error);
       toast.error('Failed to create reminders');
-    } finally {
-      setCreatingReminders(false);
+      throw error;
     }
   };
 
@@ -137,8 +138,7 @@ const ProblemCard = ({ problem, onUpdate, onDelete }) => {
             </div>
           ) : (
             <button
-              onClick={handleCreateReminders}
-              disabled={creatingReminders}
+              onClick={() => setShowReminderModal(true)}
               className="p-1 text-gray-400 hover:text-blue-400 transition-colors"
               title="Set Reminders"
             >
@@ -219,6 +219,14 @@ const ProblemCard = ({ problem, onUpdate, onDelete }) => {
           <div></div>
         )}
       </div>
+
+      {/* Reminder Setup Modal */}
+      <ReminderSetupModal
+        problem={problem}
+        isOpen={showReminderModal}
+        onSave={handleCreateReminders}
+        onClose={() => setShowReminderModal(false)}
+      />
     </div>
   );
 };

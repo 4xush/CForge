@@ -55,32 +55,43 @@ export default function ReviewsPage({ isAuthUser = false }) {
     const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1 });
     const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(1);
-    const { myReview, setMyReview, loading: loadingMyReview } = useMyReview(isAuthUser);
+    const { myReview, setMyReview } = useMyReview(isAuthUser);
     const [editMode, setEditMode] = useState(false);
+    const [helpfulByMe, setHelpfulByMe] = useState({}); // { [reviewId]: true/false }
 
     // Fetch reviews and stats
+    const fetchReviews = async (paramsOverride = {}) => {
+        setLoading(true);
+        try {
+            const params = {
+                category: filterCategory,
+                sortBy,
+                page,
+                limit: 10,
+                ...paramsOverride,
+            };
+            const res = await ApiService.get('/reviews', params);
+            const json = res.data;
+            if (!json.success) throw new Error('Failed to fetch reviews');
+            setReviews(json.data.reviews);
+            setPagination(json.data.pagination);
+            setStats(json.data.stats);
+            // Set helpfulByMe state from backend if available, else fallback to localStorage
+            const localHelpful = JSON.parse(localStorage.getItem('helpfulReviewIds') || '[]');
+            const newHelpfulByMe = {};
+            json.data.reviews.forEach(r => {
+                // If backend returns isMarkedHelpful, use it, else fallback to localStorage
+                newHelpfulByMe[r.id] = r.isMarkedHelpful !== undefined ? r.isMarkedHelpful : localHelpful.includes(r.id);
+            });
+            setHelpfulByMe(newHelpfulByMe);
+        } catch (err) {
+            toast.error(err.message || 'Error fetching reviews');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchReviews = async () => {
-            setLoading(true);
-            try {
-                const params = {
-                    category: filterCategory,
-                    sortBy,
-                    page,
-                    limit: 10,
-                };
-                const res = await ApiService.get('/reviews', params);
-                const json = res.data;
-                if (!json.success) throw new Error('Failed to fetch reviews');
-                setReviews(json.data.reviews);
-                setPagination(json.data.pagination);
-                setStats(json.data.stats);
-            } catch (err) {
-                toast.error(err.message || 'Error fetching reviews');
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchReviews();
     }, [filterCategory, sortBy, page]);
 
@@ -100,6 +111,7 @@ export default function ReviewsPage({ isAuthUser = false }) {
             setRating(5);
             setTimeout(() => setSubmitted(false), 3000);
             setPage(1);
+            fetchReviews({ page: 1 }); // Immediately refresh reviews after submit
             toast.success('Review submitted!');
         } catch (err) {
             toast.error(err.response?.data?.message || 'Error submitting review');
@@ -132,6 +144,7 @@ export default function ReviewsPage({ isAuthUser = false }) {
             setPage(1);
             toast.success('Review updated!');
             setMyReview({ ...myReview, message: review, category, rating });
+            window.location.reload(); // Refresh the page to get the latest reviews
         } catch (err) {
             toast.error(err.response?.data?.message || 'Error updating review');
         } finally {
@@ -143,9 +156,25 @@ export default function ReviewsPage({ isAuthUser = false }) {
     const handleHelpful = async (id) => {
         if (!isAuthUser) return toast.info('Sign in to vote helpful!');
         try {
-            await ApiService.put(`/reviews/${id}/helpful`);
-            setReviews(reviews => reviews.map(r => r.id === id ? { ...r, helpful: r.helpful + 1 } : r));
-            toast.success('Marked as helpful!');
+            const res = await ApiService.put(`/reviews/${id}/helpful`);
+            // Update local state and localStorage
+            setReviews(reviews =>
+                reviews.map(r =>
+                    r.id === id
+                        ? { ...r, helpful: res.data.data.helpful }
+                        : r
+                )
+            );
+            setHelpfulByMe(prev => ({ ...prev, [id]: res.data.data.isMarkedHelpful }));
+            // Update localStorage for persistence
+            let localHelpful = JSON.parse(localStorage.getItem('helpfulReviewIds') || '[]');
+            if (res.data.data.isMarkedHelpful) {
+                if (!localHelpful.includes(id)) localHelpful.push(id);
+            } else {
+                localHelpful = localHelpful.filter(x => x !== id);
+            }
+            localStorage.setItem('helpfulReviewIds', JSON.stringify(localHelpful));
+            toast.success(res.data.message);
         } catch (err) {
             toast.error(err.response?.data?.message || 'Error marking helpful');
         }
@@ -157,30 +186,32 @@ export default function ReviewsPage({ isAuthUser = false }) {
             <div className="container mx-auto px-4 py-8">
                 {/* Header Section */}
                 <div className="text-center mb-8">
-                    <div className="flex items-center justify-center gap-3 mb-4">
+                    <div className="flex items-center justify-center gap-3 mb-2">
                         <MessageCircle className="w-8 h-8 sm:w-10 sm:h-10 text-purple-400" />
                         <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
                             User Reviews
                         </h1>
                     </div>
-                    <p className="text-sm sm:text-base md:text-lg text-gray-400 max-w-2xl mx-auto">
-                        See what our community thinks about CForge and share your own experience
-                    </p>
-
-                    {/* Stats */}
-                    <div className="flex items-center justify-center gap-4 sm:gap-8 mt-6 text-xs sm:text-sm">
-                        <div className="flex flex-col items-center">
-                            <div className="text-xl sm:text-2xl font-bold text-yellow-400">{stats.averageRating}</div>
-                            <div className="flex items-center gap-1">
-                                <StarRating rating={Math.round(parseFloat(stats.averageRating))} disabled />
-                            </div>
-                            <div className="text-gray-500 text-xs sm:text-sm">Average Rating</div>
-                        </div>
-                        <div className="flex flex-col items-center">
-                            <div className="text-xl sm:text-2xl font-bold text-purple-400">{stats.totalReviews}</div>
-                            <div className="text-gray-500 text-xs sm:text-sm">Total Reviews</div>
-                        </div>
+                    {/* Minimal stats row */}
+                    <div className="flex items-center justify-center gap-4 text-xs sm:text-sm text-gray-400 font-medium mb-2">
+                        <span className="flex items-center gap-1">
+                            <Star className="w-4 h-4 text-yellow-400" />
+                            <span className="font-semibold text-white">{stats.averageRating}</span>
+                            <span>Avg Rating</span>
+                        </span>
+                        <span className="flex items-center gap-1">
+                            <User className="w-4 h-4 text-purple-400" />
+                            <span className="font-semibold text-white">{stats.totalReviews}</span>
+                            <span>Reviews</span>
+                        </span>
                     </div>
+                    <p className="text-sm sm:text-base md:text-lg text-gray-400 max-w-2xl mx-auto">
+                        Explore user feedback on CForge and add your own{' '}
+                        <span style={{ fontFamily: 'Playfair Display, serif', textTransform: 'uppercase', fontWeight: 600, color: '#e0c3fc', fontStyle: 'italic', letterSpacing: '0.04em', display: 'inline' }}>
+                            EXPERIENCE
+                        </span>
+                        .
+                    </p>
                 </div>
 
                 {/* Reviews Section - Main content for everyone */}
@@ -404,7 +435,11 @@ export default function ReviewsPage({ isAuthUser = false }) {
 
                                             <div className="flex items-center justify-between">
                                                 <button
-                                                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-purple-400 transition-colors"
+                                                    className={`flex items-center gap-1 text-xs transition-colors ${
+                                                        helpfulByMe[review.id]
+                                                            ? 'text-purple-400 font-bold'
+                                                            : 'text-gray-500 hover:text-purple-400'
+                                                    }`}
                                                     onClick={() => handleHelpful(review.id)}
                                                     disabled={!isAuthUser}
                                                 >

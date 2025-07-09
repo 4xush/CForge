@@ -16,6 +16,7 @@ import RoomList from "../Rooms/RoomList";
 import UserProfileModal from "./UserMiniProfileModal";
 import CreateJoinModal from "../CreateRoom/CreateJoinRoomModal";
 import WideMenuIcon from "../ui/WideMenuIcon";
+import usePendingReminders from "../../hooks/usePendingReminders";
 
 const LeftSidebar = () => {
   const { logout } = useAuthContext();
@@ -24,6 +25,7 @@ const LeftSidebar = () => {
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { pendingCount, error } = usePendingReminders();
 
   const handleLogout = () => {
     logout();
@@ -85,9 +87,9 @@ const LeftSidebar = () => {
       <img
         src="/cforge.png"
         alt="CForge Icon"
-        className="h-5 w-5 sm:h-6 sm:w-6 rounded-full"
+        className="h-5 w-5 sm:h-5.5 sm:w-5.5 rounded-full"
       />
-      <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
+      <span className="text-base font-bold tracking-tight bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
         CForge
       </span>
     </div>
@@ -108,8 +110,9 @@ const LeftSidebar = () => {
           </button>
         </div>
       ) : (
-        <div className="pl-2 mb-8">
+        <div className="pl-2">
           <LogoWithTitle />
+          <hr className="my-2 border-t border-gray-700" />
         </div>
       )}
 
@@ -123,28 +126,31 @@ const LeftSidebar = () => {
           className="w-full transition-all duration-300 hover:bg-gray-700"
         />
         <DashboardButton
+          icon={Code2}
+          label="LeetCode Tracker"
+          badge={!error && pendingCount > 0 ? pendingCount : null}
+          isActive={isActive("/leetcode-tracker")}
+          onClick={() => navigate("/leetcode-tracker")}
+          className="w-full transition-all duration-300 hover:bg-gray-700"
+        />
+        <div>
+          <DashboardButton
+            icon={PanelRightIcon}
+            label="Rooms"
+            isActive={isActive("/rooms")}
+            onClick={() => navigate("/rooms")}
+            className="w-full transition-all duration-300 hover:bg-gray-700"
+          />
+          <div className="mt-2">
+            <RoomList setRoomFormVisible={setRoomFormVisible} />
+          </div>
+        </div>
+        <DashboardButton
           icon={TrophyIcon}
           label="Contest Central"
           isActive={isActive("/contest-central")}
           onClick={() => navigate("/contest-central")}
         />
-        <DashboardButton
-          icon={Code2}
-          label="LeetCode Tracker"
-          isActive={isActive("/leetcode-tracker")}
-          onClick={() => navigate("/leetcode-tracker")}
-          className="w-full transition-all duration-300 hover:bg-gray-700"
-        />
-        <DashboardButton
-          icon={PanelRightIcon}
-          label="Rooms"
-          isActive={isActive("/rooms")}
-          onClick={() => navigate("/rooms")}
-          className="w-full transition-all duration-300 hover:bg-gray-700"
-        />
-        <div className="mt-2">
-          <RoomList setRoomFormVisible={setRoomFormVisible} />
-        </div>
         <DashboardButton
           ref={settingsButtonRef}
           icon={SettingsIcon}
@@ -163,7 +169,7 @@ const LeftSidebar = () => {
       </div>
 
       {/* Fixed footer */}
-      <div className="pt-4 border-t border-gray-700">
+      <div className="pt-2 border-t border-gray-700">
         <div className="mb-2 flex items-center justify-center">
           <button
             onClick={() => navigate("/reviews")}

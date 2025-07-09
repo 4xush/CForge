@@ -1,19 +1,36 @@
 import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
-import { Code2, RefreshCw, BookOpen, Clock, Star } from "lucide-react";
+import { Code2, RefreshCw, BookOpen, Clock, Star, Bell, BellOff } from "lucide-react";
 import { problemTrackerApi } from "../../api/problemTrackerApi";
 import ProblemList from "./ProblemList";
 import ReminderList from "./ReminderList";
 import StatsCards from "./StatsCards";
+import NotificationPreferences from "./NotificationPreferences";
+import { useReminderContext } from "../../context/ReminderContext";
+import { 
+  requestNotificationPermission, 
+  checkDueReminders, 
+  getNotificationStatus,
+  scheduleLocalNotification 
+} from "../../utils/notificationUtils";
 
 const ProblemTrackerDashboard = () => {
   const [activeTab, setActiveTab] = useState("problems");
   const [problems, setProblems] = useState([]);
   const [importantProblems, setImportantProblems] = useState([]);
-  const [reminders, setReminders] = useState([]);
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  
+  // Use reminder context
+  const {
+    reminders,
+    pendingCount,
+    fetchPendingReminders,
+    completeReminder: contextCompleteReminder,
+    skipReminder: contextSkipReminder,
+    refreshCount
+  } = useReminderContext();
   const [filters, setFilters] = useState({
     search: "",
     isImportant: "",
@@ -38,10 +55,14 @@ const ProblemTrackerDashboard = () => {
     totalProblems: 0,
   });
   const [isMobile, setIsMobile] = useState(false);
+  const [notificationStatus, setNotificationStatus] = useState(getNotificationStatus());
+  const [scheduledNotifications, setScheduledNotifications] = useState([]);
+  const [showNotificationPreferences, setShowNotificationPreferences] = useState(false);
 
   // Load initial data
   useEffect(() => {
     loadDashboardData();
+    checkNotificationPermission();
   }, []);
 
   useEffect(() => {
@@ -50,6 +71,16 @@ const ProblemTrackerDashboard = () => {
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  // Check for due reminders and show notifications
+  useEffect(() => {
+    if (reminders.length > 0 && notificationStatus.enabled) {
+      const dueCount = checkDueReminders(reminders, handleNotificationClick);
+      if (dueCount > 0) {
+        console.log(`Showed ${dueCount} due reminder notifications`);
+      }
+    }
+  }, [reminders, notificationStatus.enabled]);
 
   // Load problems when filters change
   useEffect(() => {
@@ -123,13 +154,48 @@ const ProblemTrackerDashboard = () => {
 
   const loadPendingReminders = async () => {
     try {
-      const response = await problemTrackerApi.getPendingReminders({
-        limit: 10,
-      });
-      setReminders(response.reminders || []);
+      await fetchPendingReminders();
+      
+      // Schedule notifications for future reminders
+      if (notificationStatus.enabled) {
+        scheduleNotifications(reminders);
+      }
     } catch (error) {
       console.error("❌ Frontend: Error loading reminders:", error);
     }
+  };
+
+  const checkNotificationPermission = async () => {
+    const status = getNotificationStatus();
+    setNotificationStatus(status);
+  };
+
+  const handleRequestNotificationPermission = async () => {
+    const granted = await requestNotificationPermission();
+    if (granted) {
+      toast.success("Notifications enabled! You'll be notified when reminders are due.");
+    } else {
+      toast.error("Notifications denied. Enable them in your browser settings.");
+    }
+    setNotificationStatus(getNotificationStatus());
+  };
+
+  const scheduleNotifications = (reminders) => {
+    // Clear existing scheduled notifications
+    scheduledNotifications.forEach(clearTimeout);
+    
+    const newTimeouts = reminders
+      .filter(reminder => reminder.status === 'pending')
+      .map(reminder => scheduleLocalNotification(reminder, handleNotificationClick))
+      .filter(Boolean);
+    
+    setScheduledNotifications(newTimeouts);
+  };
+
+  const handleNotificationClick = (reminder) => {
+    // Focus on reminders tab when notification is clicked
+    setActiveTab('reminders');
+    toast.info(`Reminder for: ${reminder.problem.title}`);
   };
 
   const handleSync = async () => {
@@ -182,6 +248,11 @@ const ProblemTrackerDashboard = () => {
         loadImportantProblems(importantPagination.current);
       }
 
+      // Refresh reminders if reminders were updated
+      if (updates.hasReminders !== undefined) {
+        refreshCount();
+      }
+
       loadStats(); // Refresh stats
     } catch (error) {
       console.error("Error updating problem:", error);
@@ -210,9 +281,8 @@ const ProblemTrackerDashboard = () => {
 
   const handleReminderComplete = async (reminderId) => {
     try {
-      await problemTrackerApi.completeReminder(reminderId);
+      await contextCompleteReminder(reminderId);
       toast.success("Reminder completed!");
-      loadPendingReminders();
       loadStats(); // Refresh stats
     } catch (error) {
       console.error("Error completing reminder:", error);
@@ -222,9 +292,8 @@ const ProblemTrackerDashboard = () => {
 
   const handleReminderSkip = async (reminderId, snoozeHours = 24) => {
     try {
-      await problemTrackerApi.skipReminder(reminderId, snoozeHours);
+      await contextSkipReminder(reminderId, snoozeHours);
       toast.success(`Reminder snoozed for ${snoozeHours} hours`);
-      loadPendingReminders();
     } catch (error) {
       console.error("Error skipping reminder:", error);
       toast.error("Failed to skip reminder");
@@ -257,14 +326,37 @@ const ProblemTrackerDashboard = () => {
             </p>
           </div>
 
-          <button
-            onClick={handleSync}
-            disabled={syncing}
-            className="w-full sm:w-auto mt-2 sm:mt-0 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed rounded-lg transition-colors text-xs sm:text-base"
-          >
-            <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
-            {syncing ? "Syncing..." : "Sync from LeetCode"}
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Notification Button */}
+            {notificationStatus.supported && (
+              <button
+                onClick={() => setShowNotificationPreferences(true)}
+                className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-colors text-xs sm:text-sm ${
+                  notificationStatus.enabled
+                    ? 'bg-green-600 hover:bg-green-700 text-white'
+                    : 'bg-gray-600 hover:bg-gray-700 text-gray-300'
+                }`}
+                title={notificationStatus.enabled ? 'Notifications enabled - Click to configure' : 'Enable notifications'}
+              >
+                {notificationStatus.enabled ? (
+                  <Bell className="w-4 h-4" />
+                ) : (
+                  <BellOff className="w-4 h-4" />
+                )}
+                {!isMobile && (notificationStatus.enabled ? 'Notifications On' : 'Enable Notifications')}
+              </button>
+            )}
+
+            {/* Sync Button */}
+            <button
+              onClick={handleSync}
+              disabled={syncing}
+              className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed rounded-lg transition-colors text-xs sm:text-base"
+            >
+              <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
+              {syncing ? "Syncing..." : "Sync from LeetCode"}
+            </button>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -295,7 +387,7 @@ const ProblemTrackerDashboard = () => {
                     id: "reminders",
                     label: "Pending Reminders",
                     icon: Clock,
-                    badge: stats.pendingReminders,
+                    badge: pendingCount,
                   },
                 ]
           ).map((tab) => (
@@ -357,6 +449,15 @@ const ProblemTrackerDashboard = () => {
             </>
           )}
         </div>
+
+        {/* Notification Preferences Modal */}
+        <NotificationPreferences 
+          isOpen={showNotificationPreferences}
+          onClose={() => {
+            setShowNotificationPreferences(false);
+            setNotificationStatus(getNotificationStatus());
+          }}
+        />
       </div>
     </div>
   );

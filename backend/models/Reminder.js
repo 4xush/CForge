@@ -22,7 +22,8 @@ const reminderSchema = new mongoose.Schema(
     interval: {
       type: Number,
       required: true,
-      enum: [1, 3, 7, 14, 30], // Days
+      min: 1,
+      max: 365, // Allow up to 1 year
     },
     status: {
       type: String,

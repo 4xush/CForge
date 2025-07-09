@@ -8,7 +8,23 @@ const createReminders = async (req, res) => {
   try {
     const userId = req.user.id;
     const { problemId } = req.params;
-    const { intervals = [1, 3, 7, 14, 30] } = req.body; // Default spaced repetition intervals
+    const { intervals = [] } = req.body; // User-selected intervals
+
+    // Validate intervals
+    if (!intervals.length || intervals.length > 10) {
+      return res.status(400).json({ 
+        message: 'Please select 1-10 reminder intervals' 
+      });
+    }
+
+    // Validate each interval
+    for (const interval of intervals) {
+      if (!Number.isInteger(interval) || interval < 1 || interval > 365) {
+        return res.status(400).json({ 
+          message: 'Each interval must be between 1-365 days' 
+        });
+      }
+    }
 
     // Verify the problem belongs to the user
     const userSolvedProblem = await UserSolvedProblem.findOne({
@@ -26,7 +42,7 @@ const createReminders = async (req, res) => {
       userSolvedProblem: problemId 
     });
 
-    // Create new reminders
+    // Create new reminders based on user selection
     const reminders = [];
     const baseDate = new Date();
 
@@ -53,7 +69,7 @@ const createReminders = async (req, res) => {
     }
 
     res.json({
-      message: `Created ${reminders.length} reminders for "${userSolvedProblem.problem.title}"`,
+      message: `Created ${reminders.length} reminder${reminders.length !== 1 ? 's' : ''} for "${userSolvedProblem.problem.title}"`,
       reminders,
       problem: {
         id: userSolvedProblem._id,

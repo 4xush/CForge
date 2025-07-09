@@ -99,8 +99,8 @@ const AboutCForge = () => {
               About the Developer
             </h2>
             <p className="text-sm sm:text-base text-gray-400">
-              <span className="font-semibold text-white">Ayush Kumar</span> is a
-              B.Tech student at{" "}
+              <span className="font-semibold text-white">Ayush Kumar</span> -
+              B.Tech undergraduate student at{" "}
               <a
                 href="https://www.iiitg.ac.in/"
                 target="_blank"
@@ -108,9 +108,7 @@ const AboutCForge = () => {
                 className="underline hover:text-blue-400 transition-colors"
               >
                 IIIT Guwahati
-              </a>{" "}
-              specializing in Electronics and Communication Engineering. With a
-              passion for problem-solving and building robust application.
+              </a>{" "}specializing in Electronics and Communication Engineering, with a passion for problem-solving and building user-focused applications.
             </p>
             <a
               href="https://4xush.github.io/portfolio/"

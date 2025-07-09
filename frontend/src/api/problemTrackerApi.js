@@ -65,7 +65,7 @@ export const problemTrackerApi = {
   },
 
   // Reminder management
-  createReminders: async (problemId, intervals = [1, 3, 7, 14, 30]) => {
+  createReminders: async (problemId, intervals) => {
     try {
       const response = await api.post(`${API_BASE}/problems/${problemId}/reminders`, { intervals });
       return response.data;
