@@ -1,5 +1,13 @@
 import { useState, useRef, useEffect } from "react";
-import { MoreVertical, LogOut, X, Settings, Info, Clock, AlertTriangle } from "lucide-react";
+import {
+  MoreVertical,
+  LogOut,
+  X,
+  Settings,
+  Info,
+  Clock,
+  AlertTriangle,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import CenteredRoomDetailsModal from "./CenteredRoomDetailsModal";
@@ -19,7 +27,7 @@ const TopBar = ({ roomId }) => {
     currentRoomError,
     setCurrentRoomDetails,
     loadCurrentRoomDetails,
-    refreshRoomList
+    refreshRoomList,
   } = useRoomContext();
   const { authUser } = useAuthContext();
 
@@ -69,7 +77,7 @@ const TopBar = ({ roomId }) => {
         event.target.closest('[role="dialog"]') ||
         event.target.closest(".dialog-content") ||
         event.target.closest('[class*="dialog"]') ||
-        event.target.closest('[data-radix-popper-content-wrapper]')
+        event.target.closest("[data-radix-popper-content-wrapper]")
       ) {
         return;
       }
@@ -85,7 +93,7 @@ const TopBar = ({ roomId }) => {
 
   const onLeaveRoom = async () => {
     if (isLeavingRoom) return; // Prevent multiple calls
-    
+
     setIsLeavingRoom(true);
     try {
       const response = await ApiService.delete(`/rooms/${roomId}/leave`);
@@ -102,9 +110,13 @@ const TopBar = ({ roomId }) => {
     }
   };
 
-  const isCurrentUserAdmin = !currentRoomLoading && currentRoomDetails && authUser && currentRoomDetails.admins?.some(
-    (admin) => admin.username === authUser.username
-  );
+  const isCurrentUserAdmin =
+    !currentRoomLoading &&
+    currentRoomDetails &&
+    authUser &&
+    currentRoomDetails.admins?.some(
+      (admin) => admin.username === authUser.username
+    );
 
   const handleInviteLinkGenerated = (data) => {
     setInviteData(data);
@@ -150,12 +162,24 @@ const TopBar = ({ roomId }) => {
 
     const getStatusBadge = (status) => {
       switch (status) {
-        case 'updating':
-          return <span className="text-yellow-400 text-[9px] sm:text-[10px] bg-yellow-400/10 px-1 sm:px-1.5 py-0.5 rounded">Updating</span>;
-        case 'failed':
-          return <span className="text-red-400 text-[9px] sm:text-[10px] bg-red-400/10 px-1 sm:px-1.5 py-0.5 rounded">Failed</span>;
-        case 'idle':
-          return <span className="text-green-400 text-[9px] sm:text-[10px] bg-green-400/10 px-1 sm:px-1.5 py-0.5 rounded">Idle</span>;
+        case "updating":
+          return (
+            <span className="text-yellow-400 text-[9px] sm:text-[10px] bg-yellow-400/10 px-1 sm:px-1.5 py-0.5 rounded">
+              Updating
+            </span>
+          );
+        case "failed":
+          return (
+            <span className="text-red-400 text-[9px] sm:text-[10px] bg-red-400/10 px-1 sm:px-1.5 py-0.5 rounded">
+              Failed
+            </span>
+          );
+        case "idle":
+          return (
+            <span className="text-green-400 text-[9px] sm:text-[10px] bg-green-400/10 px-1 sm:px-1.5 py-0.5 rounded">
+              Idle
+            </span>
+          );
         default:
           return null;
       }
@@ -169,12 +193,24 @@ const TopBar = ({ roomId }) => {
         </div>
         <div className="flex items-center flex-shrink-0">
           <span className="text-blue-400 mr-1">LC:</span>
-          <span className={`mr-1 ${leetcodeUpdate?.updateStatus === 'failed' ? 'text-red-400' : ''}`}>{formatLastUpdated(leetcodeUpdate?.lastUpdated)}</span>
+          <span
+            className={`mr-1 ${
+              leetcodeUpdate?.updateStatus === "failed" ? "text-red-400" : ""
+            }`}
+          >
+            {formatLastUpdated(leetcodeUpdate?.lastUpdated)}
+          </span>
           {getStatusBadge(leetcodeUpdate?.updateStatus)}
         </div>
         <div className="flex items-center flex-shrink-0">
           <span className="text-orange-400 mr-1">CF:</span>
-          <span className={`mr-1 ${codeforcesUpdate?.updateStatus === 'failed' ? 'text-red-400' : ''}`}>{formatLastUpdated(codeforcesUpdate?.lastUpdated)}</span>
+          <span
+            className={`mr-1 ${
+              codeforcesUpdate?.updateStatus === "failed" ? "text-red-400" : ""
+            }`}
+          >
+            {formatLastUpdated(codeforcesUpdate?.lastUpdated)}
+          </span>
           {getStatusBadge(codeforcesUpdate?.updateStatus)}
         </div>
         {/* Warning message - hidden on mobile, shown on larger screens */}
@@ -192,7 +228,7 @@ const TopBar = ({ roomId }) => {
     <>
       <div
         ref={topBarRef}
-        className="bg-gray-800 py-0.5 sm:py-1 px-1.5 sm:px-3 flex items-center justify-between border-b border-gray-700 relative min-h-[32px] sm:min-h-[44px]"
+        className="bg-gray-800 py-1 sm:py-0 px-1.5 sm:px-3 flex items-center justify-between border-b border-gray-700 relative min-h-[32px] sm:min-h-[44px]"
       >
         <div className="flex-1 min-w-0 pr-1">
           <div className="flex flex-row items-center gap-2">
@@ -203,18 +239,23 @@ const TopBar = ({ roomId }) => {
             >
               {getRoomName()}
             </h2>
-            <p className="text-[10px] sm:text-xs text-gray-500 whitespace-nowrap">
+            <p
+              className="text-[10px] sm:text-xs text-gray-500 cursor-pointer whitespace-nowrap"
+              onClick={handleRoomDetailsClick}
+            >
               {getMemberCountText()}
             </p>
           </div>
-          <div className="flex flex-row items-center gap-2 mt-0.5">
+          <div className="flex flex-row items-center gap-2 ">
             {getPlatformUpdateStatus()}
           </div>
         </div>
         <div className="flex-shrink-0">
           <button
             onClick={toggleMenu}
-            className={`text-gray-300 p-1 hover:bg-gray-700 rounded transition-colors${activeComponent === 'menu' ? ' bg-gray-700' : ''}`}
+            className={`text-gray-300 p-1 hover:bg-gray-700 rounded transition-colors${
+              activeComponent === "menu" ? " bg-gray-700" : ""
+            }`}
             aria-label="Open menu"
           >
             <MoreVertical size={16} className="sm:w-6 sm:h-6" />
@@ -262,26 +303,28 @@ const TopBar = ({ roomId }) => {
         )}
 
         {/* Mobile-responsive settings panel */}
-        {activeComponent === "settings" && currentRoomDetails && !updatingRoom && (
-          <div className="fixed inset-0 sm:right-0 sm:left-auto top-0 h-full w-full sm:w-96 bg-gray-800 text-gray-300 shadow-lg z-20 transition-transform duration-300 ease-in-out transform translate-x-0 overflow-y-auto">
-            <div className="flex items-center justify-between p-4 border-b border-gray-700 sticky top-0 bg-gray-800">
-              <h2 className="text-lg font-bold">Room Settings</h2>
-              <button
-                onClick={() => setActiveComponent(null)}
-                className="text-gray-300 p-1 hover:bg-gray-700 rounded transition-colors"
-                aria-label="Close settings"
-              >
-                <X size={24} />
-              </button>
+        {activeComponent === "settings" &&
+          currentRoomDetails &&
+          !updatingRoom && (
+            <div className="fixed inset-0 sm:right-0 sm:left-auto top-0 h-full w-full sm:w-96 bg-gray-800 text-gray-300 shadow-lg z-20 transition-transform duration-300 ease-in-out transform translate-x-0 overflow-y-auto">
+              <div className="flex items-center justify-between p-4 border-b border-gray-700 sticky top-0 bg-gray-800">
+                <h2 className="text-lg font-bold">Room Settings</h2>
+                <button
+                  onClick={() => setActiveComponent(null)}
+                  className="text-gray-300 p-1 hover:bg-gray-700 rounded transition-colors"
+                  aria-label="Close settings"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+              <RoomSettings
+                key={settingsKey}
+                room={currentRoomDetails}
+                onClose={() => setActiveComponent(null)}
+                onUpdate={handleRoomUpdate}
+              />
             </div>
-            <RoomSettings
-              key={settingsKey}
-              room={currentRoomDetails}
-              onClose={() => setActiveComponent(null)}
-              onUpdate={handleRoomUpdate}
-            />
-          </div>
-        )}
+          )}
 
         {/* Mobile-responsive updating state */}
         {activeComponent === "settings" && updatingRoom && (
@@ -299,7 +342,9 @@ const TopBar = ({ roomId }) => {
             <div className="p-4">
               <div className="flex items-center justify-center space-x-2">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-300"></div>
-                <p className="text-sm">Please wait while room settings are being updated...</p>
+                <p className="text-sm">
+                  Please wait while room settings are being updated...
+                </p>
               </div>
             </div>
           </div>

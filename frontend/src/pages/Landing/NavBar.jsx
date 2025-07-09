@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Code, BadgeInfo, X, Menu } from "lucide-react";
+import { Code, BadgeInfo, Menu } from "lucide-react";
 import WideMenuIcon from "../../components/ui/WideMenuIcon";
 
 // Reusable Components
@@ -74,7 +74,7 @@ const Header = ({ isScrolled }) => {
 
             {/* Mobile Menu Button */}
             <button
-              className="md:hidden text-white p-2 hover:bg-purple-500/20 rounded-lg transition-colors duration-200"
+              className="md:hidden text-white p-2 rounded-lg transition-colors duration-200"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               <WideMenuIcon isOpen={isMenuOpen} className="text-white" />
@@ -112,12 +112,6 @@ const Header = ({ isScrolled }) => {
                 CForge
               </span>
             </div>
-            <button
-              onClick={() => setIsMenuOpen(false)}
-              className="text-gray-300 hover:text-white p-2 hover:bg-purple-500/20 rounded-lg transition-colors duration-200"
-            >
-              <X size={20} />
-            </button>
           </div>
 
           {/* Navigation Items */}

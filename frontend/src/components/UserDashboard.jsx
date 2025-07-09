@@ -379,7 +379,7 @@ const UserProfile = () => {
         <div className="mb-4 sm:mb-8">
           <ProfileHeader user={user} />
         </div>
-        <div className="mt-4 sm:mt-8 mb-3 sm:mb-6">
+        <div className="mt-2 sm:mt-2 mb-3 sm:mb-2">
           <h1 className="text-2xl sm:text-3xl font-bold text-white">
             Welcome, {user.fullName}!
           </h1>

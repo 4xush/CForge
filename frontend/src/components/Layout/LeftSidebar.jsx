@@ -5,7 +5,6 @@ import {
   SettingsIcon,
   HelpCircleIcon,
   LayoutDashboardIcon,
-  XIcon,
   MessageCircle,
   TrophyIcon,
   Code2,
@@ -40,7 +39,7 @@ const LeftSidebar = () => {
 
   const handleRoomCreatedOrJoined = (roomDetails) => {
     setRoomFormVisible(false);
-    
+
     if (roomDetails && roomDetails.roomId) {
       // Navigate to the newly created/joined room
       navigate(`/rooms/${roomDetails.roomId}/leaderboard`);
@@ -112,13 +111,11 @@ const LeftSidebar = () => {
             onClick={() => setMobileMenuOpen(false)}
             className="p-2 rounded-lg hover:bg-gray-700 transition-colors"
             aria-label="Close menu"
-          >
-            <XIcon className="w-5 h-5 text-gray-400" />
-          </button>
+          ></button>
         </div>
       ) : (
         <div className="pl-2">
-          <LogoWithTitle />
+          <LogoWithTitle onClick={() => navigate("/?force=true")} />
           <hr className="my-2 border-t border-gray-700" />
         </div>
       )}
@@ -198,7 +195,7 @@ const LeftSidebar = () => {
         <div className="flex items-center gap-2 w-full">
           <button
             onClick={() => setMobileMenuOpen(true)}
-            className="mobile-menu-button p-2 rounded-lg hover:bg-gray-700 transition-colors"
+            className="mobile-menu-button p-2 rounded-lg  transition-colors"
             aria-label="Open menu"
           >
             <WideMenuIcon className="text-gray-300" isOpen={isMobileMenuOpen} />

@@ -187,8 +187,8 @@ export default function ReviewsPage({ isAuthUser = false }) {
                 {/* Header Section */}
                 <div className="text-center mb-8">
                     <div className="flex items-center justify-center gap-3 mb-2">
-                        <MessageCircle className="w-8 h-8 sm:w-10 sm:h-10 text-purple-400" />
-                        <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                        <MessageCircle className="w-8 h-8 sm:w-8 sm:h-8 text-purple-400" />
+                        <h1 className="text-2xl sm:text-3xl md:text-3xl font-extrabold bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
                             User Reviews
                         </h1>
                     </div>
