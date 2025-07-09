@@ -8,6 +8,10 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
+      devOptions: {
+        enabled: true,
+        type: 'module'
+      },
       includeAssets: [
         "favicon/favicon.svg",
         "favicon/favicon.ico",
@@ -46,6 +50,10 @@ export default defineConfig({
       workbox: {
         navigateFallback: '/index.html',
         cleanupOutdatedCaches: true,
+        additionalManifestEntries: [
+          { url: '/sw-push.js', revision: null }
+        ],
+        importScripts: ['/sw-push.js'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/cforge\.onrender\.com\/api\//,

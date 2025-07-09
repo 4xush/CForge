@@ -47,6 +47,9 @@ const healthRoutes = require('./routes/healthRoutes');
 const contestsRoutes = require('./routes/contests');
 const reviewRoutes = require('./routes/reviewRoutes');
 const problemTrackerRoutes = require("./routes/problemTrackerRoutes");
+const pushNotificationRoutes = require("./routes/pushNotificationRoutes");
+const ReminderScheduler = require('./services/reminderScheduler');
+
 // Enhanced services
 const serviceInitializer = require('./services/initialization/serviceInitializer');
 
@@ -110,6 +113,15 @@ const connectWithRetry = async (retries = 5, delay = 5000) => {
 
       // Initialize schedulers
       initSchedulers();
+
+      // Initialize reminder scheduler for push notifications
+      try {
+        ReminderScheduler.start();
+        logger.info('✅ Reminder scheduler initialized for push notifications');
+      } catch (error) {
+        logger.warn('⚠️ Reminder scheduler failed to initialize:', error.message);
+      }
+
       return;
     } catch (err) {
       logger.error(`MongoDB connection attempt ${i + 1} failed: ${err.message}`);
@@ -131,6 +143,7 @@ app.get('/ping', (req, res) => {
 app.use('/api/health', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/push-notifications', pushNotificationRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/rooms/admin', adminRoomRoutes);
 app.use('/api/reviews', reviewRoutes);

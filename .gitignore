@@ -4,3 +4,4 @@ dev-helpers/
 *.env
 *.log
 Backup/
+dev-dist/
