@@ -12,16 +12,16 @@ const createReminders = async (req, res) => {
 
     // Validate intervals
     if (!intervals.length || intervals.length > 10) {
-      return res.status(400).json({ 
-        message: 'Please select 1-10 reminder intervals' 
+      return res.status(400).json({
+        message: 'Please select 1-10 reminder intervals'
       });
     }
 
     // Validate each interval
     for (const interval of intervals) {
       if (!Number.isInteger(interval) || interval < 1 || interval > 365) {
-        return res.status(400).json({ 
-          message: 'Each interval must be between 1-365 days' 
+        return res.status(400).json({
+          message: 'Each interval must be between 1-365 days'
         });
       }
     }
@@ -37,9 +37,9 @@ const createReminders = async (req, res) => {
     }
 
     // Delete existing reminders for this problem
-    await Reminder.deleteMany({ 
-      user: userId, 
-      userSolvedProblem: problemId 
+    await Reminder.deleteMany({
+      user: userId,
+      userSolvedProblem: problemId
     });
 
     // Create new reminders based on user selection
@@ -79,9 +79,9 @@ const createReminders = async (req, res) => {
 
   } catch (error) {
     console.error('Error creating reminders:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Failed to create reminders',
-      error: error.message 
+      error: error.message
     });
   }
 };
@@ -94,7 +94,7 @@ const getPendingReminders = async (req, res) => {
     const userId = req.user.id;
     const { page = 1, limit = 20 } = req.query;
 
-    
+
     // First, let's see ALL reminders for this user
     const allReminders = await Reminder.find({ user: userId });
 
@@ -103,16 +103,16 @@ const getPendingReminders = async (req, res) => {
       status: 'pending',
       isActive: true
     })
-    .populate({
-      path: 'userSolvedProblem',
-      populate: {
-        path: 'problem',
-        model: 'Problem'
-      }
-    })
-    .sort({ reminderDate: 1 })
-    .limit(limit * 1)
-    .skip((page - 1) * limit);
+      .populate({
+        path: 'userSolvedProblem',
+        populate: {
+          path: 'problem',
+          model: 'Problem'
+        }
+      })
+      .sort({ reminderDate: 1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
 
     const total = await Reminder.countDocuments({
       user: userId,
@@ -137,6 +137,7 @@ const getPendingReminders = async (req, res) => {
     }));
 
     res.json({
+      message: `Found ${total} pending reminder${total !== 1 ? 's' : ''}`,
       reminders: formattedReminders,
       pagination: {
         current: parseInt(page),
@@ -148,9 +149,9 @@ const getPendingReminders = async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error fetching pending reminders:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Failed to fetch pending reminders',
-      error: error.message 
+      error: error.message
     });
   }
 };
@@ -192,9 +193,9 @@ const getProblemReminders = async (req, res) => {
 
   } catch (error) {
     console.error('Error fetching problem reminders:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Failed to fetch problem reminders',
-      error: error.message 
+      error: error.message
     });
   }
 };
@@ -248,9 +249,9 @@ const completeReminder = async (req, res) => {
 
   } catch (error) {
     console.error('Error completing reminder:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Failed to complete reminder',
-      error: error.message 
+      error: error.message
     });
   }
 };
@@ -276,7 +277,7 @@ const skipReminder = async (req, res) => {
     // Update reminder date to snooze
     const newReminderDate = new Date();
     newReminderDate.setHours(newReminderDate.getHours() + snoozeHours);
-    
+
     reminder.reminderDate = newReminderDate;
     reminder.status = 'pending'; // Keep as pending
     await reminder.save();
@@ -292,9 +293,9 @@ const skipReminder = async (req, res) => {
 
   } catch (error) {
     console.error('Error skipping reminder:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Failed to skip reminder',
-      error: error.message 
+      error: error.message
     });
   }
 };
@@ -329,9 +330,9 @@ const deleteReminders = async (req, res) => {
 
   } catch (error) {
     console.error('Error deleting reminders:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Failed to delete reminders',
-      error: error.message 
+      error: error.message
     });
   }
 };

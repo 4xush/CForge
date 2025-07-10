@@ -16,6 +16,7 @@ const ReminderList = ({
   onReminderComplete,
   onReminderSkip,
   onRefresh,
+  refreshing = false,
 }) => {
   const [processingReminder, setProcessingReminder] = useState(null);
   const [viewMode, setViewMode] = useState("today");
@@ -37,8 +38,6 @@ const ReminderList = ({
       setProcessingReminder(null);
     }
   };
-
-
 
   const getDifficultyColor = (difficulty) => {
     const colors = {
@@ -96,20 +95,23 @@ const ReminderList = ({
 
   if (reminders.length === 0) {
     return (
-      <div className="bg-gray-800 rounded-lg p-8 text-center border border-gray-700">
-        <Clock className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-300 mb-2">
+      <div className="bg-gray-800 rounded-lg p-4 sm:p-8 text-center border border-gray-700 mx-2 sm:mx-0">
+        <Clock className="w-8 h-8 sm:w-12 sm:h-12 text-gray-500 mx-auto mb-3 sm:mb-4" />
+        <h3 className="text-base sm:text-lg font-medium text-gray-300 mb-1 sm:mb-2">
           No pending reminders
         </h3>
-        <p className="text-gray-500 mb-4">
+        <p className="text-gray-500 mb-3 sm:mb-4 text-xs sm:text-base">
           Great job! You're all caught up with your reviews.
         </p>
         <button
           onClick={onRefresh}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors mx-auto"
+          disabled={refreshing}
+          className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white rounded-lg transition-colors mx-auto text-sm sm:text-base"
         >
-          <RefreshCw className="w-4 h-4" />
-          Refresh
+          <RefreshCw
+            className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`}
+          />
+          {refreshing ? "Refreshing..." : "Refresh"}
         </button>
       </div>
     );
@@ -124,10 +126,13 @@ const ReminderList = ({
         </h3>
         <button
           onClick={onRefresh}
-          className="flex items-center gap-2 px-3 py-1 text-gray-400 hover:text-white transition-colors"
+          disabled={refreshing}
+          className="flex items-center gap-2 px-3 py-1 text-gray-400 hover:text-white disabled:text-gray-500 transition-colors"
         >
-          <RefreshCw className="w-4 h-4" />
-          Refresh
+          <RefreshCw
+            className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`}
+          />
+          {refreshing ? "Refreshing..." : "Refresh"}
         </button>
       </div>
 
@@ -162,8 +167,8 @@ const ReminderList = ({
                   mode.key === "overdue" && mode.count > 0
                     ? "bg-red-500 text-white"
                     : viewMode === mode.key
-                      ? "bg-blue-800 text-blue-200"
-                      : "bg-gray-600 text-gray-300"
+                    ? "bg-blue-800 text-blue-200"
+                    : "bg-gray-600 text-gray-300"
                 }`}
               >
                 {mode.count}
@@ -219,7 +224,9 @@ const ReminderList = ({
                     {/* Difficulty */}
                     {reminder.problem.difficulty && (
                       <span
-                        className={`font-medium ${getDifficultyColor(reminder.problem.difficulty)}`}
+                        className={`font-medium ${getDifficultyColor(
+                          reminder.problem.difficulty
+                        )}`}
                       >
                         {reminder.problem.difficulty}
                       </span>

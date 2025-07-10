@@ -356,8 +356,6 @@ const TopBar = ({ roomId }) => {
           onConfirm={onLeaveRoom}
           loading={isLeavingRoom}
           confirmButtonText={isLeavingRoom ? "Leaving..." : "Leave Room"}
-          loading={isLeavingRoom}
-          confirmButtonText={isLeavingRoom ? "Leaving..." : "Leave Room"}
           title="Leave Room"
           message="Are you sure you want to leave this room?"
         />

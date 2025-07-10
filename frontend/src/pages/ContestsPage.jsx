@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react"
-import { format, formatDistanceToNow, addSeconds } from "date-fns"
+import { useState, useEffect, useCallback } from "react";
+import { format, formatDistanceToNow, addSeconds } from "date-fns";
 import {
   Calendar,
   Clock,
@@ -15,10 +15,10 @@ import {
   Award,
   Filter,
   ChevronDown,
-  TrendingUp
-} from "lucide-react"
-import { toast } from "react-hot-toast"
-import ApiService from "../services/ApiService"
+  TrendingUp,
+} from "lucide-react";
+import { toast } from "react-hot-toast";
+import ApiService from "../services/ApiService";
 
 const PLATFORMS = {
   codeforces: {
@@ -37,9 +37,10 @@ const PLATFORMS = {
     textColor: "text-orange-400",
     bgColor: "bg-orange-500/10",
     borderColor: "border-orange-500/30",
-    getContestUrl: (contest) => `https://leetcode.com/contest/${contest.titleSlug || contest.id}`,
-  }
-}
+    getContestUrl: (contest) =>
+      `https://leetcode.com/contest/${contest.titleSlug || contest.id}`,
+  },
+};
 
 // Cache duration in milliseconds (5 minutes)
 const CACHE_DURATION = 5 * 60 * 1000;
@@ -49,72 +50,82 @@ const CACHE_KEY = "contests_data";
 
 // Countdown Timer Component
 const CountdownTimer = ({ targetDate, onExpire }) => {
-  const [timeLeft, setTimeLeft] = useState("")
-  const [isExpired, setIsExpired] = useState(false)
+  const [timeLeft, setTimeLeft] = useState("");
+  const [isExpired, setIsExpired] = useState(false);
 
   useEffect(() => {
     const updateTimer = () => {
-      const now = new Date()
-      const target = new Date(targetDate)
-      const difference = target.getTime() - now.getTime()
+      const now = new Date();
+      const target = new Date(targetDate);
+      const difference = target.getTime() - now.getTime();
 
       if (difference <= 0) {
-        setTimeLeft("Contest Started!")
-        setIsExpired(true)
-        if (onExpire) onExpire()
-        return
+        setTimeLeft("Contest Started!");
+        setIsExpired(true);
+        if (onExpire) onExpire();
+        return;
       }
 
-      const days = Math.floor(difference / (1000 * 60 * 60 * 24))
-      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60))
-      const seconds = Math.floor((difference % (1000 * 60)) / 1000)
+      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const hours = Math.floor(
+        (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+      );
+      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
 
       if (days > 0) {
-        setTimeLeft(`${days}d ${hours}h ${minutes}m`)
+        setTimeLeft(`${days}d ${hours}h ${minutes}m`);
       } else if (hours > 0) {
-        setTimeLeft(`${hours}h ${minutes}m ${seconds}s`)
+        setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
       } else {
-        setTimeLeft(`${minutes}m ${seconds}s`)
+        setTimeLeft(`${minutes}m ${seconds}s`);
       }
-    }
+    };
 
-    updateTimer()
-    const interval = setInterval(updateTimer, 1000)
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
 
-    return () => clearInterval(interval)
-  }, [targetDate, onExpire])
+    return () => clearInterval(interval);
+  }, [targetDate, onExpire]);
 
   return (
-    <div className={`flex items-center space-x-2 ${isExpired ? "text-emerald-400" : "text-purple-300"}`}>
+    <div
+      className={`flex items-center space-x-2 ${
+        isExpired ? "text-emerald-400" : "text-purple-300"
+      }`}
+    >
       <Timer size={16} className="animate-pulse" />
-      <span className="font-mono text-sm font-medium bg-black/20 px-2 py-1 rounded">{timeLeft}</span>
+      <span className="font-mono text-sm font-medium bg-black/20 px-2 py-1 rounded">
+        {timeLeft}
+      </span>
     </div>
-  )
-}
+  );
+};
 
 // Contest Card Component
 const ContestCard = ({ contest, isOngoing = false }) => {
-  const platform = PLATFORMS[contest.platform] || PLATFORMS.codeforces
-  const PlatformIcon = platform.icon
+  const platform = PLATFORMS[contest.platform] || PLATFORMS.codeforces;
+  const PlatformIcon = platform.icon;
 
-  const startTime = new Date(contest.startTimeSeconds * 1000)
-  const endTime = addSeconds(startTime, contest.durationSeconds)
-  const duration = Math.floor(contest.durationSeconds / 3600)
-  const durationMinutes = Math.floor((contest.durationSeconds % 3600) / 60)
+  const startTime = new Date(contest.startTimeSeconds * 1000);
+  const endTime = addSeconds(startTime, contest.durationSeconds);
+  const duration = Math.floor(contest.durationSeconds / 3600);
+  const durationMinutes = Math.floor((contest.durationSeconds % 3600) / 60);
 
   const handleJoinContest = () => {
     // Log analytics
     // console.log(`User clicked on contest: ${contest.name} (${contest.platform})`)
 
-    const contestUrl = platform.getContestUrl(contest)
+    const contestUrl = platform.getContestUrl(contest);
     if (contestUrl) {
-      window.open(contestUrl, "_blank", "noopener,noreferrer")
+      window.open(contestUrl, "_blank", "noopener,noreferrer");
     }
-  }
+  };
 
   return (
-    <div className={`group relative bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-xl border ${platform.borderColor} hover:border-purple-400/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/20`}>
+    <div
+      className={`group relative bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-xl border ${platform.borderColor} hover:border-purple-400/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/20`}
+    >
       {/* Background pattern */}
       <div className="absolute inset-0 bg-gradient-to-br from-purple-600/5 to-transparent rounded-xl"></div>
 
@@ -132,14 +143,18 @@ const ContestCard = ({ contest, isOngoing = false }) => {
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center space-x-3">
-            <div className={`p-3 rounded-xl bg-gradient-to-br ${platform.color} shadow-lg`}>
+            <div
+              className={`p-3 rounded-xl bg-gradient-to-br ${platform.color} shadow-lg`}
+            >
               <PlatformIcon size={24} className="text-white" />
             </div>
             <div>
               <h3 className="text-lg font-bold text-white line-clamp-2 group-hover:text-purple-200 transition-colors">
                 {contest.name}
               </h3>
-              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${platform.textColor} ${platform.bgColor} mt-2`}>
+              <span
+                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${platform.textColor} ${platform.bgColor} mt-2`}
+              >
                 {platform.name}
               </span>
             </div>
@@ -161,12 +176,16 @@ const ContestCard = ({ contest, isOngoing = false }) => {
           {contest.participants && contest.participants > 0 && (
             <div className="flex items-center space-x-2 text-slate-300">
               <Users size={16} className="text-purple-400" />
-              <span className="text-sm">{contest.participants.toLocaleString()} participants</span>
+              <span className="text-sm">
+                {contest.participants.toLocaleString()} participants
+              </span>
             </div>
           )}
           <div className="flex items-center space-x-2 text-slate-300">
             <Award size={16} className="text-purple-400" />
-            <span className="text-sm">{isOngoing ? "In Progress" : "Scheduled"}</span>
+            <span className="text-sm">
+              {isOngoing ? "In Progress" : "Scheduled"}
+            </span>
           </div>
         </div>
 
@@ -190,10 +209,11 @@ const ContestCard = ({ contest, isOngoing = false }) => {
 
           <button
             onClick={handleJoinContest}
-            className={`group/btn px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-300 flex items-center space-x-2 ${isOngoing
-              ? "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg hover:shadow-emerald-500/25"
-              : "bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-lg hover:shadow-purple-500/25"
-              } hover:scale-105`}
+            className={`group/btn px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-300 flex items-center space-x-2 ${
+              isOngoing
+                ? "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg hover:shadow-emerald-500/25"
+                : "bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-lg hover:shadow-purple-500/25"
+            } hover:scale-105`}
           >
             {isOngoing ? (
               <>
@@ -202,7 +222,10 @@ const ContestCard = ({ contest, isOngoing = false }) => {
               </>
             ) : (
               <>
-                <ExternalLink size={16} className="group-hover/btn:rotate-12 transition-transform" />
+                <ExternalLink
+                  size={16}
+                  className="group-hover/btn:rotate-12 transition-transform"
+                />
                 <span>View Details</span>
               </>
             )}
@@ -210,12 +233,12 @@ const ContestCard = ({ contest, isOngoing = false }) => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 // Platform Filter Component
 const PlatformFilter = ({ selectedPlatforms, onPlatformToggle }) => {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div className="relative">
@@ -225,43 +248,52 @@ const PlatformFilter = ({ selectedPlatforms, onPlatformToggle }) => {
       >
         <Filter size={16} className="text-purple-400" />
         <span>Filter Platforms</span>
-        <ChevronDown size={16} className={`transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        <ChevronDown
+          size={16}
+          className={`transition-transform ${isOpen ? "rotate-180" : ""}`}
+        />
       </button>
 
       {isOpen && (
         <div className="absolute top-full left-0 mt-2 bg-slate-800/95 backdrop-blur-sm border border-slate-700 rounded-lg shadow-2xl z-50 min-w-[200px]">
           <div className="p-3">
             {Object.entries(PLATFORMS).map(([key, platform]) => {
-              const PlatformIcon = platform.icon
-              const isSelected = selectedPlatforms.includes(key)
+              const PlatformIcon = platform.icon;
+              const isSelected = selectedPlatforms.includes(key);
 
               return (
                 <button
                   key={key}
                   onClick={() => onPlatformToggle(key)}
-                  className={`w-full flex items-center space-x-3 px-3 py-2 mb-1 rounded-lg text-sm font-medium transition-all ${isSelected
-                    ? `bg-gradient-to-r ${platform.color} text-white`
-                    : "text-slate-300 hover:bg-slate-700/50"
-                    }`}
+                  className={`w-full flex items-center space-x-3 px-3 py-2 mb-1 rounded-lg text-sm font-medium transition-all ${
+                    isSelected
+                      ? `bg-gradient-to-r ${platform.color} text-white`
+                      : "text-slate-300 hover:bg-slate-700/50"
+                  }`}
                 >
                   <PlatformIcon size={16} />
                   <span>{platform.name}</span>
-                  {isSelected && <div className="ml-auto w-2 h-2 bg-white rounded-full"></div>}
+                  {isSelected && (
+                    <div className="ml-auto w-2 h-2 bg-white rounded-full"></div>
+                  )}
                 </button>
-              )
+              );
             })}
           </div>
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
 // Stats Component
 const StatsComponent = ({ contests }) => {
-  const totalOngoing = contests.ongoing.length
-  const totalUpcoming = contests.upcoming.length
-  const totalParticipants = contests.ongoing.reduce((sum, contest) => sum + (contest.participants || 0), 0)
+  const totalOngoing = contests.ongoing.length;
+  const totalUpcoming = contests.upcoming.length;
+  const totalParticipants = contests.ongoing.reduce(
+    (sum, contest) => sum + (contest.participants || 0),
+    0
+  );
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
@@ -271,8 +303,12 @@ const StatsComponent = ({ contests }) => {
             <Play size={20} className="sm:text-[24px] text-white" />
           </div>
           <div>
-            <p className="text-slate-400 text-xs sm:text-sm">Ongoing Contests</p>
-            <p className="text-lg sm:text-2xl font-bold text-white">{totalOngoing}</p>
+            <p className="text-slate-400 text-xs sm:text-sm">
+              Ongoing Contests
+            </p>
+            <p className="text-lg sm:text-2xl font-bold text-white">
+              {totalOngoing}
+            </p>
           </div>
         </div>
       </div>
@@ -283,8 +319,12 @@ const StatsComponent = ({ contests }) => {
             <Calendar size={20} className="sm:text-[24px] text-white" />
           </div>
           <div>
-            <p className="text-slate-400 text-xs sm:text-sm">Upcoming Contests</p>
-            <p className="text-lg sm:text-2xl font-bold text-white">{totalUpcoming}</p>
+            <p className="text-slate-400 text-xs sm:text-sm">
+              Upcoming Contests
+            </p>
+            <p className="text-lg sm:text-2xl font-bold text-white">
+              {totalUpcoming}
+            </p>
           </div>
         </div>
       </div>
@@ -295,24 +335,30 @@ const StatsComponent = ({ contests }) => {
             <TrendingUp size={20} className="sm:text-[24px] text-white" />
           </div>
           <div>
-            <p className="text-slate-400 text-xs sm:text-sm">Active Participants</p>
-            <p className="text-lg sm:text-2xl font-bold text-white">{totalParticipants.toLocaleString()}</p>
+            <p className="text-slate-400 text-xs sm:text-sm">
+              Active Participants
+            </p>
+            <p className="text-lg sm:text-2xl font-bold text-white">
+              {totalParticipants.toLocaleString()}
+            </p>
           </div>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 // Main Contests Page Component
 const ContestsPage = () => {
-  const [contests, setContests] = useState({ ongoing: [], upcoming: [] })
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [lastUpdated, setLastUpdated] = useState(null)
-  const [activeTab, setActiveTab] = useState("upcoming")
-  const [selectedPlatforms, setSelectedPlatforms] = useState(Object.keys(PLATFORMS))
-  const [notes, setNotes] = useState([])
+  const [contests, setContests] = useState({ ongoing: [], upcoming: [] });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [activeTab, setActiveTab] = useState("upcoming");
+  const [selectedPlatforms, setSelectedPlatforms] = useState(
+    Object.keys(PLATFORMS)
+  );
+  const [notes, setNotes] = useState([]);
 
   const getCachedData = () => {
     try {
@@ -336,7 +382,7 @@ const ContestsPage = () => {
     try {
       const cacheData = {
         data,
-        timestamp: new Date().getTime()
+        timestamp: new Date().getTime(),
       };
       sessionStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
     } catch (error) {
@@ -378,14 +424,17 @@ const ContestsPage = () => {
       setCachedData({
         contests: newData,
         timestamp: new Date().getTime(),
-        notes: response.data.notes || []
+        notes: response.data.notes || [],
       });
 
       // Show errors as toast notifications if any
       if (response.data.errors && response.data.errors.length > 0) {
-        toast.error(`Some platforms failed to load: ${response.data.errors.join(", ")}`, {
-          duration: 5000,
-        });
+        toast.error(
+          `Some platforms failed to load: ${response.data.errors.join(", ")}`,
+          {
+            duration: 5000,
+          }
+        );
       }
 
       // Show notes as info notifications
@@ -404,17 +453,21 @@ const ContestsPage = () => {
   }, []);
 
   const handlePlatformToggle = (platform) => {
-    setSelectedPlatforms(prev =>
+    setSelectedPlatforms((prev) =>
       prev.includes(platform)
-        ? prev.filter(p => p !== platform)
+        ? prev.filter((p) => p !== platform)
         : [...prev, platform]
-    )
-  }
+    );
+  };
 
   const filteredContests = {
-    ongoing: contests.ongoing.filter(contest => selectedPlatforms.includes(contest.platform)),
-    upcoming: contests.upcoming.filter(contest => selectedPlatforms.includes(contest.platform)),
-  }
+    ongoing: contests.ongoing.filter((contest) =>
+      selectedPlatforms.includes(contest.platform)
+    ),
+    upcoming: contests.upcoming.filter((contest) =>
+      selectedPlatforms.includes(contest.platform)
+    ),
+  };
 
   useEffect(() => {
     fetchContests();
@@ -424,7 +477,11 @@ const ContestsPage = () => {
     return () => clearInterval(interval);
   }, [fetchContests]);
 
-  if (loading && contests.ongoing.length === 0 && contests.upcoming.length === 0) {
+  if (
+    loading &&
+    contests.ongoing.length === 0 &&
+    contests.upcoming.length === 0
+  ) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900">
         <div className="max-w-7xl mx-auto px-6">
@@ -436,10 +493,14 @@ const ContestsPage = () => {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
-  if (error && contests.ongoing.length === 0 && contests.upcoming.length === 0) {
+  if (
+    error &&
+    contests.ongoing.length === 0 &&
+    contests.upcoming.length === 0
+  ) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900">
         <div className="max-w-7xl mx-auto px-6">
@@ -458,7 +519,7 @@ const ContestsPage = () => {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -479,8 +540,8 @@ const ContestsPage = () => {
                 Contest Central
               </h1>
               <p className="text-slate-400 mt-2 sm:mt-3 text-base sm:text-lg max-w-2xl">
-                Your ultimate destination for competitive programming contests. Track live competitions,
-                upcoming events, and never miss a coding challenge.
+                Track live competitions,upcoming events, and never miss a coding
+                challenge.
               </p>
               {notes.length > 0 && (
                 <div className="mt-3 sm:mt-4 p-2 sm:p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
@@ -501,7 +562,10 @@ const ContestsPage = () => {
                 disabled={loading}
                 className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg font-semibold transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg hover:shadow-purple-500/25 text-xs sm:text-base"
               >
-                <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+                <RefreshCw
+                  size={16}
+                  className={loading ? "animate-spin" : ""}
+                />
                 <span>Refresh</span>
               </button>
             </div>
@@ -524,21 +588,23 @@ const ContestsPage = () => {
           {/* Tabs */}
           <div className="flex bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-lg p-1 w-full sm:w-auto mt-3 sm:mt-0">
             <button
-              onClick={() => setActiveTab('ongoing')}
-              className={`flex items-center justify-center space-x-2 px-3 sm:px-6 py-2 sm:py-3 rounded-md font-semibold text-xs sm:text-sm transition-all duration-300 w-1/2 sm:w-auto ${activeTab === 'ongoing'
-                ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg'
-                : 'text-slate-400 hover:text-white'
-                }`}
+              onClick={() => setActiveTab("ongoing")}
+              className={`flex items-center justify-center space-x-2 px-3 sm:px-6 py-2 sm:py-3 rounded-md font-semibold text-xs sm:text-sm transition-all duration-300 w-1/2 sm:w-auto ${
+                activeTab === "ongoing"
+                  ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg"
+                  : "text-slate-400 hover:text-white"
+              }`}
             >
               <Play size={16} />
               <span>Live ({filteredContests.ongoing.length})</span>
             </button>
             <button
-              onClick={() => setActiveTab('upcoming')}
-              className={`flex items-center justify-center space-x-2 px-3 sm:px-6 py-2 sm:py-3 rounded-md font-semibold text-xs sm:text-sm transition-all duration-300 w-1/2 sm:w-auto ${activeTab === 'upcoming'
-                ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg'
-                : 'text-slate-400 hover:text-white'
-                }`}
+              onClick={() => setActiveTab("upcoming")}
+              className={`flex items-center justify-center space-x-2 px-3 sm:px-6 py-2 sm:py-3 rounded-md font-semibold text-xs sm:text-sm transition-all duration-300 w-1/2 sm:w-auto ${
+                activeTab === "upcoming"
+                  ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg"
+                  : "text-slate-400 hover:text-white"
+              }`}
             >
               <Calendar size={16} />
               <span>Upcoming ({filteredContests.upcoming.length})</span>
@@ -548,7 +614,7 @@ const ContestsPage = () => {
 
         {/* Contest Grid */}
         <div className="transition-all duration-500">
-          {activeTab === 'ongoing' && (
+          {activeTab === "ongoing" && (
             <>
               {filteredContests.ongoing.length > 0 ? (
                 <div className="grid grid-cols-1 gap-6 xl:grid-cols-2 xl:gap-8">
@@ -565,10 +631,14 @@ const ContestsPage = () => {
                   <div className="bg-slate-800/30 backdrop-blur-sm rounded-full w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center m-auto mb-4 sm:mb-6">
                     <Trophy className="h-10 w-10 sm:h-12 sm:w-12 text-slate-600" />
                   </div>
-                  <h3 className="text-lg sm:text-xl font-semibold text-white mb-2 sm:mb-3">No Live Contests</h3>
-                  <p className="text-slate-400 mb-4 sm:mb-6">Check back soon or explore upcoming contests!</p>
+                  <h3 className="text-lg sm:text-xl font-semibold text-white mb-2 sm:mb-3">
+                    No Live Contests
+                  </h3>
+                  <p className="text-slate-400 mb-4 sm:mb-6">
+                    Check back soon or explore upcoming contests!
+                  </p>
                   <button
-                    onClick={() => setActiveTab('upcoming')}
+                    onClick={() => setActiveTab("upcoming")}
                     className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg font-semibold hover:scale-105 transition-all duration-300 text-xs sm:text-base"
                   >
                     View Upcoming Contests
@@ -578,7 +648,7 @@ const ContestsPage = () => {
             </>
           )}
 
-          {activeTab === 'upcoming' && (
+          {activeTab === "upcoming" && (
             <>
               {filteredContests.upcoming.length > 0 ? (
                 <div className="grid grid-cols-1 gap-6 xl:grid-cols-2 xl:gap-8">
@@ -595,8 +665,12 @@ const ContestsPage = () => {
                   <div className="bg-slate-800/30 backdrop-blur-sm rounded-full w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center m-auto mb-4 sm:mb-6">
                     <Calendar className="h-10 w-10 sm:h-12 sm:w-12 text-slate-600" />
                   </div>
-                  <h3 className="text-lg sm:text-xl font-semibold text-white mb-2 sm:mb-3">No Upcoming Contests</h3>
-                  <p className="text-slate-400">All contests are currently live or completed.</p>
+                  <h3 className="text-lg sm:text-xl font-semibold text-white mb-2 sm:mb-3">
+                    No Upcoming Contests
+                  </h3>
+                  <p className="text-slate-400">
+                    All contests are currently live or completed.
+                  </p>
                 </div>
               )}
             </>
@@ -604,7 +678,7 @@ const ContestsPage = () => {
         </div>
       </main>
     </div>
-  )
-}
+  );
+};
 
-export default ContestsPage
+export default ContestsPage;
