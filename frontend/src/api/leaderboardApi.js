@@ -1,8 +1,8 @@
-import api from "../config/api";
+import ApiService from "../services/ApiService";
 
 export const refreshLeetcodeLeaderboard = async (roomId) => {
     try {
-      const response = await api.post(`/rooms/${roomId}/update-leetcode-stats`);
+      const response = await ApiService.post(`/rooms/${roomId}/update-leetcode-stats`);
       return response.data;
     } catch (error) {
       throw error.response?.data || new Error("Failed to update LeetCode stats");
@@ -11,7 +11,7 @@ export const refreshLeetcodeLeaderboard = async (roomId) => {
 
 export const refreshCodeforcesLeaderboard = async (roomId) => {
     try {
-      const response = await api.post(`/rooms/${roomId}/update-codeforces-stats`);
+      const response = await ApiService.post(`/rooms/${roomId}/update-codeforces-stats`);
       return response.data;
     } catch (error) {
       throw error.response?.data || new Error("Failed to update Codeforces stats");
@@ -20,7 +20,7 @@ export const refreshCodeforcesLeaderboard = async (roomId) => {
 
 export const getLeaderboard = async (roomId, sortBy, limit, page, platform = 'leetcode') => {
     try {
-      const response = await api.get(`/rooms/${roomId}/leaderboard`, {
+      const response = await ApiService.get(`/rooms/${roomId}/leaderboard`, {
         params: { sortBy, limit, page, platform }
       });
       

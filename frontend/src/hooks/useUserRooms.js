@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import api from '../config/api';
+import ApiService from '../services/ApiService';
 
 const useUserRooms = (refreshRooms) => {
     const [rooms, setRooms] = useState([]);
@@ -8,7 +8,7 @@ const useUserRooms = (refreshRooms) => {
     useEffect(() => {
         const fetchRooms = async () => {
             try {
-                const response = await api.get('/rooms');
+                const response = await ApiService.get('/rooms');
                 setRooms(response.data.rooms);
             } catch (err) {
                 setError('Failed to fetch rooms');

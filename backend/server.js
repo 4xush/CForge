@@ -54,7 +54,6 @@ const ReminderScheduler = require('./services/reminderScheduler');
 const serviceInitializer = require('./services/initialization/serviceInitializer');
 
 const { checkPlatformStatus, includeMetaData } = require('./middleware/platformStatusMiddleware');
-const { initSchedulers } = require('./schedulers');
 
 const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
@@ -111,8 +110,6 @@ const connectWithRetry = async (retries = 5, delay = 5000) => {
         logger.info('All enhanced services initialized successfully');
       }
 
-      // Initialize schedulers
-      initSchedulers();
 
       // Initialize reminder scheduler for push notifications
       try {

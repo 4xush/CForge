@@ -1,4 +1,4 @@
-import api from '../config/api';
+import ApiService from '../services/ApiService';
 
 const API_BASE = '/leetcode-tracker';
 
@@ -6,7 +6,7 @@ export const problemTrackerApi = {
   // Sync recent problems from LeetCode
   syncRecentProblems: async () => {
     try {
-      const response = await api.post(`${API_BASE}/sync`);
+      const response = await ApiService.post(`${API_BASE}/sync`);
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to sync problems' };
@@ -27,7 +27,7 @@ export const problemTrackerApi = {
       const queryString = queryParams.toString();
       const url = queryString ? `${API_BASE}/problems?${queryString}` : `${API_BASE}/problems`;
 
-      const response = await api.get(url);
+      const response = await ApiService.get(url);
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch problems' };
@@ -37,7 +37,7 @@ export const problemTrackerApi = {
   // Update a tracked problem
   updateTrackedProblem: async (problemId, updates) => {
     try {
-      const response = await api.put(`${API_BASE}/problems/${problemId}`, updates);
+      const response = await ApiService.put(`${API_BASE}/problems/${problemId}`, updates);
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to update problem' };
@@ -47,7 +47,7 @@ export const problemTrackerApi = {
   // Delete a tracked problem
   deleteTrackedProblem: async (problemId) => {
     try {
-      const response = await api.delete(`${API_BASE}/problems/${problemId}`);
+      const response = await ApiService.delete(`${API_BASE}/problems/${problemId}`);
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to delete problem' };
@@ -57,7 +57,7 @@ export const problemTrackerApi = {
   // Get dashboard stats
   getDashboardStats: async () => {
     try {
-      const response = await api.get(`${API_BASE}/stats`);
+      const response = await ApiService.get(`${API_BASE}/stats`);
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch stats' };
@@ -67,7 +67,7 @@ export const problemTrackerApi = {
   // Reminder management
   createReminders: async (problemId, intervals) => {
     try {
-      const response = await api.post(`${API_BASE}/problems/${problemId}/reminders`, { intervals });
+      const response = await ApiService.post(`${API_BASE}/problems/${problemId}/reminders`, { intervals });
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to create reminders' };
@@ -87,7 +87,7 @@ export const problemTrackerApi = {
       const queryString = queryParams.toString();
       const url = queryString ? `${API_BASE}/reminders/pending?${queryString}` : `${API_BASE}/reminders/pending`;
 
-      const response = await api.get(url);
+      const response = await ApiService.get(url);
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch reminders' };
@@ -96,7 +96,7 @@ export const problemTrackerApi = {
 
   getProblemReminders: async (problemId) => {
     try {
-      const response = await api.get(`${API_BASE}/problems/${problemId}/reminders`);
+      const response = await ApiService.get(`${API_BASE}/problems/${problemId}/reminders`);
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch problem reminders' };
@@ -105,7 +105,7 @@ export const problemTrackerApi = {
 
   completeReminder: async (reminderId) => {
     try {
-      const response = await api.put(`${API_BASE}/reminders/${reminderId}/complete`);
+      const response = await ApiService.put(`${API_BASE}/reminders/${reminderId}/complete`);
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to complete reminder' };
@@ -114,7 +114,7 @@ export const problemTrackerApi = {
 
   skipReminder: async (reminderId, snoozeHours = 24) => {
     try {
-      const response = await api.put(`${API_BASE}/reminders/${reminderId}/skip`, { snoozeHours });
+      const response = await ApiService.put(`${API_BASE}/reminders/${reminderId}/skip`, { snoozeHours });
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to skip reminder' };
@@ -123,7 +123,7 @@ export const problemTrackerApi = {
 
   deleteReminders: async (problemId) => {
     try {
-      const response = await api.delete(`${API_BASE}/problems/${problemId}/reminders`);
+      const response = await ApiService.delete(`${API_BASE}/problems/${problemId}/reminders`);
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to delete reminders' };

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useRoomContext } from '../context/RoomContext';
-import api from '../config/api';
+import ApiService from '../services/ApiService';
 
 const useJoinRoom = () => {
     const [loading, setLoading] = useState(false);
@@ -21,7 +21,7 @@ const useJoinRoom = () => {
         setSuccess(null);
 
         try {
-            const response = await api.post(`/rooms/${formattedRoomId}/join`);
+            const response = await ApiService.post(`/rooms/${formattedRoomId}/join`);
             setSuccess(response.data.message);
             
             // Immediately refresh the room list

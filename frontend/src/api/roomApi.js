@@ -1,10 +1,10 @@
-import api from "../config/api";
+import ApiService from "../services/ApiService";
 
 const BASE_URL = '/rooms';
 
 export const getRoomDetails = async (roomId) => {
     try {
-        const response = await api.get(`${BASE_URL}/${roomId}`);
+        const response = await ApiService.get(`${BASE_URL}/${roomId}`);
         return response.data;
     } catch (error) {
         throw error.response?.data || new Error("Failed to fetch room details");
@@ -13,7 +13,7 @@ export const getRoomDetails = async (roomId) => {
 
 export const generateInviteLink = async (roomId) => {
     try {
-        const response = await api.post(`${BASE_URL}/admin/${roomId}/invite`);
+        const response = await ApiService.post(`${BASE_URL}/admin/${roomId}/invite`);
         return response.data;
     } catch (error) {
         throw error.response?.data || new Error("Failed to generate invite link");
@@ -22,7 +22,7 @@ export const generateInviteLink = async (roomId) => {
 
 export const verifyRoomInvite = async (inviteCode) => {
     try {
-        const response = await api.get(`${BASE_URL}/invite/${inviteCode}/verify`);
+        const response = await ApiService.get(`${BASE_URL}/invite/${inviteCode}/verify`);
         return response.data;
     } catch (error) {
         throw error.response?.data || new Error("Failed to verify invite link");
@@ -31,7 +31,7 @@ export const verifyRoomInvite = async (inviteCode) => {
 
 export const joinRoom = async (inviteCode) => {
     try {
-        const response = await api.post(`${BASE_URL}/invite/${inviteCode}/join`);
+        const response = await ApiService.post(`${BASE_URL}/invite/${inviteCode}/join`);
         return response.data;
     } catch (error) {
         throw error.response?.data || new Error("Failed to join room");
@@ -40,7 +40,7 @@ export const joinRoom = async (inviteCode) => {
 
 export const getLeaderboard = async (roomId, sortBy, limit, page) => {
     try {
-        const response = await api.get(`${BASE_URL}/${roomId}/leaderboard`, {
+        const response = await ApiService.get(`${BASE_URL}/${roomId}/leaderboard`, {
             params: { sortBy, limit, page },
         });
         return response.data;
@@ -51,7 +51,7 @@ export const getLeaderboard = async (roomId, sortBy, limit, page) => {
 
 export const createRoom = async (formData) => {
     try {
-        const response = await api.post(`${BASE_URL}/create`, formData);
+        const response = await ApiService.post(`${BASE_URL}/create`, formData);
         return response.data;
     } catch (error) {
         throw error.response?.data || new Error("Failed to create room");
@@ -60,7 +60,7 @@ export const createRoom = async (formData) => {
 
 export const updateRoomMembersLeetCodeStats = async (roomId) => {
     try {
-        const response = await api.post(`${BASE_URL}/${roomId}/update-leetcode-stats`);
+        const response = await ApiService.post(`${BASE_URL}/${roomId}/update-leetcode-stats`);
         return response.data;
     } catch (error) {
         throw error.response?.data || new Error("Failed to update LeetCode stats");

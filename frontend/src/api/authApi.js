@@ -1,8 +1,8 @@
-import api from "../config/api";
+import ApiService from "../services/ApiService";
 
 export const googleLogin = async (idToken) => {
   try {
-    const response = await api.post(`/auth/google`, { idToken });
+    const response = await ApiService.post(`/auth/google`, { idToken });
     // Let AuthContext handle token storage
     return response.data;
   } catch (error) {
@@ -13,7 +13,7 @@ export const googleLogin = async (idToken) => {
 
 export const login = async (email, password) => {
   try {
-    const { data } = await api.post("/auth/login", { email, password });
+    const { data } = await ApiService.post("/auth/login", { email, password });
     const { token, user } = data;
     if (!token || !user) {
       console.error("Missing token or user in response:", data);
@@ -29,7 +29,7 @@ export const login = async (email, password) => {
 
 export const register = async (userData) => {
   try {
-    const { data } = await api.post("/auth/signup", userData);
+    const { data } = await ApiService.post("/auth/signup", userData);
     const { token, user } = data;
     // Let AuthContext handle token storage
     return {
@@ -53,7 +53,7 @@ export const register = async (userData) => {
 
 export const updateProfile = async (type, data) => {
   try {
-    const response = await api.put(`/users/settings/${type}`, data);
+    const response = await ApiService.put(`/users/settings/${type}`, data);
     return response.data.user;
   } catch (error) {
     throw error.response?.data || new Error("Failed to update profile");
@@ -62,7 +62,7 @@ export const updateProfile = async (type, data) => {
 
 export const deleteAccount = async () => {
   try {
-    await api.delete("/users/profile");
+    await ApiService.delete("/users/profile");
   } catch (error) {
     throw error.response?.data || new Error("Failed to delete account");
   }

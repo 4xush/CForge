@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useRoomContext } from '../context/RoomContext';
-import api from '../config/api';
+import ApiService from '../services/ApiService';
 
 const useCreateRoom = () => {
     const [loading, setLoading] = useState(false);
@@ -14,7 +14,7 @@ const useCreateRoom = () => {
         setSuccess(null);
 
         try {
-            const response = await api.post('/rooms/create', formData);
+            const response = await ApiService.post('/rooms/create', formData);
             setSuccess('Room created successfully!');
             
             // Immediately refresh the room list
