@@ -54,8 +54,8 @@ class ApiService {
     }
 
     // Generic methods
-    async get(url, params = {}) {
-        return this.api.get(url, { params });
+    async get(url, config = {}) {
+        return this.api.get(url, config);
     }
 
     async post(url, data) {

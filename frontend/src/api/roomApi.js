@@ -38,16 +38,6 @@ export const joinRoom = async (inviteCode) => {
     }
 };
 
-export const getLeaderboard = async (roomId, sortBy, limit, page) => {
-    try {
-        const response = await ApiService.get(`${BASE_URL}/${roomId}/leaderboard`, {
-            params: { sortBy, limit, page },
-        });
-        return response.data;
-    } catch (error) {
-        throw error.response?.data || new Error("Failed to fetch leaderboard");
-    }
-};
 
 export const createRoom = async (formData) => {
     try {
@@ -72,7 +62,6 @@ export default {
     generateInviteLink,
     verifyRoomInvite,
     joinRoom,
-    getLeaderboard,
     createRoom,
     updateRoomMembersLeetCodeStats
 };

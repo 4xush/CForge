@@ -12,7 +12,7 @@ import { Spinner } from '../ui/Spinner';
 
 const CodingLeaderboard = () => {
     const { authUser } = useAuthContext();
-    const { currentRoomDetails, currentRoomLoading } = useRoomContext();
+    const { currentRoomDetails, currentRoomLoading, loadCurrentRoomDetails } = useRoomContext();
     const [users, setUsers] = useState([]);
     const [topUsers, setTopUsers] = useState([]);
     const [selectedPlatform, setSelectedPlatform] = useState('leetcode');
@@ -90,6 +90,8 @@ const CodingLeaderboard = () => {
                 toast.success(`${selectedPlatform.charAt(0).toUpperCase() + selectedPlatform.slice(1)} stats update initiated.`);
                 if (result?.updateResults?.success?.length) toast.success(`Updated: ${result.updateResults.success.length}`);
                 if (result?.updateResults?.failed?.length) toast.error(`Failed: ${result.updateResults.failed.length}`);
+                // Refresh room details to update TopBar platform stats
+                await loadCurrentRoomDetails(currentRoomDetails.roomId, true);
                 await fetchLeaderboardData(1, sortBy, limit, selectedPlatform, sortDirection);
             }
         } catch (err) {
@@ -170,19 +172,9 @@ const CodingLeaderboard = () => {
     const closeProfileModal = () => setProfileModal({ isOpen: false, username: null });
 
     const handlePlatformChange = (newPlatform) => {
-        // Clear existing data and show loading state immediately
-        setUsers([]);
-        setTopUsers([]);
-        setTotalCount(0);
-        setError(null);
-        setHighlightedUserId(null);
-        setLoading(true);
-        
-        // Update platform and sort settings
         setSelectedPlatform(newPlatform);
         setSortBy(platformSortOptions[newPlatform][0].value);
-        setSortDirection('desc');
-        setPage(1);
+        setSortDirection('desc'); setPage(1); setHighlightedUserId(null);
     };
 
     if (currentRoomLoading) {
