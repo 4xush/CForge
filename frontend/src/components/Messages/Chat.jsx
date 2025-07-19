@@ -11,6 +11,7 @@ import { format, isToday, isYesterday, isSameYear } from "date-fns"
 import { AlertCircle, RefreshCw, ChevronDown } from "lucide-react"
 import { Spinner } from "../ui/Spinner"
 import toast from "react-hot-toast"
+import webSocketErrorHandler from "../../utils/websocketErrorHandler"
 
 const Chat = () => {
     const { currentRoomDetails } = useRoomContext()

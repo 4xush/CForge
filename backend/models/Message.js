@@ -24,6 +24,10 @@ const messageSchema = new mongoose.Schema(
       type: Boolean, // Indicates if the message was edited
       default: false,
     },
+    editedAt: {
+      type: Date,
+      default: null
+    },
     attachments: {
       type: [String], // Stores an array of attachment URLs
       default: [],

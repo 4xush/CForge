@@ -5,3 +5,5 @@ dev-helpers/
 *.log
 Backup/
 dev-dist/
+docs/
+**/docs/

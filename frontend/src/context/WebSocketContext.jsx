@@ -5,6 +5,7 @@ import { useLocation } from "react-router-dom"
 import { useAuthContext } from "./AuthContext"
 import webSocketService from "../services/WebSocketService"
 import toast from "react-hot-toast"
+import webSocketErrorHandler from "../utils/websocketErrorHandler"
 import PropTypes from "prop-types"
 
 const WebSocketContext = createContext()
@@ -280,6 +281,41 @@ export const WebSocketProvider = ({ children }) => {
       if (!webSocketService.isSocketConnected()) {
         console.warn("Send message cancelled: WebSocket not connected. Attempting reconnect.")
         toast.error("Not connected. Trying to send after reconnecting.")
+        
+        // Add enhanced error handling for WebSocket events
+        const setupEnhancedErrorHandling = () => {
+          if (!webSocketService.socket) return;
+          
+          // Handle message errors with enhanced error handler
+          webSocketService.socket.on("message_error", (error) => {
+            webSocketErrorHandler.handleMessageError(error, () => {
+              // Retry logic can be added here
+              console.log("Message error handled, ready for retry");
+            });
+          });
+          
+          // Handle room errors with enhanced error handler
+          webSocketService.socket.on("room_error", (error) => {
+            webSocketErrorHandler.handleRoomError(error, () => {
+              // Retry room join if needed
+              if (error.roomId) {
+                setTimeout(() => {
+                  webSocketService.joinRoom(error.roomId);
+                }, 1000);
+              }
+            });
+          });
+          
+          // Handle rate limit status updates
+          webSocketService.socket.on("rate_limit_status", ({ action, status }) => {
+            webSocketErrorHandler.showRateLimitStatus(status, action);
+          });
+        };
+        
+        // Setup enhanced error handling when socket connects
+        if (webSocketService.socket && webSocketService.socket.connected) {
+          setupEnhancedErrorHandling();
+        }
         const token = localStorage.getItem("app-token")
         if (token) {
           connectWithRetry(token, authUser._id)

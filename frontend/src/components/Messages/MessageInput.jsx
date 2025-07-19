@@ -4,6 +4,7 @@ import { useAuthContext } from "../../context/AuthContext"
 import { useMessageContext } from "../../context/MessageContext"
 import { useWebSocket } from "../../context/WebSocketContext"
 import toast from "react-hot-toast"
+import webSocketErrorHandler from "../../utils/websocketErrorHandler"
 import { Send, X, WifiOff } from "lucide-react"
 import PropTypes from "prop-types"
 
@@ -139,7 +140,7 @@ const MessageInput = ({
             }, 3000)
         } catch (error) {
             console.error("Error sending message:", error)
-            toast.error("Failed to send message")
+            webSocketErrorHandler.handleMessageError({ error: "Failed to send message" })
         } finally {
             setSending(false)
         }

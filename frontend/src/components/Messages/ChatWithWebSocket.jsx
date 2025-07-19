@@ -6,6 +6,7 @@ import { useAuthContext } from "../../context/AuthContext"
 import { AlertCircle } from "lucide-react"
 import Chat from "./Chat"
 import { Spinner } from "../ui/Spinner"
+import webSocketErrorHandler from "../../utils/websocketErrorHandler"
 import toast from "react-hot-toast"
 import webSocketService from "../../services/WebSocketService" // FIXED: Direct import
 
@@ -94,7 +95,12 @@ const ChatWithWebSocket = () => {
 
   const handleRoomError = useCallback(
     (error) => {
-      // console.error("ChatWithWebSocket: Room error event:", error)
+      webSocketErrorHandler.handleRoomError(error, () => {
+        // Retry room join after rate limit expires
+        if (currentRoomId && directlyConnected) {
+          setTimeout(() => joinRoom(currentRoomId), 1000);
+        }
+      });
       if (error.roomId === currentRoomId) {
         toast.error(`Error with room ${currentRoomId}: ${error.message}`)
       }
