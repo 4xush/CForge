@@ -146,6 +146,7 @@ app.use('/api/rooms/admin', adminRoomRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/contests', contestsRoutes);
 app.use('/api/leetcode-tracker', problemTrackerRoutes);
+app.use("/api/notifications", require("./routes/notificationRoutes"));
 app.use('/api', publicRoutes);
 
 

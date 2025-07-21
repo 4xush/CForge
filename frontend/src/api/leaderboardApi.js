@@ -23,7 +23,10 @@ export const getLeaderboard = async (roomId, sortBy, limit, page, platform = 'le
       const response = await ApiService.get(`/rooms/${roomId}/leaderboard`, {
         params: { sortBy, limit, page, platform }
       });
+<<<<<<< Updated upstream
       
+=======
+>>>>>>> Stashed changes
       return response.data;
     } catch (error) {
       throw error.response?.data || new Error("Failed to fetch leaderboard");

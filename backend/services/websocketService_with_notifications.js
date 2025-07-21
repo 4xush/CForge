@@ -4,8 +4,9 @@ const Room = require('../models/Room');
 const mongoose = require('mongoose');
 const { encrypt, decrypt } = require('../utils/cryptoUtils');
 const jwt = require('jsonwebtoken');
-const notificationService = require("./notificationService");
 const winston = require('winston');
+const WebSocketRateLimit = require('../utils/websocketRateLimit');
+const MessageValidator = require('../utils/messageValidator');
 
 const logger = winston.createLogger({
     level: 'info',
@@ -20,19 +21,28 @@ if (process.env.NODE_ENV !== 'production') {
     logger.add(new winston.transports.Console({ format: winston.format.simple() }));
 }
 
-class WebSocketService {
+class EnhancedWebSocketService {
     constructor() {
         this.io = null;
         this.connectedUsers = new Map(); // socketId -> { userId, username, rooms: Set() }
         this.userSockets = new Map(); // userId -> Set of socketIds
         this.roomMembers = new Map(); // roomId -> Set of userIds
+        
+        // Initialize rate limiter and message validator
+        this.rateLimiter = new WebSocketRateLimit();
+        this.messageValidator = new MessageValidator();
+        
+        // Memory cleanup interval - run every 10 minutes
+        this.cleanupInterval = setInterval(() => {
+            this.cleanupStaleConnections();
+        }, 600000);
     }
 
     initialize(server) {
         try {
             this.io = socketIO(server, {
                 cors: {
-                    origin: process.env.FRONTEND_URL ,
+                    origin: process.env.FRONTEND_URL,
                     methods: ["GET", "POST"],
                     credentials: true,
                     allowedHeaders: ["Authorization"]
@@ -44,7 +54,7 @@ class WebSocketService {
                 allowEIO3: true
             });
 
-            logger.info('Socket.IO instance created successfully');
+            logger.info('Enhanced Socket.IO instance created successfully');
 
             // Authentication middleware
             this.io.use((socket, next) => {
@@ -86,7 +96,8 @@ class WebSocketService {
                 this.connectedUsers.set(socket.id, {
                     userId,
                     username,
-                    rooms: new Set()
+                    rooms: new Set(),
+                    connectedAt: Date.now()
                 });
 
                 // Track user's sockets
@@ -95,10 +106,22 @@ class WebSocketService {
                 }
                 this.userSockets.get(userId).add(socket.id);
 
-                // Handle room joining
+                // Handle room joining with rate limiting
                 socket.on('join_room', async ({ roomId, userId: requestUserId }) => {
                     try {
                         logger.info(`Join room request: ${roomId} from user ${userId} (socket: ${socket.id})`);
+
+                        // Rate limiting check
+                        const rateLimitCheck = this.rateLimiter.checkRateLimit(userId, 'roomJoins');
+                        if (!rateLimitCheck.allowed) {
+                            logger.warn(`Rate limit exceeded for join_room: ${userId}`);
+                            return socket.emit('room_error', { 
+                                error: rateLimitCheck.reason,
+                                retryAfter: rateLimitCheck.retryAfter,
+                                roomId,
+                                type: 'rate_limit'
+                            });
+                        }
 
                         if (!roomId || !requestUserId) {
                             logger.error('Join room failed: Missing roomId or userId');
@@ -139,7 +162,7 @@ class WebSocketService {
                             });
                         }
 
-                        // Join the socket to the room (always do this for reconnections)
+                        // Join the socket to the room
                         await socket.join(roomId);
                         
                         // Update our tracking
@@ -157,7 +180,7 @@ class WebSocketService {
                         logger.info(`User ${username} (${userId}) successfully joined room ${roomId}`);
                         socket.emit('room_joined', { roomId });
 
-                        // Notify other users in the room (optional)
+                        // Notify other users in the room
                         socket.to(roomId).emit('user_joined_room', { 
                             userId, 
                             username, 
@@ -174,17 +197,46 @@ class WebSocketService {
                     }
                 });
 
-                // Handle message sending
+                // Handle message sending with rate limiting and validation
                 socket.on('send_message', async ({ roomId, message }) => {
                     try {
                         logger.info(`Send message request to room ${roomId} from user ${userId}`);
+
+                        // Rate limiting check
+                        const rateLimitCheck = this.rateLimiter.checkRateLimit(userId, 'messages');
+                        if (!rateLimitCheck.allowed) {
+                            logger.warn(`Rate limit exceeded for send_message: ${userId}`);
+                            return socket.emit('message_error', { 
+                                error: rateLimitCheck.reason,
+                                retryAfter: rateLimitCheck.retryAfter,
+                                tempId: message?.tempId,
+                                type: 'rate_limit'
+                            });
+                        }
 
                         if (!roomId || !message || !message.content || !message.sender) {
                             logger.error('Send message failed: Invalid message format');
                             return socket.emit('message_error', { 
                                 error: 'Invalid message format',
-                                tempId: message.tempId 
+                                tempId: message?.tempId 
                             });
+                        }
+
+                        // Message validation
+                        const validation = this.messageValidator.validateMessage(message);
+                        if (!validation.valid) {
+                            logger.warn(`Message validation failed for user ${userId}:`, validation.errors);
+                            return socket.emit('message_error', { 
+                                error: 'Message validation failed',
+                                details: validation.errors,
+                                tempId: message.tempId,
+                                type: 'validation'
+                            });
+                        }
+
+                        // Log warnings if any
+                        if (validation.warnings.length > 0) {
+                            logger.warn(`Message validation warnings for user ${userId}:`, validation.warnings);
                         }
 
                         // Verify user is in the room
@@ -207,8 +259,9 @@ class WebSocketService {
                             });
                         }
 
-                        // Encrypt the message content
-                        const { encryptedData, iv } = encrypt(message.content);
+                        // Sanitize and encrypt the message content
+                        const sanitizedContent = this.messageValidator.sanitizeContent(message.content);
+                        const { encryptedData, iv } = encrypt(sanitizedContent);
                         
                         // Create and save the message
                         const newMessage = new Message({
@@ -241,47 +294,42 @@ class WebSocketService {
                         // Broadcast to all users in the room
                         this.io.to(roomId).emit('receive_message', decryptedMessage);
                         
-                        // Emit notification update event to trigger bell refresh
-                        this.io.to(roomId).emit("notification_count_update", {
-                            type: "new_message",
-                            roomId: roomId
-                        });
-                        
                         // Send confirmation to sender
                         socket.emit('message_sent', {
                             success: true,
                             messageId: savedMessage._id,
-                            tempId: message.tempId
+                            tempId: message.tempId,
+                            warnings: validation.warnings
                         });
 
                         logger.info(`Message ${savedMessage._id} sent successfully to room ${roomId}`);
-
-                        // Create notification for new message
-                        try {
-                            await notificationService.createMessageNotification({
-                                roomId,
-                                senderId: userId,
-                                messageContent: sanitizedContent
-                            });
-                            logger.info(`Notification created for message ${savedMessage._id}`);
-                        } catch (notifError) {
-                            logger.warn(`Failed to create message notification: ${notifError.message}`);
-                        }
 
                     } catch (error) {
                         logger.error(`Error sending message to room ${roomId}: ${error.message}`);
                         socket.emit('message_error', {
                             error: 'Failed to send message',
                             details: error.message,
-                            tempId: message.tempId
+                            tempId: message?.tempId
                         });
                     }
                 });
 
-                // Handle message editing
+                // Handle message editing with rate limiting and validation
                 socket.on('edit_message', async ({ roomId, messageId, newContent }) => {
                     try {
                         logger.info(`Edit message request: ${messageId} in room ${roomId} from user ${userId}`);
+
+                        // Rate limiting check
+                        const rateLimitCheck = this.rateLimiter.checkRateLimit(userId, 'messageEdits');
+                        if (!rateLimitCheck.allowed) {
+                            logger.warn(`Rate limit exceeded for edit_message: ${userId}`);
+                            return socket.emit('message_error', {
+                                error: rateLimitCheck.reason,
+                                retryAfter: rateLimitCheck.retryAfter,
+                                messageId,
+                                type: 'rate_limit'
+                            });
+                        }
 
                         if (!roomId || !messageId || !newContent || newContent.trim() === '') {
                             return socket.emit('message_error', {
@@ -314,6 +362,18 @@ class WebSocketService {
                             });
                         }
 
+                        // Validate edit
+                        const validation = this.messageValidator.validateEdit(message, newContent);
+                        if (!validation.valid) {
+                            logger.warn(`Message edit validation failed for user ${userId}:`, validation.errors);
+                            return socket.emit('message_error', {
+                                error: 'Edit validation failed',
+                                details: validation.errors,
+                                messageId,
+                                type: 'validation'
+                            });
+                        }
+
                         // Get the room
                         const room = await Room.findById(roomId);
                         if (!room) {
@@ -323,8 +383,9 @@ class WebSocketService {
                             });
                         }
 
-                        // Encrypt the new content
-                        const { encryptedData, iv } = encrypt(newContent);
+                        // Sanitize and encrypt the new content
+                        const sanitizedContent = this.messageValidator.sanitizeContent(newContent);
+                        const { encryptedData, iv } = encrypt(sanitizedContent);
                         
                         // Update the message
                         message.content = encryptedData;
@@ -344,7 +405,10 @@ class WebSocketService {
                         this.io.to(roomId).emit('message_updated', decryptedMessage);
                         
                         // Send confirmation
-                        socket.emit('edit_success', { messageId });
+                        socket.emit('edit_success', { 
+                            messageId,
+                            warnings: validation.warnings 
+                        });
 
                         logger.info(`Message ${messageId} edited successfully in room ${roomId}`);
 
@@ -395,6 +459,16 @@ class WebSocketService {
 
                     } catch (error) {
                         logger.error(`Error leaving room ${roomId}: ${error.message}`);
+                    }
+                });
+
+                // Handle rate limit status request
+                socket.on('get_rate_limit_status', ({ action }) => {
+                    try {
+                        const status = this.rateLimiter.getRateLimitStatus(userId, action);
+                        socket.emit('rate_limit_status', { action, status });
+                    } catch (error) {
+                        logger.error(`Error getting rate limit status: ${error.message}`);
                     }
                 });
 
@@ -463,18 +537,41 @@ class WebSocketService {
                 logger.error(`Engine connection error: ${err.req?.url} - ${err.message}`);
             });
 
-<<<<<<< Updated upstream
-            logger.info('WebSocket service initialized successfully');
-=======
-            // Connect notification service
-            notificationService.setWebSocketService(this);
-            logger.info("Notification service connected to WebSocket");
             logger.info('Enhanced WebSocket service initialized successfully');
->>>>>>> Stashed changes
 
         } catch (error) {
-            logger.error(`Failed to initialize WebSocket service: ${error.message}`);
+            logger.error(`Failed to initialize Enhanced WebSocket service: ${error.message}`);
             throw error;
+        }
+    }
+
+    /**
+     * Clean up stale connections and memory
+     */
+    cleanupStaleConnections() {
+        const now = Date.now();
+        const staleThreshold = 24 * 60 * 60 * 1000; // 24 hours
+        let cleanedConnections = 0;
+        let cleanedRooms = 0;
+
+        // Clean up stale user connections
+        for (const [socketId, connection] of this.connectedUsers.entries()) {
+            if (now - connection.connectedAt > staleThreshold) {
+                this.connectedUsers.delete(socketId);
+                cleanedConnections++;
+            }
+        }
+
+        // Clean up empty room members
+        for (const [roomId, members] of this.roomMembers.entries()) {
+            if (members.size === 0) {
+                this.roomMembers.delete(roomId);
+                cleanedRooms++;
+            }
+        }
+
+        if (cleanedConnections > 0 || cleanedRooms > 0) {
+            logger.info(`Memory cleanup: removed ${cleanedConnections} stale connections and ${cleanedRooms} empty rooms`);
         }
     }
 
@@ -505,9 +602,47 @@ class WebSocketService {
 
         return {
             socketCount: userSockets.size,
-            rooms: Array.from(rooms)
+            rooms: Array.from(rooms),
+            rateLimitStatus: {
+                messages: this.rateLimiter.getRateLimitStatus(userId, 'messages'),
+                roomJoins: this.rateLimiter.getRateLimitStatus(userId, 'roomJoins'),
+                messageEdits: this.rateLimiter.getRateLimitStatus(userId, 'messageEdits')
+            }
         };
+    }
+
+    // Get service statistics
+    getServiceStats() {
+        return {
+            connectedUsers: this.connectedUsers.size,
+            totalRooms: this.roomMembers.size,
+            rateLimiter: this.rateLimiter.getStats(),
+            messageValidator: this.messageValidator.getValidationInfo()
+        };
+    }
+
+    // Admin function to reset rate limits
+    resetUserRateLimit(userId, action = null) {
+        return this.rateLimiter.resetUserLimits(userId, action);
+    }
+
+    // Cleanup and destroy
+    destroy() {
+        if (this.cleanupInterval) {
+            clearInterval(this.cleanupInterval);
+            this.cleanupInterval = null;
+        }
+        
+        if (this.rateLimiter) {
+            this.rateLimiter.destroy();
+        }
+        
+        this.connectedUsers.clear();
+        this.userSockets.clear();
+        this.roomMembers.clear();
+        
+        logger.info('Enhanced WebSocket service destroyed');
     }
 }
 
-module.exports = new WebSocketService();
+module.exports = new EnhancedWebSocketService();

@@ -10,6 +10,7 @@ import { RoomProvider } from "./context/RoomContext";
 import { AuthProvider, useAuthContext } from "./context/AuthContext";
 import { MessageProvider } from "./context/MessageContext";
 import { WebSocketProvider } from "./context/WebSocketContext";
+import { NotificationProvider } from "./context/NotificationContext";
 import { ReminderProvider } from "./context/ReminderContext";
 import { Toaster } from "react-hot-toast";
 import Layout from "./components/Layout/Layout.jsx";
@@ -189,7 +190,9 @@ const App = () => {
                         <ErrorBoundary>
                           <MessageProvider>
                             <WebSocketProvider>
+        <NotificationProvider>
                               <RoomChat />
+        </NotificationProvider>
                             </WebSocketProvider>
                           </MessageProvider>
                         </ErrorBoundary>

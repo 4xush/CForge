@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import NotificationBell from "../Notifications/NotificationBell";
 import {
   MoreVertical,
   LogOut,
@@ -188,9 +189,13 @@ const TopBar = ({ roomId }) => {
     return (
       <div className="flex flex-row items-center space-x-2 text-[10px] sm:text-xs">
         <div className="flex items-center text-gray-400">
+          {/* Notification Bell */}
+
           <Clock size={10} className="mr-1 flex-shrink-0" />
           <span className="mr-1 whitespace-nowrap">Last updated:</span>
         </div>
+        {/* Notification Bell */}
+
         <div className="flex items-center flex-shrink-0">
           <span className="text-blue-400 mr-1">LC:</span>
           <span
@@ -202,6 +207,8 @@ const TopBar = ({ roomId }) => {
           </span>
           {getStatusBadge(leetcodeUpdate?.updateStatus)}
         </div>
+        {/* Notification Bell */}
+
         <div className="flex items-center flex-shrink-0">
           <span className="text-orange-400 mr-1">CF:</span>
           <span
@@ -215,6 +222,8 @@ const TopBar = ({ roomId }) => {
         </div>
         {/* Warning message - hidden on mobile, shown on larger screens */}
         <div className="hidden lg:flex items-center">
+          {/* Notification Bell */}
+
           <AlertTriangle size={12} className="mr-1 flex-shrink-0" />
           <span className="text-red-400 text-xsm whitespace-nowrap">
             Leaderboard updates are restricted to one refresh every two days.
@@ -250,7 +259,9 @@ const TopBar = ({ roomId }) => {
             {getPlatformUpdateStatus()}
           </div>
         </div>
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 flex items-center space-x-1">
+          {/* Notification Bell */}
+          <NotificationBell />
           <button
             onClick={toggleMenu}
             className={`text-gray-300 p-1 hover:bg-gray-700 rounded transition-colors${
@@ -285,6 +296,7 @@ const TopBar = ({ roomId }) => {
                 className="px-4 py-3 hover:bg-gray-600 cursor-pointer text-red-400 flex items-center text-sm transition-colors border-t border-gray-600"
                 onClick={handleLeaveRoomClick}
               >
+                {/* Notification Bell */}
                 <LogOut size={16} className="mr-3 flex-shrink-0" />
                 Leave Room
               </li>
