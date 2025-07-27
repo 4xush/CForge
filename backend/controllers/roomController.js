@@ -1,5 +1,7 @@
 const Room = require("../models/Room");
 const User = require("../models/User");
+const LastSeen = require("../models/LastSeen");
+const Message = require("../models/Message");
 const shortid = require('shortid');
 const { getLeetCodeStats } = require("../services/leetcode/leetcodeService");
 const { getCodeforcesStats } = require('../services/codeforces/codeforcesService');
@@ -15,10 +17,61 @@ exports.getAllRoomsForUser = async (req, res) => {
     const userId = req.user._id;
     const rooms = await Room.find({ members: userId })
       .select("roomId name description isPublic members admins maxMembers createdAt")
-      .lean() 
+      .lean()
       .exec();
 
-    res.json({ rooms });
+    const roomsWithUnreadCount = await Promise.all(
+      rooms.map(async (room) => {
+
+        const lastSeen = await LastSeen.findOne({ user: userId, room: room._id });
+
+        let unreadCount = 0;
+
+        const lastMessage = await Message.findOne({ room: room._id })
+          .sort({ createdAt: -1 })
+          .lean();
+
+        if (lastSeen && lastSeen.lastSeenMessage) {
+
+          if (lastMessage && lastSeen.lastSeenMessage.toString() === lastMessage._id.toString()) {
+            unreadCount = 0;
+          }
+          else {
+            const lastSeenMessage = await Message.findById(lastSeen.lastSeenMessage);
+
+            if (lastSeenMessage) {
+              unreadCount = await Message.countDocuments({
+                room: room._id,
+                createdAt: { $gt: lastSeenMessage.createdAt },
+                sender: { $ne: userId } // ← ADD THIS: Exclude messages sent by the user themselves
+              });
+            } else {
+              unreadCount = await Message.countDocuments({
+                room: room._id,
+                sender: { $ne: userId } // ← ADD THIS: Exclude user's own messages
+              });
+            }
+          }
+        } else {
+          unreadCount = await Message.countDocuments({
+            room: room._id,
+            sender: { $ne: userId } // ← ADD THIS: Exclude user's own messages
+          });
+        }
+
+        return {
+          ...room,
+          unreadCount,
+          lastMessage: lastMessage ? {
+            content: lastMessage.content,
+            createdAt: lastMessage.createdAt,
+            sender: lastMessage.sender
+          } : null
+        };
+      })
+    );
+
+    res.json({ rooms: roomsWithUnreadCount });
   } catch (error) {
     console.error("Error fetching user's rooms:", error);
     res
@@ -49,11 +102,43 @@ exports.createRoom = async (req, res) => {
     res
       .status(201)
       .json({ message: "Room created successfully", room: newRoom });
-    // console.log("Room created with ID:", newRoomId);
   } catch (error) {
     res
       .status(500)
       .json({ message: "Error creating room", error: error.message });
+  }
+};
+
+exports.updateLastSeenMessage = async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const userId = req.user._id;
+
+    const room = await Room.findOne({ roomId });
+    if (!room) {
+      return res.status(404).json({ message: "Room not found" });
+    }
+
+    if (!isMember(room, userId)) {
+      return res.status(403).json({ message: "You are not a member of this room" });
+    }
+
+    const lastMessage = await Message.findOne({ room: room._id }).sort({ createdAt: -1 });
+
+    if (!lastMessage) {
+      return res.status(200).json({ message: "No messages in the room to mark as seen." });
+    }
+
+    await LastSeen.findOneAndUpdate(
+      { user: userId, room: room._id },
+      { lastSeenMessage: lastMessage._id },
+      { upsert: true, new: true }
+    );
+
+    res.status(200).json({ message: "Last seen message updated successfully." });
+  } catch (error) {
+    console.error("Error updating last seen message:", error);
+    res.status(500).json({ message: "Error updating last seen message", error: error.message });
   }
 };
 
@@ -295,7 +380,7 @@ exports.updateRoomMembersLeetCodeStats = async (req, res) => {
     if (lastUpdate) {
       const twoDaysAgo = new Date();
       twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-      
+
       if (lastUpdate > twoDaysAgo) {
         return res.status(200).json({
           message: "LeetCode stats were recently updated",
@@ -444,7 +529,7 @@ exports.updateRoomMembersCodeforcesStats = async (req, res) => {
     if (lastUpdate) {
       const twoDaysAgo = new Date();
       twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-      
+
       if (lastUpdate > twoDaysAgo) {
         return res.status(200).json({
           message: "Codeforces stats were recently updated",

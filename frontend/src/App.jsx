@@ -111,139 +111,142 @@ const App = () => {
     <ErrorBoundary>
       <Router>
         <AuthProvider>
-          <ReminderProvider>
-            <RoomProvider>
-              <Toaster
-                position="top-right"
-                reverseOrder={false}
-                toastOptions={{
-                  duration: 5000,
-                  style: {
-                    background: "#333",
-                    color: "#fff",
-                  },
-                }}
-              />
-            <Suspense
-              fallback={
-                <div className="fixed inset-0 flex items-center justify-center bg-gray-900">
-                  <FullScreenLoader />
-                </div>
-              }
-            >
-              <Routes>
-                {/* Public routes */}
-                <Route path="/signup" element={<SignupPage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/logout" element={<Logout />} />
-                <Route path="/" element={<AuthLanding />} />
-                <Route path="/about" element={<AboutCForge />} />
-                <Route path="/reviews" element={<ReviewsPageWrapper />} />
-                <Route path="/404" element={<NotFoundPage />} />
-
-                {/* Protected routes inside layout */}
-                <Route element={<Layout />}>
-                  <Route path="/contest-central" element={<ContestsPage />} />
-                  <Route
-                    path="/u/:username"
-                    element={
-                      <ErrorBoundary>
-                        <PublicUserProfile />
-                      </ErrorBoundary>
-                    }
-                  />
-                  <Route
-                    path="/dashboard"
-                    element={
-                      <PrivateRoute>
-                        <ErrorBoundary>
-                          <DashboardPage />
-                        </ErrorBoundary>
-                      </PrivateRoute>
-                    }
-                  />
-                  <Route
-                    path="/rooms/"
-                    element={
-                      <PrivateRoute>
-                        <ErrorBoundary>
-                          <RoomPage />
-                        </ErrorBoundary>
-                      </PrivateRoute>
-                    }
-                  />
-                  <Route
-                    path="/rooms/:roomId/leaderboard"
-                    element={
-                      <PrivateRoute>
-                        <ErrorBoundary>
-                          <RoomLeaderboard />
-                        </ErrorBoundary>
-                      </PrivateRoute>
-                    }
-                  />
-                  <Route
-                    path="/rooms/:roomId/chat"
-                    element={
-                      <PrivateRoute>
-                        <ErrorBoundary>
-                          <MessageProvider>
-                            <WebSocketProvider>
-                              <RoomChat />
-                            </WebSocketProvider>
-                          </MessageProvider>
-                        </ErrorBoundary>
-                      </PrivateRoute>
-                    }
-                  />
-                  <Route
-                    path="/settings"
-                    element={
-                      <PrivateRoute>
-                        <ErrorBoundary>
-                          <Settings />
-                        </ErrorBoundary>
-                      </PrivateRoute>
-                    }
-                  />
-                  <Route
-                    path="/leetcode-tracker"
-                    element={
-                      <PrivateRoute>
-                        <ErrorBoundary>
-                          <ProblemTrackerPage />
-                        </ErrorBoundary>
-                      </PrivateRoute>
-                    }
-                  />
-                  <Route
-                    path="/help"
-                    element={
-                      <PrivateRoute>
-                        <ErrorBoundary>
-                          <HelpFAQ />
-                        </ErrorBoundary>
-                      </PrivateRoute>
-                    }
-                  />
-                </Route>
-
-                {/* Invite route (public) */}
-                <Route
-                  path="/rooms/join/:inviteCode"
-                  element={
-                    <ErrorBoundary>
-                      <RoomInviteHandler />
-                    </ErrorBoundary>
-                  }
+          <WebSocketProvider>
+            <ReminderProvider>
+              <RoomProvider>
+                <Toaster
+                  position="top-right"
+                  reverseOrder={false}
+                  toastOptions={{
+                    duration: 5000,
+                    style: {
+                      background: "#333",
+                      color: "#fff",
+                    },
+                  }}
                 />
+                <Suspense
+                  fallback={
+                    <div className="fixed inset-0 flex items-center justify-center bg-gray-900">
+                      <FullScreenLoader />
+                    </div>
+                  }
+                >
+                  <Routes>
+                    {/* Public routes */}
+                    <Route path="/signup" element={<SignupPage />} />
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/logout" element={<Logout />} />
+                    <Route path="/" element={<AuthLanding />} />
+                    <Route path="/about" element={<AboutCForge />} />
+                    <Route path="/reviews" element={<ReviewsPageWrapper />} />
+                    <Route path="/404" element={<NotFoundPage />} />
 
-                {/* Fallback */}
-                <Route path="*" element={<Navigate to="/404" replace />} />
-              </Routes>
-            </Suspense>
-            </RoomProvider>
-          </ReminderProvider>
+                    {/* Protected routes inside layout */}
+                    <Route element={<Layout />}>
+                      <Route
+                        path="/contest-central"
+                        element={<ContestsPage />}
+                      />
+                      <Route
+                        path="/u/:username"
+                        element={
+                          <ErrorBoundary>
+                            <PublicUserProfile />
+                          </ErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/dashboard"
+                        element={
+                          <PrivateRoute>
+                            <ErrorBoundary>
+                              <DashboardPage />
+                            </ErrorBoundary>
+                          </PrivateRoute>
+                        }
+                      />
+                      <Route
+                        path="/rooms/"
+                        element={
+                          <PrivateRoute>
+                            <ErrorBoundary>
+                              <RoomPage />
+                            </ErrorBoundary>
+                          </PrivateRoute>
+                        }
+                      />
+                      <Route
+                        path="/rooms/:roomId/leaderboard"
+                        element={
+                          <PrivateRoute>
+                            <ErrorBoundary>
+                              <RoomLeaderboard />
+                            </ErrorBoundary>
+                          </PrivateRoute>
+                        }
+                      />
+                      <Route
+                        path="/rooms/:roomId/chat"
+                        element={
+                          <PrivateRoute>
+                            <ErrorBoundary>
+                              <MessageProvider>
+                                <RoomChat />
+                              </MessageProvider>
+                            </ErrorBoundary>
+                          </PrivateRoute>
+                        }
+                      />
+                      <Route
+                        path="/settings"
+                        element={
+                          <PrivateRoute>
+                            <ErrorBoundary>
+                              <Settings />
+                            </ErrorBoundary>
+                          </PrivateRoute>
+                        }
+                      />
+                      <Route
+                        path="/leetcode-tracker"
+                        element={
+                          <PrivateRoute>
+                            <ErrorBoundary>
+                              <ProblemTrackerPage />
+                            </ErrorBoundary>
+                          </PrivateRoute>
+                        }
+                      />
+                      <Route
+                        path="/help"
+                        element={
+                          <PrivateRoute>
+                            <ErrorBoundary>
+                              <HelpFAQ />
+                            </ErrorBoundary>
+                          </PrivateRoute>
+                        }
+                      />
+                    </Route>
+
+                    {/* Invite route (public) */}
+                    <Route
+                      path="/rooms/join/:inviteCode"
+                      element={
+                        <ErrorBoundary>
+                          <RoomInviteHandler />
+                        </ErrorBoundary>
+                      }
+                    />
+
+                    {/* Fallback */}
+                    <Route path="*" element={<Navigate to="/404" replace />} />
+                  </Routes>
+                </Suspense>
+              </RoomProvider>
+            </ReminderProvider>
+          </WebSocketProvider>
         </AuthProvider>
       </Router>
     </ErrorBoundary>

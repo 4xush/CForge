@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Message = require("../models/Message");
 const Room = require("../models/Room");
+const LastSeen = require("../models/LastSeen");
 const { encrypt, decrypt } = require("../utils/cryptoUtils");
 
 // Send Message with Encryption
@@ -26,6 +27,13 @@ exports.sendMessage = async (req, res) => {
 
     await message.save();
 
+    await LastSeen.findOneAndUpdate(
+      // { user: senderId, room: roomId },
+      { user: senderId, room: room._id },
+      { lastSeenMessage: message._id },
+      { upsert: true, new: true }
+    );
+
     // Fix: Remove duplicate 'message' property
     res.status(201).json({
       success: true,
@@ -44,6 +52,7 @@ exports.getMessages = async (req, res) => {
   try {
     const { roomId } = req.params;
     const { lastMessageId = null, limit = 50 } = req.query;
+    const userId = req.user._id;
 
     // Validate roomId
     if (!roomId || !mongoose.Types.ObjectId.isValid(roomId)) {
@@ -107,6 +116,8 @@ exports.getMessages = async (req, res) => {
       }
     });
 
+    const lastSeen = await LastSeen.findOne({ user: userId, room: roomId });
+
     // Add total count for initial load (optional)
     let totalCount;
     if (!lastMessageId) {
@@ -116,6 +127,7 @@ exports.getMessages = async (req, res) => {
     res.json({
       messages: decryptedMessages,
       hasMore,
+      lastSeenMessageId: lastSeen ? lastSeen.lastSeenMessage : null,
       ...(totalCount !== undefined && { totalCount }),
     });
   } catch (error) {

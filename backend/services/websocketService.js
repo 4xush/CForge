@@ -27,11 +27,11 @@ class EnhancedWebSocketService {
         this.connectedUsers = new Map(); // socketId -> { userId, username, rooms: Set() }
         this.userSockets = new Map(); // userId -> Set of socketIds
         this.roomMembers = new Map(); // roomId -> Set of userIds
-        
+
         // Initialize rate limiter and message validator
         this.rateLimiter = new WebSocketRateLimit();
         this.messageValidator = new MessageValidator();
-        
+
         // Memory cleanup interval - run every 10 minutes
         this.cleanupInterval = setInterval(() => {
             this.cleanupStaleConnections();
@@ -63,7 +63,7 @@ class EnhancedWebSocketService {
                     logger.error('Socket authentication failed: No token provided');
                     return next(new Error('Authentication token required'));
                 }
-                
+
                 try {
                     const decoded = jwt.verify(token, process.env.JWT_SECRET);
                     const userId = decoded.userId || decoded._id || decoded.id;
@@ -71,13 +71,13 @@ class EnhancedWebSocketService {
                         logger.error('Invalid token: No user ID found');
                         return next(new Error('Invalid token: No user ID'));
                     }
-                    
+
                     socket.user = {
                         _id: userId.toString(),
                         username: decoded.username,
                         email: decoded.email
                     };
-                    
+
                     logger.info(`Socket authenticated for user: ${socket.user.username} (${socket.user._id})`);
                     next();
                 } catch (error) {
@@ -89,7 +89,7 @@ class EnhancedWebSocketService {
             this.io.on('connection', (socket) => {
                 const userId = socket.user._id;
                 const username = socket.user.username;
-                
+
                 logger.info(`User connected: ${username} (${userId}) - Socket: ${socket.id}`);
 
                 // Track this socket connection
@@ -115,7 +115,7 @@ class EnhancedWebSocketService {
                         const rateLimitCheck = this.rateLimiter.checkRateLimit(userId, 'roomJoins');
                         if (!rateLimitCheck.allowed) {
                             logger.warn(`Rate limit exceeded for join_room: ${userId}`);
-                            return socket.emit('room_error', { 
+                            return socket.emit('room_error', {
                                 error: rateLimitCheck.reason,
                                 retryAfter: rateLimitCheck.retryAfter,
                                 roomId,
@@ -125,17 +125,17 @@ class EnhancedWebSocketService {
 
                         if (!roomId || !requestUserId) {
                             logger.error('Join room failed: Missing roomId or userId');
-                            return socket.emit('room_error', { 
+                            return socket.emit('room_error', {
                                 error: 'Room ID and User ID are required',
-                                roomId 
+                                roomId
                             });
                         }
 
                         if (socket.user._id !== requestUserId.toString()) {
                             logger.error(`Join room failed: User ID mismatch. Socket user: ${socket.user._id}, Request user: ${requestUserId}`);
-                            return socket.emit('room_error', { 
+                            return socket.emit('room_error', {
                                 error: 'User ID mismatch',
-                                roomId 
+                                roomId
                             });
                         }
 
@@ -143,28 +143,28 @@ class EnhancedWebSocketService {
                         const room = await Room.findById(roomId);
                         if (!room) {
                             logger.error(`Join room failed: Room ${roomId} not found`);
-                            return socket.emit('room_error', { 
+                            return socket.emit('room_error', {
                                 error: 'Room not found',
-                                roomId 
+                                roomId
                             });
                         }
 
                         // Check if user is a member of the room
-                        const isMember = room.members.some(member => 
+                        const isMember = room.members.some(member =>
                             member.toString() === userId.toString()
                         );
 
                         if (!isMember) {
                             logger.error(`Join room failed: User ${userId} is not a member of room ${roomId}`);
-                            return socket.emit('room_error', { 
+                            return socket.emit('room_error', {
                                 error: 'Not authorized to join this room',
-                                roomId 
+                                roomId
                             });
                         }
 
                         // Join the socket to the room
                         await socket.join(roomId);
-                        
+
                         // Update our tracking
                         const userConnection = this.connectedUsers.get(socket.id);
                         if (userConnection) {
@@ -181,18 +181,26 @@ class EnhancedWebSocketService {
                         socket.emit('room_joined', { roomId });
 
                         // Notify other users in the room
-                        socket.to(roomId).emit('user_joined_room', { 
-                            userId, 
-                            username, 
-                            roomId 
+                        socket.to(roomId).emit('user_joined_room', {
+                            userId,
+                            username,
+                            roomId
+                        });
+
+                        this.io.to(roomId).emit('room_notification', {
+                            message: `${username} has joined the room`,
+                            type: 'user_joined',
+                            roomId: roomId,
+                            user: { userId, username },
+                            timestamp: new Date()
                         });
 
                     } catch (error) {
                         logger.error(`Error joining room ${roomId}: ${error.message}`);
-                        socket.emit('room_error', { 
+                        socket.emit('room_error', {
                             error: 'Failed to join room',
                             details: error.message,
-                            roomId 
+                            roomId
                         });
                     }
                 });
@@ -206,7 +214,7 @@ class EnhancedWebSocketService {
                         const rateLimitCheck = this.rateLimiter.checkRateLimit(userId, 'messages');
                         if (!rateLimitCheck.allowed) {
                             logger.warn(`Rate limit exceeded for send_message: ${userId}`);
-                            return socket.emit('message_error', { 
+                            return socket.emit('message_error', {
                                 error: rateLimitCheck.reason,
                                 retryAfter: rateLimitCheck.retryAfter,
                                 tempId: message?.tempId,
@@ -216,9 +224,9 @@ class EnhancedWebSocketService {
 
                         if (!roomId || !message || !message.content || !message.sender) {
                             logger.error('Send message failed: Invalid message format');
-                            return socket.emit('message_error', { 
+                            return socket.emit('message_error', {
                                 error: 'Invalid message format',
-                                tempId: message?.tempId 
+                                tempId: message?.tempId
                             });
                         }
 
@@ -226,7 +234,7 @@ class EnhancedWebSocketService {
                         const validation = this.messageValidator.validateMessage(message);
                         if (!validation.valid) {
                             logger.warn(`Message validation failed for user ${userId}:`, validation.errors);
-                            return socket.emit('message_error', { 
+                            return socket.emit('message_error', {
                                 error: 'Message validation failed',
                                 details: validation.errors,
                                 tempId: message.tempId,
@@ -243,9 +251,9 @@ class EnhancedWebSocketService {
                         const userConnection = this.connectedUsers.get(socket.id);
                         if (!userConnection || !userConnection.rooms.has(roomId)) {
                             logger.error(`Send message failed: User ${userId} not in room ${roomId}`);
-                            return socket.emit('message_error', { 
+                            return socket.emit('message_error', {
                                 error: 'You must join the room before sending messages',
-                                tempId: message.tempId 
+                                tempId: message.tempId
                             });
                         }
 
@@ -253,16 +261,16 @@ class EnhancedWebSocketService {
                         const room = await Room.findById(roomId);
                         if (!room) {
                             logger.error(`Send message failed: Room ${roomId} not found`);
-                            return socket.emit('message_error', { 
+                            return socket.emit('message_error', {
                                 error: 'Room not found',
-                                tempId: message.tempId 
+                                tempId: message.tempId
                             });
                         }
 
                         // Sanitize and encrypt the message content
                         const sanitizedContent = this.messageValidator.sanitizeContent(message.content);
                         const { encryptedData, iv } = encrypt(sanitizedContent);
-                        
+
                         // Create and save the message
                         const newMessage = new Message({
                             content: encryptedData,
@@ -273,7 +281,7 @@ class EnhancedWebSocketService {
                         });
 
                         const savedMessage = await newMessage.save();
-                        
+
                         // Populate sender information
                         const populatedMessage = await Message.findById(savedMessage._id)
                             .populate('sender', 'username profilePicture')
@@ -290,10 +298,18 @@ class EnhancedWebSocketService {
                         };
 
                         logger.info(`Broadcasting message ${savedMessage._id} to room ${roomId}`);
-                        
+
                         // Broadcast to all users in the room
                         this.io.to(roomId).emit('receive_message', decryptedMessage);
-                        
+
+                        this.io.to(roomId).emit('room_notification', {
+                            message: `${decryptedMessage.sender.username} sent a message`,
+                            type: 'new_message',
+                            roomId: roomId,
+                            sender: decryptedMessage.sender,
+                            timestamp: new Date()
+                        });
+
                         // Send confirmation to sender
                         socket.emit('message_sent', {
                             success: true,
@@ -386,7 +402,7 @@ class EnhancedWebSocketService {
                         // Sanitize and encrypt the new content
                         const sanitizedContent = this.messageValidator.sanitizeContent(newContent);
                         const { encryptedData, iv } = encrypt(sanitizedContent);
-                        
+
                         // Update the message
                         message.content = encryptedData;
                         message.iv = iv;
@@ -403,11 +419,11 @@ class EnhancedWebSocketService {
 
                         // Broadcast the update
                         this.io.to(roomId).emit('message_updated', decryptedMessage);
-                        
+
                         // Send confirmation
-                        socket.emit('edit_success', { 
+                        socket.emit('edit_success', {
                             messageId,
-                            warnings: validation.warnings 
+                            warnings: validation.warnings
                         });
 
                         logger.info(`Message ${messageId} edited successfully in room ${roomId}`);
@@ -455,6 +471,14 @@ class EnhancedWebSocketService {
                         socket.emit('room_left', { roomId });
                         socket.to(roomId).emit('user_left_room', { userId, username, roomId });
 
+                        this.io.to(roomId).emit('room_notification', {
+                            message: `${username} has left the room`,
+                            type: 'user_left',
+                            roomId: roomId,
+                            user: { userId, username },
+                            timestamp: new Date()
+                        });
+
                         logger.info(`User ${username} left room ${roomId}`);
 
                     } catch (error) {
@@ -479,15 +503,15 @@ class EnhancedWebSocketService {
                     try {
                         // Get user connection data
                         const userConnection = this.connectedUsers.get(socket.id);
-                        
+
                         if (userConnection) {
                             // Leave all rooms this socket was in
                             userConnection.rooms.forEach(roomId => {
                                 socket.leave(roomId);
-                                socket.to(roomId).emit('user_left_room', { 
-                                    userId, 
-                                    username, 
-                                    roomId 
+                                socket.to(roomId).emit('user_left_room', {
+                                    userId,
+                                    username,
+                                    roomId
                                 });
                             });
                         }
@@ -592,7 +616,7 @@ class EnhancedWebSocketService {
     getUserStats(userId) {
         const userSockets = this.userSockets.get(userId) || new Set();
         const rooms = new Set();
-        
+
         userSockets.forEach(socketId => {
             const connection = this.connectedUsers.get(socketId);
             if (connection) {
@@ -632,15 +656,15 @@ class EnhancedWebSocketService {
             clearInterval(this.cleanupInterval);
             this.cleanupInterval = null;
         }
-        
+
         if (this.rateLimiter) {
             this.rateLimiter.destroy();
         }
-        
+
         this.connectedUsers.clear();
         this.userSockets.clear();
         this.roomMembers.clear();
-        
+
         logger.info('Enhanced WebSocket service destroyed');
     }
 }

@@ -7,7 +7,8 @@ const {
   sendJoinRequest,
   leaveRoom,
   updateRoomMembersLeetCodeStats,
-  updateRoomMembersCodeforcesStats
+  updateRoomMembersCodeforcesStats,
+  updateLastSeenMessage
 } = require("../controllers/roomController");
 
 // Enhanced room controller with improved platform stats
@@ -62,6 +63,8 @@ router.post("/:roomId/messages", protect, messagingRateLimit, sendMessage);
 router.get("/:roomId/leaderboard", protect, getLeaderboard);
 
 router.get("/:roomId/messages", protect, getMessages);
+
+router.post("/:roomId/update-last-seen", protect, updateLastSeenMessage);
 
 router.delete("/messages/:messageId", protect, messagingRateLimit, deleteMessage);
 
