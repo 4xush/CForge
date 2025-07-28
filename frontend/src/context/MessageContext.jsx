@@ -216,7 +216,6 @@ export const MessageProvider = ({ children }) => {
         const response = await api.get(
           `/rooms/${currentRoomDetails._id}/messages${query}`
         );
-
         // Only update state if this is the latest fetch request and we're still in the same room
         if (
           currentFetchId === fetchIdRef.current &&

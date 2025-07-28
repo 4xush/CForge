@@ -13,6 +13,7 @@ import { Spinner } from "../ui/Spinner";
 import toast from "react-hot-toast";
 
 const Chat = () => {
+  // 1. Context hooks - Get values from context providers
   const { currentRoomDetails } = useRoomContext();
   const { authUser } = useAuthContext();
   const {
@@ -33,6 +34,7 @@ const Chat = () => {
     lastSeenMessageId,
   } = useMessageContext();
 
+  // 2. State hooks - Initialize all state variables
   const [contextMenu, setContextMenu] = useState({
     visible: false,
     x: 0,
@@ -45,16 +47,19 @@ const Chat = () => {
     isOpen: false,
     username: null,
   });
-  const isInitialLoadRef = useRef(true);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [isNearBottom, setIsNearBottom] = useState(isInitialLoadRef.current);
+  const [isNearBottom, setIsNearBottom] = useState(true);
 
+  // 3. Ref hooks - Initialize all refs
   const messagesEndRef = useRef(null);
   const contextMenuRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const lastScrollTopRef = useRef(0);
   const eventListenersSetupRef = useRef(false);
+  const isInitialLoadRef = useRef(true);
+
+  // 4. Side effects - Data fetching, event listeners, etc.
 
   // Fetch messages when room changes
   useEffect(() => {
@@ -63,6 +68,8 @@ const Chat = () => {
       fetchMessages();
     }
   }, [currentRoomDetails, currentRoomDetails?._id, fetchMessages]);
+
+  // 5. Callback functions - Event handlers, helpers, etc.
 
   const handleNewMessage = useCallback(
     (message) => {
@@ -308,27 +315,41 @@ const Chat = () => {
       const oldestMessage = messages[0];
       await fetchMessages(oldestMessage._id);
       toast.success("Older messages loaded", { duration: 1000 });
-    } catch (error) {
+    } catch {
+      // Error caught and handled without referencing error object
       toast.error("Failed to load older messages. Please try again.");
     } finally {
       setLoadingMore(false);
     }
   }, [hasMore, loadingMore, messages, fetchMessages]);
 
-  // Context menu handling
   useEffect(() => {
+    // This effect must be after closeContextMenu is defined
+    if (!contextMenuRef.current) return; // Safeguard in case effect runs too early
+
     const handleClickOutside = (event) => {
       if (
         contextMenuRef.current &&
         !contextMenuRef.current.contains(event.target)
       ) {
-        closeContextMenu();
+        setContextMenu({ visible: false, x: 0, y: 0, messageId: null });
       }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Cleanup: Leave room when component unmounts or room changes
+  useEffect(() => {
+    return () => {
+      if (currentRoomDetails && socket) {
+        // Explicitly leave the room when navigating away
+        socket.emit("leave_room", { roomId: currentRoomDetails._id });
+        console.log(`🚪 Left room ${currentRoomDetails.name} via cleanup`);
+      }
+    };
+  }, [currentRoomDetails, socket]);
 
   const canModifyMessage = useCallback(
     (message) => {
@@ -356,10 +377,6 @@ const Chat = () => {
     },
     [messages, canModifyMessage]
   );
-
-  const closeContextMenu = useCallback(() => {
-    setContextMenu({ visible: false, x: 0, y: 0, messageId: null });
-  }, []);
 
   // FIXED: Message editing - Updated for backend format
   const handleEditMessage = useCallback(
@@ -403,7 +420,7 @@ const Chat = () => {
 
   const startEditing = useCallback((message) => {
     setEditingMessage(message);
-    closeContextMenu();
+    setContextMenu({ visible: false, x: 0, y: 0, messageId: null }); // Inline instead of using closeContextMenu
   }, []);
 
   const cancelEditing = useCallback(() => {
@@ -481,7 +498,41 @@ const Chat = () => {
     return deduped;
   }, []);
 
-  // Render states
+  // Helper to identify first unread message
+  const isFirstUnreadMessage = useCallback(
+    (currentMsg, allMessages) => {
+      if (!lastSeenMessageId || !currentMsg._id) {
+        return false;
+      }
+
+      // Find the index of lastSeenMessageId
+      const lastSeenIndex = allMessages.findIndex(
+        (msg) => msg._id === lastSeenMessageId
+      );
+
+      if (lastSeenIndex === -1) {
+        // If lastSeenMessageId not found, no unread messages to mark
+        return false;
+      }
+
+      // Find the index of current message
+      const currentIndex = allMessages.findIndex(
+        (msg) => msg._id === currentMsg._id
+      );
+
+      if (currentIndex === -1) {
+        return false;
+      }
+
+      // Check if this is the first message after lastSeenMessageId
+      // Since messages are in descending order (newest first),
+      // the first unread message has index = lastSeenIndex - 1
+      return currentIndex === lastSeenIndex - 1;
+    },
+    [lastSeenMessageId]
+  );
+
+  // 6. Conditional renders - Return early if conditions aren't met
   if (!currentRoomDetails) {
     return (
       <div className="flex flex-col h-full items-center justify-center text-gray-500">
@@ -521,6 +572,8 @@ const Chat = () => {
     );
   }
 
+  // 7. Derived state - Values computed from props and state
+
   // FIXED: Filter, validate and deduplicate messages before grouping
   const validMessages = deduplicateMessages(messages.filter(validateMessage));
 
@@ -536,6 +589,7 @@ const Chat = () => {
 
   let unreadMarkerRendered = false;
 
+  // 8. Main render
   return (
     <div className="flex flex-col h-full relative">
       <div
@@ -577,7 +631,6 @@ const Chat = () => {
             {msgs.map((msg, index) => {
               // FIXED: Additional validation before rendering each message
               if (!validateMessage(msg)) {
-                // Skip invalid messages completely
                 return null;
               }
 
@@ -585,6 +638,9 @@ const Chat = () => {
               const messageKey = `${msg._id || msg.tempId || `temp-${index}`}-${
                 msg.isEdited ? "edited" : "original"
               }-${msg.editedAt || msg.createdAt}`;
+
+              // Check if this is the first unread message
+              const isFirstUnread = isFirstUnreadMessage(msg, validMessages);
 
               const messageContent = (
                 <div key={messageKey} className="relative group">
@@ -624,18 +680,21 @@ const Chat = () => {
                 </div>
               );
 
-              if (msg._id === lastSeenMessageId && !unreadMarkerRendered) {
+              // ✅ FIXED: Show separator BEFORE first unread message
+              if (isFirstUnread && !unreadMarkerRendered) {
                 unreadMarkerRendered = true;
                 return (
                   <React.Fragment key={`${messageKey}-with-marker`}>
-                    {messageContent}
-                    <div className="flex items-center my-2">
-                      <hr className="flex-grow border-t border-red-500" />
-                      <span className="px-2 text-xs text-red-500 bg-gray-900">
+                    {/* Show separator BEFORE the unread message */}
+                    <div className="flex items-center my-4">
+                      <hr className="flex-grow border-t border-blue-500" />
+                      <span className="px-2 text-xs text-blue-400 bg-gray-900">
                         New Messages
                       </span>
-                      <hr className="flex-grow border-t border-red-500" />
+                      <hr className="flex-grow border-t border-blue-500" />
                     </div>
+                    {/* Then show the unread message */}
+                    {messageContent}
                   </React.Fragment>
                 );
               }
@@ -768,7 +827,9 @@ const Chat = () => {
               );
               startEditing(messageToEdit);
             }}
-            onCancel={closeContextMenu}
+            onCancel={() =>
+              setContextMenu({ visible: false, x: 0, y: 0, messageId: null })
+            }
           />
         </div>
       )}

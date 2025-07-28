@@ -459,12 +459,32 @@ export const RoomProvider = ({ children }) => {
     const isRoomRoute = pathSegments[0] === "rooms" && pathSegments.length >= 2;
 
     if (!isRoomRoute && currentRoomDetails) {
+
+      // Leave room via WebSocket before clearing details
+      if (socket) {
+        socket.emit('leave_room', { roomId: currentRoomDetails._id });
+        console.log(`🚪 Left room ${currentRoomDetails.name} via navigation`);
+      }
       setCurrentRoomDetails(null);
       setCurrentRoomError(null);
       currentRoomIdRef.current = null;
     }
-  }, [location.pathname, currentRoomDetails]);
+  }, [location.pathname, currentRoomDetails, socket]);
 
+
+  // Handle page close/refresh - leave current room
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (currentRoomDetails && socket) {
+        // Send leave room request before page closes
+        socket.emit('leave_room', { roomId: currentRoomDetails._id });
+        console.log(`🚪 Left room ${currentRoomDetails.name} via page close`);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [currentRoomDetails, socket]);
   // Clear all cached data when user logs out
   useEffect(() => {
     if (!authUser) {
