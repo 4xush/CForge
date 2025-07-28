@@ -228,7 +228,7 @@ const TopBar = ({ roomId }) => {
     <>
       <div
         ref={topBarRef}
-        className="bg-gray-800 py-1 sm:py-0 px-1.5 sm:px-3 flex items-center justify-between border-b border-gray-700 relative min-h-[32px] sm:min-h-[44px]"
+        className="bg-gray-800 py-1 sm:py-0 px-2 sm:px-3 flex items-center justify-between border-b border-gray-700 relative min-h-[32px] sm:min-h-[44px]"
       >
         <div className="flex-1 min-w-0 pr-1">
           <div className="flex flex-row items-center gap-2">
@@ -258,7 +258,7 @@ const TopBar = ({ roomId }) => {
             }`}
             aria-label="Open menu"
           >
-            <MoreVertical size={16} className="sm:w-6 sm:h-6" />
+            <MoreVertical size={18} className="sm:w-6 sm:h-6" />
           </button>
         </div>
         {/* Mobile-optimized dropdown menu */}

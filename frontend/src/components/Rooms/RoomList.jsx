@@ -16,7 +16,7 @@ const RoomList = ({ setRoomFormVisible }) => {
 
   const handleRoomClick = (room) => {
     if (room.unreadCount > 0) {
-      console.log("Marking room as read:", room.roomId);
+      // console.log("Marking room as read:", room.roomId);
       markRoomAsRead(room.roomId);
       navigate(`/rooms/${room.roomId}/chat`);
     } else {

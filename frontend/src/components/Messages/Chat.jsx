@@ -638,21 +638,21 @@ const Chat = () => {
                 </div>
               );
 
-              if (isFirstUnread && !unreadMarkerRendered) {
-                unreadMarkerRendered = true;
-                return (
-                  <React.Fragment key={`${messageKey}-with-marker`}>
-                    <div className="flex items-center my-4">
-                      <hr className="flex-grow border-t border-blue-500" />
-                      <span className="px-2 text-xs text-blue-400 bg-gray-900">
-                        Your Last Sent Message
-                      </span>
-                      <hr className="flex-grow border-t border-blue-500" />
-                    </div>
-                    {messageContent}
-                  </React.Fragment>
-                );
-              }
+              // if (isFirstUnread && !unreadMarkerRendered) {
+              //   unreadMarkerRendered = true;
+              //   return (
+              //     <React.Fragment key={`${messageKey}-with-marker`}>
+              //       <div className="flex items-center my-4">
+              //         <hr className="flex-grow border-t border-blue-500" />
+              //         <span className="px-2 text-xs text-blue-400 bg-gray-900">
+              //           Your Last Sent Message
+              //         </span>
+              //         <hr className="flex-grow border-t border-blue-500" />
+              //       </div>
+              //       {messageContent}
+              //     </React.Fragment>
+              //   );
+              // }
 
               return messageContent;
             })}
