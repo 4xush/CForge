@@ -6,6 +6,33 @@ const { encrypt, decrypt } = require('../utils/cryptoUtils');
 const jwt = require('jsonwebtoken');
 const winston = require('winston');
 const WebSocketRateLimit = require('../utils/websocketRateLimit');
+
+// Helper function to update lastSeenMessage when user leaves room
+async function updateLastSeenOnLeave(userId, roomId) {
+  try {
+    const Message = require('../models/Message');
+    const LastSeen = require('../models/LastSeen');
+
+    // Get the latest message in the room
+    const latestMessage = await Message.findOne({ room: roomId })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    if (latestMessage) {
+      // Update user's lastSeenMessage to the latest message
+      await LastSeen.findOneAndUpdate(
+        { user: userId, room: roomId },
+        { lastSeenMessage: latestMessage._id },
+        { upsert: true, new: true }
+      );
+
+      console.log(`✅ Updated lastSeen for user ${userId} in room ${roomId} to message ${latestMessage._id}`);
+    }
+  } catch (error) {
+    console.error(`❌ Error updating lastSeen on leave for user ${userId} in room ${roomId}:`, error);
+  }
+}
+
 const MessageValidator = require('../utils/messageValidator');
 
 const logger = winston.createLogger({
@@ -168,6 +195,12 @@ class EnhancedWebSocketService {
                         // Update our tracking
                         const userConnection = this.connectedUsers.get(socket.id);
                         if (userConnection) {
+
+                            // Update lastSeenMessage for all rooms user was in before disconnect
+                            for (const roomId of userConnection.rooms) {
+                                await updateLastSeenOnLeave(userId, roomId);
+                            }
+
                             userConnection.rooms.add(roomId);
                         }
 
@@ -439,11 +472,14 @@ class EnhancedWebSocketService {
                 });
 
                 // Handle leaving room
-                socket.on('leave_room', ({ roomId }) => {
+                socket.on('leave_room', async ({ roomId }) => {
                     try {
                         logger.info(`Leave room request: ${roomId} from user ${userId}`);
 
                         if (!roomId) return;
+
+                        // Update lastSeenMessage before leaving
+                        await updateLastSeenOnLeave(userId, roomId);
 
                         // Leave the socket room
                         socket.leave(roomId);
@@ -451,6 +487,12 @@ class EnhancedWebSocketService {
                         // Update tracking
                         const userConnection = this.connectedUsers.get(socket.id);
                         if (userConnection) {
+
+                            // Update lastSeenMessage for all rooms user was in before disconnect
+                            for (const roomId of userConnection.rooms) {
+                                await updateLastSeenOnLeave(userId, roomId);
+                            }
+
                             userConnection.rooms.delete(roomId);
                         }
 
@@ -497,7 +539,7 @@ class EnhancedWebSocketService {
                 });
 
                 // Handle disconnection
-                socket.on('disconnect', (reason) => {
+                socket.on('disconnect', async (reason) => {
                     logger.info(`User ${username} (${userId}) disconnected: ${reason} - Socket: ${socket.id}`);
 
                     try {
@@ -505,6 +547,12 @@ class EnhancedWebSocketService {
                         const userConnection = this.connectedUsers.get(socket.id);
 
                         if (userConnection) {
+
+                            // Update lastSeenMessage for all rooms user was in before disconnect
+                            for (const roomId of userConnection.rooms) {
+                                await updateLastSeenOnLeave(userId, roomId);
+                            }
+
                             // Leave all rooms this socket was in
                             userConnection.rooms.forEach(roomId => {
                                 socket.leave(roomId);
@@ -529,6 +577,12 @@ class EnhancedWebSocketService {
 
                         // Clean up room members for rooms where this user has no more sockets
                         if (userConnection) {
+
+                            // Update lastSeenMessage for all rooms user was in before disconnect
+                            for (const roomId of userConnection.rooms) {
+                                await updateLastSeenOnLeave(userId, roomId);
+                            }
+
                             userConnection.rooms.forEach(roomId => {
                                 const userSockets = this.userSockets.get(userId) || new Set();
                                 const userStillInRoom = Array.from(userSockets).some(socketId => {

@@ -1,10 +1,4 @@
-import React, {
-  useEffect,
-  useRef,
-  useState,
-  useCallback,
-  useMemo,
-} from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useRoomContext } from "../../context/RoomContext";
 import { useAuthContext } from "../../context/AuthContext";
 import { useMessageContext } from "../../context/MessageContext";
@@ -64,28 +58,28 @@ const Chat = () => {
   const lastScrollTopRef = useRef(0);
   const eventListenersSetupRef = useRef(false);
   const isInitialLoadRef = useRef(true);
-  const eventHandlersRef = useRef({});
 
   // 4. Side effects - Data fetching, event listeners, etc.
 
   // Fetch messages when room changes
   useEffect(() => {
-    if (currentRoomDetails?._id) {
+    if (currentRoomDetails) {
       isInitialLoadRef.current = true;
       fetchMessages();
     }
-  }, [currentRoomDetails?._id, fetchMessages]);
+  }, [currentRoomDetails, currentRoomDetails?._id, fetchMessages]);
 
   // 5. Callback functions - Event handlers, helpers, etc.
 
   const handleNewMessage = useCallback(
     (message) => {
       if (!message || typeof message !== "object") {
+        console.error("Chat: Invalid message received:", message);
         return;
       }
 
       setMessages((prevMessages) => {
-        // Check for existing message by ID first
+        // FIXED: Check for existing message by ID first
         const existsById = prevMessages.some((msg) => msg._id === message._id);
         if (existsById) {
           return prevMessages;
@@ -104,7 +98,7 @@ const Chat = () => {
           return newMessages;
         }
 
-        // If no tempId match, check if this is from current user and similar content
+        // FIXED: If no tempId match, check if this message is from current user and similar content
         if (message.sender._id === authUser._id) {
           const similarTempIndex = prevMessages.findIndex(
             (msg) =>
@@ -124,7 +118,7 @@ const Chat = () => {
           }
         }
 
-        // Check if this is a duplicate of an existing non-temporary message
+        // FIXED: Check if this is a duplicate of an existing non-temporary message
         const duplicateExists = prevMessages.some(
           (msg) =>
             !msg.isTemporary &&
@@ -145,10 +139,82 @@ const Chat = () => {
     },
     [setMessages, authUser?._id]
   );
-  // Message edit handler
+
+  // FIXED: Handle message sent confirmation
+  const handleMessageSent = useCallback(
+    (data) => {
+      if (data.tempId) {
+        setMessages((prevMessages) => {
+          const tempIndex = prevMessages.findIndex(
+            (msg) => msg.tempId === data.tempId
+          );
+          if (tempIndex !== -1) {
+            const newMessages = [...prevMessages];
+            newMessages.splice(tempIndex, 1);
+            return newMessages;
+          }
+          return prevMessages;
+        });
+      }
+
+      if (data.success) {
+        toast.success("Message sent successfully", { duration: 1000 });
+      }
+    },
+    [setMessages]
+  );
+
+  // FIXED: Handle message errors
+  const handleMessageError = useCallback(
+    (error) => {
+      // FIXED: Remove temporary message if it failed to send
+      if (error.tempId) {
+        setMessages((prevMessages) => {
+          const filtered = prevMessages.filter(
+            (msg) => msg.tempId !== error.tempId
+          );
+          return filtered;
+        });
+      }
+
+      toast.error(error.error || "Failed to send message. Please try again.");
+    },
+    [setMessages]
+  );
+
+  // FIXED: Setup WebSocket listeners with deduplication
+  useEffect(() => {
+    if (!socket || eventListenersSetupRef.current) return;
+    eventListenersSetupRef.current = true;
+
+    addEventListener("receive_message", handleNewMessage);
+    addEventListener("message_sent", handleMessageSent);
+    addEventListener("message_error", handleMessageError);
+
+    return () => {
+      eventListenersSetupRef.current = false;
+      removeEventListener("receive_message", handleNewMessage);
+      removeEventListener("message_sent", handleMessageSent);
+      removeEventListener("message_error", handleMessageError);
+    };
+  }, [
+    socket,
+    addEventListener,
+    removeEventListener,
+    handleNewMessage,
+    handleMessageSent,
+    handleMessageError,
+  ]);
+
+  // FIXED: Message edit listeners - Updated for backend format
   const handleMessageUpdated = useCallback(
     (updatedMessage) => {
+      // FIXED: Validate updated message structure
       if (!updatedMessage || typeof updatedMessage !== "object") {
+        console.error(
+          "Chat: Invalid updated message received:",
+          updatedMessage
+        );
         return;
       }
 
@@ -176,83 +242,21 @@ const Chat = () => {
       toast.success("Message edited successfully", { duration: 1000 });
     }
   }, []);
-  // Handle message sent confirmation
-  const handleMessageSent = useCallback(
-    (data) => {
-      if (data.tempId) {
-        setMessages((prevMessages) => {
-          const tempIndex = prevMessages.findIndex(
-            (msg) => msg.tempId === data.tempId
-          );
-          if (tempIndex !== -1) {
-            const newMessages = [...prevMessages];
-            newMessages.splice(tempIndex, 1);
-            return newMessages;
-          }
-          return prevMessages;
-        });
-      }
 
-      if (data.success) {
-        toast.success("Message sent successfully", { duration: 1000 });
-      }
-    },
-    [setMessages]
-  );
-
-  // Handle message errors
-  const handleMessageError = useCallback(
-    (error) => {
-      // Remove temporary message if it failed to send
-      if (error.tempId) {
-        setMessages((prevMessages) => {
-          const filtered = prevMessages.filter(
-            (msg) => msg.tempId !== error.tempId
-          );
-          return filtered;
-        });
-      }
-
-      toast.error(error.error || "Failed to send message. Please try again.");
-    },
-    [setMessages]
-  );
-
-  // Setup WebSocket listeners efficiently
   useEffect(() => {
-    if (!socket || eventListenersSetupRef.current) return;
+    if (!socket) return;
 
-    // Store the current handlers in the ref
-    eventHandlersRef.current = {
-      receive_message: handleNewMessage,
-      message_sent: handleMessageSent,
-      message_error: handleMessageError,
-      message_updated: handleMessageUpdated,
-      edit_success: handleEditSuccess,
-    };
-
-    // Set up all event listeners at once
-    Object.entries(eventHandlersRef.current).forEach(([event, handler]) => {
-      addEventListener(event, handler);
-    });
-
-    eventListenersSetupRef.current = true;
+    addEventListener("message_updated", handleMessageUpdated);
+    addEventListener("edit_success", handleEditSuccess);
 
     return () => {
-      eventListenersSetupRef.current = false;
-
-      // Clean up all event listeners at once
-      Object.entries(eventHandlersRef.current).forEach(([event, handler]) => {
-        removeEventListener(event, handler);
-      });
+      removeEventListener("message_updated", handleMessageUpdated);
+      removeEventListener("edit_success", handleEditSuccess);
     };
   }, [
     socket,
     addEventListener,
     removeEventListener,
-    handleNewMessage,
-    handleMessageSent,
-    handleMessageError,
     handleMessageUpdated,
     handleEditSuccess,
   ]);
@@ -312,15 +316,16 @@ const Chat = () => {
       await fetchMessages(oldestMessage._id);
       toast.success("Older messages loaded", { duration: 1000 });
     } catch {
+      // Error caught and handled without referencing error object
       toast.error("Failed to load older messages. Please try again.");
     } finally {
       setLoadingMore(false);
     }
   }, [hasMore, loadingMore, messages, fetchMessages]);
 
-  // Click outside context menu
   useEffect(() => {
-    if (!contextMenuRef.current) return;
+    // This effect must be after closeContextMenu is defined
+    if (!contextMenuRef.current) return; // Safeguard in case effect runs too early
 
     const handleClickOutside = (event) => {
       if (
@@ -341,11 +346,11 @@ const Chat = () => {
       if (currentRoomDetails && socket) {
         // Explicitly leave the room when navigating away
         socket.emit("leave_room", { roomId: currentRoomDetails._id });
+        console.log(`🚪 Left room ${currentRoomDetails.name} via cleanup`);
       }
     };
   }, [currentRoomDetails, socket]);
 
-  // Check if user can modify message
   const canModifyMessage = useCallback(
     (message) => {
       if (!authUser || !message) return false;
@@ -357,7 +362,6 @@ const Chat = () => {
     [authUser, currentRoomDetails]
   );
 
-  // Handle context menu
   const handleContextMenu = useCallback(
     (e, messageId) => {
       e.preventDefault();
@@ -374,29 +378,35 @@ const Chat = () => {
     [messages, canModifyMessage]
   );
 
-  // Handle edit message - using WebSocket primarily, API as fallback
+  // FIXED: Message editing - Updated for backend format
   const handleEditMessage = useCallback(
     async (messageId, newContent) => {
       try {
-        // Optimistic update
-        setMessages((prevMessages) =>
-          prevMessages.map((msg) =>
-            msg._id === messageId
-              ? {
-                  ...msg,
-                  content: newContent,
-                  isEdited: true,
-                  editedAt: new Date().toISOString(),
-                }
-              : msg
-          )
-        );
-
         if (connected && currentRoomDetails) {
-          // Prefer WebSocket for real-time updates
+          // Optimistic update
+          setMessages((prevMessages) =>
+            prevMessages.map((msg) =>
+              msg._id === messageId
+                ? {
+                    ...msg,
+                    content: newContent,
+                    isEdited: true,
+                    editedAt: new Date().toISOString(),
+                  }
+                : msg
+            )
+          );
+
+          // Send edit through WebSocket with backend expected format
           editMessage(currentRoomDetails._id, messageId, newContent);
+
+          // Also update via API for persistence
+          try {
+            await editMessage(messageId, newContent);
+          } catch (apiError) {
+            console.error("API edit error:", apiError);
+          }
         } else {
-          // Fall back to API if WebSocket not available
           await editMessage(messageId, newContent);
         }
 
@@ -410,7 +420,7 @@ const Chat = () => {
 
   const startEditing = useCallback((message) => {
     setEditingMessage(message);
-    setContextMenu({ visible: false, x: 0, y: 0, messageId: null });
+    setContextMenu({ visible: false, x: 0, y: 0, messageId: null }); // Inline instead of using closeContextMenu
   }, []);
 
   const cancelEditing = useCallback(() => {
@@ -446,10 +456,23 @@ const Chat = () => {
 
   // FIXED: Validate message structure before rendering
   const validateMessage = useCallback((msg) => {
-    if (!msg || typeof msg !== "object") return false;
-    if (!msg._id && !msg.tempId) return false;
-    if (!msg.sender || typeof msg.sender !== "object") return false;
-    if (!msg.content && msg.content !== "") return false;
+    if (!msg || typeof msg !== "object") {
+      return false;
+    }
+
+    // Ensure required fields exist
+    if (!msg._id && !msg.tempId) {
+      return false;
+    }
+
+    if (!msg.sender || typeof msg.sender !== "object") {
+      return false;
+    }
+
+    if (!msg.content && msg.content !== "") {
+      return false;
+    }
+
     return true;
   }, []);
 
@@ -459,55 +482,64 @@ const Chat = () => {
     const deduped = [];
 
     for (const msg of msgs) {
+      // Create a unique key for each message
       const key =
         msg._id ||
         `${msg.tempId}-${msg.content}-${msg.sender._id}-${msg.createdAt}`;
+
       if (!seen.has(key)) {
         seen.add(key);
         deduped.push(msg);
+      } else {
+        // console.log("Chat: Removing duplicate message:", key)
       }
     }
+
     return deduped;
   }, []);
 
-  // Helper to identify first unread message - now without console logs
+  // Helper to identify first unread message
   const isFirstUnreadMessage = useCallback(
     (currentMsg, allMessages) => {
-      if (!lastSeenMessageId || !currentMsg._id) return false;
+      if (!lastSeenMessageId || !currentMsg._id) {
+        return false;
+      }
 
+      // Find the index of lastSeenMessageId
       const lastSeenIndex = allMessages.findIndex(
         (msg) => msg._id === lastSeenMessageId
       );
-      if (lastSeenIndex === -1 || lastSeenIndex === 0) return false;
+      if (lastSeenIndex === -1) {
+        // If lastSeenMessageId not found, no unread messages to mark
+        return false;
+      }
 
+      console.log(
+        `🔍 Separator Debug: lastSeenIndex=${lastSeenIndex}, latestMessage=${allMessages[0]?._id}, lastSeenId=${lastSeenMessageId}`
+      );
+      console.log(`🔍 User has seen everything: ${lastSeenIndex === 0}`);
+
+      // ✅ NEW: Check if lastSeenMessageId is the latest message (index 0)
+      // If so, user has seen everything - no separator needed
+      if (lastSeenIndex === 0) {
+        return false;
+      }
+
+      // Find the index of current message
       const currentIndex = allMessages.findIndex(
         (msg) => msg._id === currentMsg._id
       );
 
-      if (currentIndex === -1) return false;
+      if (currentIndex === -1) {
+        return false;
+      }
+
+      // Check if this is the first message after lastSeenMessageId
+      // Since messages are in descending order (newest first),
+      // the first unread message has index = lastSeenIndex - 1
       return currentIndex === lastSeenIndex - 1;
     },
     [lastSeenMessageId]
-  );
-
-  // Process messages with memoization to prevent redundant processing
-  const validMessages = useMemo(
-    () => deduplicateMessages(messages.filter(validateMessage)),
-    [messages, deduplicateMessages, validateMessage]
-  );
-
-  // Group messages by date with memoization
-  const groupedMessages = useMemo(
-    () =>
-      validMessages.reduce((groups, message) => {
-        const date = formatMessageDate(message.createdAt);
-        if (!groups[date]) {
-          groups[date] = [];
-        }
-        groups[date].push(message);
-        return groups;
-      }, {}),
-    [validMessages, formatMessageDate]
   );
 
   // 6. Conditional renders - Return early if conditions aren't met
@@ -550,9 +582,24 @@ const Chat = () => {
     );
   }
 
-  // 8. Main render
+  // 7. Derived state - Values computed from props and state
+
+  // FIXED: Filter, validate and deduplicate messages before grouping
+  const validMessages = deduplicateMessages(messages.filter(validateMessage));
+
+  // Group messages by date
+  const groupedMessages = validMessages.reduce((groups, message) => {
+    const date = formatMessageDate(message.createdAt);
+    if (!groups[date]) {
+      groups[date] = [];
+    }
+    groups[date].push(message);
+    return groups;
+  }, {});
+
   let unreadMarkerRendered = false;
 
+  // 8. Main render
   return (
     <div className="flex flex-col h-full relative">
       <div
@@ -592,12 +639,17 @@ const Chat = () => {
               {date}
             </div>
             {msgs.map((msg, index) => {
-              if (!validateMessage(msg)) return null;
+              // FIXED: Additional validation before rendering each message
+              if (!validateMessage(msg)) {
+                return null;
+              }
 
+              // Create a truly unique key for this message
               const messageKey = `${msg._id || msg.tempId || `temp-${index}`}-${
                 msg.isEdited ? "edited" : "original"
               }-${msg.editedAt || msg.createdAt}`;
 
+              // Check if this is the first unread message
               const isFirstUnread = isFirstUnreadMessage(msg, validMessages);
 
               const messageContent = (
@@ -638,10 +690,12 @@ const Chat = () => {
                 </div>
               );
 
+              // ✅ FIXED: Show separator BEFORE first unread message
               if (isFirstUnread && !unreadMarkerRendered) {
                 unreadMarkerRendered = true;
                 return (
                   <React.Fragment key={`${messageKey}-with-marker`}>
+                    {/* Show separator BEFORE the unread message */}
                     <div className="flex items-center my-4">
                       <hr className="flex-grow border-t border-blue-500" />
                       <span className="px-2 text-xs text-blue-400 bg-gray-900">
@@ -649,6 +703,7 @@ const Chat = () => {
                       </span>
                       <hr className="flex-grow border-t border-blue-500" />
                     </div>
+                    {/* Then show the unread message */}
                     {messageContent}
                   </React.Fragment>
                 );
@@ -690,11 +745,13 @@ const Chat = () => {
       <div className="px-4 py-2 border-t border-gray-800">
         <MessageInput
           onMessageSent={(messageContent) => {
+            // FIXED: Now messageContent is just a string, not an object
             if (connected && currentRoomDetails) {
               const tempId = `temp-${Date.now()}-${Math.random()
                 .toString(36)
                 .substr(2, 9)}`;
 
+              // FIXED: Check for recent similar temporary messages to prevent duplicates
               const hasSimilarTemp = messages.some(
                 (msg) =>
                   msg.isTemporary &&
@@ -705,7 +762,10 @@ const Chat = () => {
                   ) < 2000
               );
 
-              if (hasSimilarTemp) return;
+              if (hasSimilarTemp) {
+                // console.log("Similar temporary message already exists, not adding duplicate")
+                return;
+              }
 
               const tempMessage = {
                 content: messageContent,
@@ -722,25 +782,31 @@ const Chat = () => {
 
               setMessages((prevMessages) => [...prevMessages, tempMessage]);
 
+              // FIXED: Use the context's sendMessage function with just the message content string
               const result = sendMessage(
                 currentRoomDetails._id,
                 messageContent
               );
               if (!result || !result.success) {
+                // Remove temporary message if send failed immediately
                 setTimeout(() => {
                   setMessages((prevMessages) =>
                     prevMessages.filter((msg) => msg.tempId !== tempId)
                   );
+                  // Only show error toast if the message actually failed to send
                   toast.error("Failed to send message. Please try again.");
                 }, 100);
-              } else if (result.tempId && result.tempId !== tempId) {
-                setMessages((prevMessages) =>
-                  prevMessages.map((msg) =>
-                    msg.tempId === tempId
-                      ? { ...msg, tempId: result.tempId }
-                      : msg
-                  )
-                );
+              } else {
+                // Update the temporary message with the actual tempId from the service
+                if (result.tempId && result.tempId !== tempId) {
+                  setMessages((prevMessages) =>
+                    prevMessages.map((msg) =>
+                      msg.tempId === tempId
+                        ? { ...msg, tempId: result.tempId }
+                        : msg
+                    )
+                  );
+                }
               }
 
               scrollToBottom();
