@@ -32,7 +32,7 @@ export const requestNotificationPermission = async () => {
  * @param {Object} reminder - Reminder object with problem details
  * @param {Function} onClick - Optional callback when notification is clicked
  */
-export const showReminderNotification = async (reminder, onClick) => {
+export const showReminderNotification = (reminder, onClick) => {
   if (Notification.permission !== 'granted') {
     return;
   }
@@ -40,9 +40,8 @@ export const showReminderNotification = async (reminder, onClick) => {
   const { problem } = reminder;
   const title = `Review Problem: ${problem.title}`;
   const body = `Time to review this ${problem.difficulty} problem! (${reminder.interval} day interval)`;
-
-  // Options for the notification
-  const options = {
+  
+  const notification = new Notification(title, {
     body,
     icon: '/favicon.ico',
     tag: `reminder-${reminder.id}`,
@@ -51,60 +50,31 @@ export const showReminderNotification = async (reminder, onClick) => {
     data: {
       reminderId: reminder.id,
       problemId: problem.id,
-      url: problem.url,
-      onClick: onClick ? true : false
-    },
-    actions: [
-      {
-        action: 'view',
-        title: 'View Problem'
-      }
-    ]
+      url: problem.url
+    }
+  });
+
+  // Handle notification click
+  notification.onclick = (event) => {
+    event.preventDefault();
+    window.focus();
+    
+    if (onClick) {
+      onClick(reminder);
+    } else {
+      // Default behavior: open problem URL
+      window.open(problem.url, '_blank');
+    }
+    
+    notification.close();
   };
 
-  // Use service worker if available, fallback to standard notification
-  try {
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      // Get the service worker registration to show notification
-      const registration = await navigator.serviceWorker.ready;
-      await registration.showNotification(title, options);
-      return true;
-    } else {
-      console.warn('Service worker not available, notifications may not work in PWA mode');
-      // Fallback for non-PWA environments (this will fail in PWAs)
-      try {
-        const notification = new Notification(title, options);
+  // Auto-close after 10 seconds if not interacted with
+  setTimeout(() => {
+    notification.close();
+  }, 10000);
 
-        // Handle notification click
-        notification.onclick = (event) => {
-          event.preventDefault();
-          window.focus();
-
-          if (onClick) {
-            onClick(reminder);
-          } else {
-            // Default behavior: open problem URL
-            window.open(problem.url, '_blank');
-          }
-
-          notification.close();
-        };
-
-        // Auto-close after 10 seconds if not interacted with
-        setTimeout(() => {
-          notification.close();
-        }, 10000);
-
-        return notification;
-      } catch (error) {
-        console.error('Failed to show notification:', error);
-        return null;
-      }
-    }
-  } catch (error) {
-    console.error('Error showing notification:', error);
-    return null;
-  }
+  return notification;
 };
 
 /**
@@ -116,7 +86,7 @@ export const scheduleLocalNotification = (reminder, onClick) => {
   const now = new Date();
   const reminderDate = new Date(reminder.reminderDate);
   const timeUntilReminder = reminderDate.getTime() - now.getTime();
-
+  
   if (timeUntilReminder <= 0) {
     // Reminder is due now or overdue
     showReminderNotification(reminder, onClick);
@@ -213,7 +183,7 @@ export const formatReminderDate = (dateString) => {
   const now = new Date();
   const diffTime = date - now;
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
+  
   if (diffDays === 0) {
     return 'Today';
   } else if (diffDays === -1) {
@@ -228,16 +198,6 @@ export const formatReminderDate = (dateString) => {
 };
 
 /**
- * Check if service worker is available for notifications
- * @returns {Promise<boolean>} - True if service worker is available
- */
-export const isServiceWorkerAvailable = async () => {
-  return 'serviceWorker' in navigator &&
-    navigator.serviceWorker.controller !== null &&
-    (await navigator.serviceWorker.ready) !== undefined;
-};
-
-/**
  * Get notification status and permission info
  * @returns {Object} - Notification status information
  */
@@ -245,12 +205,10 @@ export const getNotificationStatus = () => {
   const supported = 'Notification' in window;
   const permission = supported ? Notification.permission : 'unsupported';
   const preferences = getNotificationPreferences();
-  const serviceWorkerAvailable = 'serviceWorker' in navigator;
-
+  
   return {
     supported,
     permission,
-    serviceWorkerAvailable,
     enabled: supported && permission === 'granted' && preferences.enabled,
     preferences
   };

@@ -43,40 +43,50 @@ const AboutCForge = () => {
           animate="visible"
         >
           <motion.p variants={childFade} className="text-sm sm:text-base">
-            <strong>CForge</strong> is a coding community platform with progress
-            analytics designed to solve a fundamental problem in the coding
-            community: the disconnect between individual progress on coding
-            platforms and peer awareness. While many students actively solve
-            problems on LeetCode, GitHub, and Codeforces, their efforts often
-            remain invisible to their peers, creating missed opportunities for
-            motivation, collaboration, and mentorship.
+            <strong>CForge</strong> is a powerful platform focused on LeetCode
+            tracking and competitive programming progress, designed to solve two
+            critical problems: consistently reviewing important coding problems
+            and maintaining motivation through peer competition. While many
+            programmers actively solve problems on LeetCode and Codeforces, they
+            often struggle with systematic review and miss the motivational
+            benefits of peer awareness and healthy competition.
           </motion.p>
           <motion.p variants={childFade} className="text-sm sm:text-base">
-            This disconnect inspired the creation of CForge: a collaborative
-            space where developers can come together, create rooms, track their
-            progress, and stay aware of each other's journeys — no matter where
-            they are in their coding path.
+            These challenges inspired the creation of CForge: a comprehensive
+            solution with an advanced LeetCode Problem Tracker featuring smart
+            review reminders and room-based leaderboards where programmers can
+            come together, track their progress, compare statistics, and stay
+            motivated through peer competition — all available as a Progressive
+            Web App with offline capabilities.
           </motion.p>
           <motion.p variants={childFade} className="text-sm sm:text-base">
             <span className="font-semibold text-purple-300">Motivation:</span>{" "}
-            At the heart of CForge lies the belief that visibility and community
-            are key drivers of growth. When you see your peers striving,
-            building, and overcoming challenges, it sparks a sense of healthy
-            competition and shared ambition. CForge is built to transform
-            isolated coding journeys into a collective experience—where every
-            milestone is celebrated, and every setback is met with support.
+            At the heart of CForge lies the belief that systematic practice and
+            community-driven motivation are the keys to mastering competitive
+            programming. Research shows that spaced repetition significantly
+            improves long-term retention of problem-solving patterns, while peer
+            accountability increases consistency. CForge combines these
+            principles into one powerful platform that transforms isolated
+            practice into a structured, community-driven experience.
           </motion.p>
           <motion.p variants={childFade} className="text-sm sm:text-base">
-            CForge empowers coders by providing a unified dashboard to monitor
-            growth across popular platforms, while enabling healthy peer
-            competition through real-time leaderboards and insightful
-            statistics.
+            <span className="font-semibold text-purple-300">Key Features:</span>{" "}
+            CForge&apos;s LeetCode Problem Tracker automatically syncs your
+            solved problems and implements a smart reminder system for optimized
+            review schedules. The room-based leaderboards create healthy
+            competition while our PWA implementation ensures you can access your
+            tracked problems and statistics even offline. With push
+            notifications for reminders and real-time room chat for
+            collaboration, CForge creates a complete ecosystem for competitive
+            programming success.
           </motion.p>
           <motion.p variants={childFade} className="text-sm sm:text-base">
-            Whether you're preparing for interviews, grinding contests, or just
-            starting out, CForge helps bring visibility to your efforts, fosters
-            community-driven learning, and transforms scattered progress into
-            shared momentum.
+            Whether you&apos;re preparing for technical interviews, improving
+            your competitive programming skills, or just starting your coding
+            journey, CForge helps you maintain consistent practice through
+            structured reviews, fosters community-driven motivation through
+            leaderboards, and provides accessibility through modern PWA
+            technology.
           </motion.p>
           <motion.p variants={childFade} className="text-sm sm:text-base">
             <a
@@ -85,8 +95,9 @@ const AboutCForge = () => {
             >
               Join CForge
             </a>{" "}
-            — not just to track your coding, but to connect with like-minded
-            peers, grow together, and stay inspired on the journey.
+            — to track your LeetCode progress with smart review reminders, join
+            room-based leaderboards for motivation, and access your coding stats
+            anytime with our mobile-friendly PWA.
           </motion.p>
 
           <motion.div
@@ -107,8 +118,11 @@ const AboutCForge = () => {
                 rel="noopener noreferrer"
                 className="underline hover:text-blue-400 transition-colors"
               >
-                IIIT Guwahati
-              </a>{" "}specializing in Electronics and Communication Engineering, with a passion for problem-solving and building user-focused applications.
+                IIIT-Guwahati
+              </a>{" "}
+              specializing in Electronics and Communication Engineering, with a
+              passion for problem-solving and building user-focused
+              applications.
             </p>
             <a
               href="https://4xush.github.io/portfolio/"

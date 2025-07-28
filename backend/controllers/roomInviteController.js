@@ -28,7 +28,7 @@ const generateRoomInvite = async (req, res) => {
 
         // Set expiry date to 1 month from now
         const expiryDate = new Date();
-        expiryDate.setMonth(expiryDate.getMonth() + 1);
+        expiryDate.setDate(expiryDate.getDate() + 7);
 
         // Update room with new invite details
         // This will automatically replace any existing invite

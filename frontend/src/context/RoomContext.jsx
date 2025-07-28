@@ -463,7 +463,7 @@ export const RoomProvider = ({ children }) => {
       // Leave room via WebSocket before clearing details
       if (socket) {
         socket.emit('leave_room', { roomId: currentRoomDetails._id });
-        console.log(`🚪 Left room ${currentRoomDetails.name} via navigation`);
+        // console.log(`🚪 Left room ${currentRoomDetails.name} via navigation`);
       }
       setCurrentRoomDetails(null);
       setCurrentRoomError(null);
@@ -478,7 +478,7 @@ export const RoomProvider = ({ children }) => {
       if (currentRoomDetails && socket) {
         // Send leave room request before page closes
         socket.emit('leave_room', { roomId: currentRoomDetails._id });
-        console.log(`🚪 Left room ${currentRoomDetails.name} via page close`);
+        // console.log(`🚪 Left room ${currentRoomDetails.name} via page close`);
       }
     };
 

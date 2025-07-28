@@ -16,7 +16,7 @@ export default defineConfig({
       manifest: {
         name: "CForge",
         short_name: "CForge",
-        description: "Coding community platform with progress analytics.",
+        description: "LeetCode Tracker & Competitive Programming Leaderboards.",
         theme_color: "#6b46c1",
         background_color: "#6b46c1",
         display: "standalone",
@@ -67,8 +67,8 @@ export default defineConfig({
             }
           },
           {
-            urlPattern: ({ request }) => 
-              request.destination === 'script' || 
+            urlPattern: ({ request }) =>
+              request.destination === 'script' ||
               request.destination === 'style' ||
               request.destination === 'font',
             handler: 'StaleWhileRevalidate',

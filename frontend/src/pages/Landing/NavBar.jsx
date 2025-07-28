@@ -227,8 +227,8 @@ const About = () => (
           About CForge
         </h2>
         <p className="text-base sm:text-lg text-gray-300 max-w-3xl mx-auto font-light tracking-wide">
-          Bringing visibility to your coding journey and fostering
-          community-driven growth
+          LeetCode tracking with smart review reminders and room-based
+          leaderboards to enhance your competitive programming journey
         </p>
       </div>
 
@@ -237,22 +237,15 @@ const About = () => (
           <div className="space-y-4 text-gray-300 text-base sm:text-lg leading-relaxed">
             <p>
               <span className="text-purple-400 font-semibold">CForge</span> is a
-              coding community platform with progress analytics, designed to
-              bridge the gap between individual efforts on platforms like
-              LeetCode, GitHub, and Codeforces and peer visibility—unlocking new
-              opportunities for motivation, collaboration, and mentorship.
+              platform that combines LeetCode problem tracking with smart review
+              reminders and room-based leaderboards to help programmers maintain
+              consistent practice through healthy competition.
             </p>
             <p>
-              We created a collaborative space where developers can come
-              together, create rooms, track their progress, and stay aware of
-              each other's journeys — no matter where they are in their coding
-              path.
-            </p>
-            <p>
-              At the heart of CForge lies the belief that visibility and
-              community are key drivers of growth. When you see your peers
-              striving, building, and overcoming challenges, it sparks a sense
-              of healthy competition and shared ambition.
+              Available as a Progressive Web App with offline access and push
+              notifications, CForge helps you track progress across platforms,
+              schedule optimal problem reviews, and stay motivated through peer
+              competition.
             </p>
           </div>
 

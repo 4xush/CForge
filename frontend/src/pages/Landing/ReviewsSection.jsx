@@ -111,7 +111,7 @@ const ReviewsSection = () => {
                         </h2>
                     </div>
                     <p className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto font-light tracking-wide mb-8">
-                        Join developers who are already using CForge to track their progress and connect with the community
+                        Join coders who are already using CForge to track their progress and connect with the community
                     </p>
 
                     {/* Stats */}

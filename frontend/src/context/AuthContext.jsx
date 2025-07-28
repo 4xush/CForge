@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }) => {
       const profileResponse = await ApiService.get('users/profile');
       if (profileResponse.data) {
         setValidatedUser(profileResponse.data);
-        console.log('Fetched complete user profile data');
+        // console.log('Fetched complete user profile data');
         return profileResponse.data;
       }
     } catch (error) {

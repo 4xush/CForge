@@ -221,11 +221,9 @@ const App = () => {
                       <Route
                         path="/help"
                         element={
-                          <PrivateRoute>
-                            <ErrorBoundary>
-                              <HelpFAQ />
-                            </ErrorBoundary>
-                          </PrivateRoute>
+                          <ErrorBoundary>
+                            <HelpFAQ />
+                          </ErrorBoundary>
                         }
                       />
                     </Route>

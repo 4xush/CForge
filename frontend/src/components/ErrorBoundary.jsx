@@ -1,5 +1,5 @@
-import React from 'react';
-import { MailIcon } from 'lucide-react';
+import React from "react";
+import { MailIcon } from "lucide-react";
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -14,20 +14,25 @@ class ErrorBoundary extends React.Component {
   componentDidCatch(error, errorInfo) {
     this.setState({
       error: error,
-      errorInfo: errorInfo
+      errorInfo: errorInfo,
     });
 
     // Log error to your error tracking service
-    console.error('Error caught by boundary:', error, errorInfo);
+    console.error("Error caught by boundary:", error, errorInfo);
   }
 
   handleReportError = () => {
-    const subject = encodeURIComponent('Error Report - CForge');
-    const errorDetails = this.state.error ? this.state.error.toString() : 'Unknown error';
-    const stackTrace = this.state.errorInfo && this.state.errorInfo.componentStack
-      ? this.state.errorInfo.componentStack
-      : 'No stack trace available';
-    const body = encodeURIComponent(`Error: ${errorDetails}\n\nStack Trace:\n${stackTrace}`);
+    const subject = encodeURIComponent("Error Report - CForge");
+    const errorDetails = this.state.error
+      ? this.state.error.toString()
+      : "Unknown error";
+    const stackTrace =
+      this.state.errorInfo && this.state.errorInfo.componentStack
+        ? this.state.errorInfo.componentStack
+        : "No stack trace available";
+    const body = encodeURIComponent(
+      `Error: ${errorDetails}\n\nStack Trace:\n${stackTrace}`
+    );
     window.location.href = `mailto:cforge.service@gmail.com?subject=${subject}&body=${body}`;
   };
 
@@ -40,7 +45,8 @@ class ErrorBoundary extends React.Component {
               Oops! Something went wrong
             </h2>
             <p className="text-gray-300 mb-6">
-              We're sorry, but something went wrong. Our team has been notified and we're working to fix it.
+              We&#39;re sorry, but something went wrong. Our team has been
+              notified and we&#39;re working to fix it.
             </p>
             <div className="flex justify-center gap-4 mb-6">
               <button
@@ -50,13 +56,13 @@ class ErrorBoundary extends React.Component {
                 Refresh Page
               </button>
               <button
-                onClick={() => window.location.href = '/dashboard'}
+                onClick={() => (window.location.href = "/dashboard")}
                 className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
               >
                 Go Home
               </button>
             </div>
-            {process.env.NODE_ENV === 'development' && (
+            {import.meta.env.MODE !== "production" && (
               <div className="mt-8 text-left">
                 <p className="text-red-400 font-mono text-sm mb-2">
                   {this.state.error && this.state.error.toString()}
@@ -67,7 +73,9 @@ class ErrorBoundary extends React.Component {
               </div>
             )}
             <div className="border-t border-gray-700 pt-6">
-              <p className="text-gray-400 text-sm mb-4">Help us fix it by reporting the error details.</p>
+              <p className="text-gray-400 text-sm mb-4">
+                Help us fix it by reporting the error details.
+              </p>
               <button
                 onClick={this.handleReportError}
                 className="flex items-center justify-center gap-2 mx-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors text-sm"

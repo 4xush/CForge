@@ -133,7 +133,7 @@ const HelpFAQ = () => {
                - Access room settings through the TopBar menu
                - Manage room details (name, description)
                - Control room privacy settings
-               - Generate invite links with 24-hour validity
+               - Generate invite links with 7-day validity
                - Handle join requests
                - Promote/demote members
                - Remove members
