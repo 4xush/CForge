@@ -304,20 +304,27 @@ const HelpFAQ = () => {
                - Notifications appear even when CForge isn't open in your browser
                - Click on a notification to go directly to the pending reminder
                - Notifications are scheduled based on your reminder settings
+               
+            3. PWA Notification Support:
+               - For the best experience, install CForge as a PWA (from browser menu)
+               - PWA installations handle notifications more reliably
+               - Notifications work differently when using the PWA version
+               - The app can send notifications even when closed
             
-            3. Managing Notification Settings:
+            4. Managing Notification Settings:
                - Toggle notifications on/off using the bell icon
                - Access detailed settings through the notification preferences panel
                - You can enable notifications on multiple devices
                - Browser permissions can be managed in your browser settings
                
-            4. Troubleshooting Notifications:
+            5. Troubleshooting Notifications:
                - If notifications don't appear, check browser permissions
                - Ensure notifications are enabled in both CForge and your browser
                - Some browsers restrict notifications for inactive sites
-               - Desktop notifications require a compatible modern browser
+               - If using as PWA, notifications use a different system than regular browser tabs
+               - Try reinstalling the PWA if notifications aren't working properly
                
-            5. Privacy and Control:
+            6. Privacy and Control:
                - All notifications are generated locally in your browser
                - You can disable notifications at any time
                - No notification data is stored on our servers

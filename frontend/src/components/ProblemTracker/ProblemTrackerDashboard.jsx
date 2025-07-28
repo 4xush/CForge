@@ -94,6 +94,37 @@ const ProblemTrackerDashboard = () => {
     }
   }, [reminders, notificationStatus.enabled]);
 
+  // Listen for service worker messages (for notification clicks)
+  useEffect(() => {
+    const handleServiceWorkerMessage = (event) => {
+      const message = event.data;
+      if (
+        message &&
+        message.type === "REMINDER_NOTIFICATION_CLICK" &&
+        message.reminderId
+      ) {
+        // Find the reminder by ID
+        const reminder = reminders.find((r) => r.id === message.reminderId);
+        if (reminder) {
+          handleNotificationClick(reminder);
+        }
+      }
+    };
+
+    // Add message listener for service worker communication
+    navigator.serviceWorker.addEventListener(
+      "message",
+      handleServiceWorkerMessage
+    );
+
+    return () => {
+      navigator.serviceWorker.removeEventListener(
+        "message",
+        handleServiceWorkerMessage
+      );
+    };
+  }, [reminders]);
+
   // Load problems when filters change
   useEffect(() => {
     if (activeTab === "problems") {
