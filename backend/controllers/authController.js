@@ -187,110 +187,11 @@ const refreshToken = async (req, res) => {
  * User registration
  */
 const signupUser = async (req, res) => {
-  try {
-    const { fullName, email, password, gender } = req.body;
-
-    // Input validation
-    const validationErrors = [];
-
-    if (!fullName?.trim()) validationErrors.push("Full name is required");
-    if (!email?.trim()) validationErrors.push("Email is required");
-    if (!password?.trim()) validationErrors.push("Password is required");
-    if (!gender?.trim()) validationErrors.push("Gender is required");
-
-    if (!validateEmail(email)) validationErrors.push("Invalid email format");
-    if (!validatePassword(password)) validationErrors.push("Password must be at least 8 characters long");
-    if (!validateFullName(fullName)) validationErrors.push("Full name must be between 2 and 50 characters");
-    if (!["male", "female", "other"].includes(gender?.toLowerCase())) {
-      validationErrors.push("Gender must be either 'male', 'female', or 'other'");
-    }
-
-    if (validationErrors.length > 0) {
-      return res.status(400).json({
-        message: "Validation failed",
-        errors: validationErrors
-      });
-    }
-
-    // Check if email is already registered
-    const existingUser = await User.findOne({
-      email: new RegExp(`^${email.trim()}$`, 'i')
-    });
-
-    if (existingUser) {
-      return res.status(400).json({ message: "Email is already registered" });
-    }
-
-    // Generate username and avatar
-    const username = await generateUsername(fullName.trim());
-    const avatarUrl = `https://ui-avatars.com/api/?background=random&name=${encodeURIComponent(fullName.trim())}`;
-
-    // Create user with complete structure
-    const newUser = await User.create({
-      fullName: fullName.trim(),
-      username,
-      email: email.toLowerCase().trim(),
-      password: await bcrypt.hash(password, 12),
-      gender: gender.toLowerCase(),
-      profilePicture: avatarUrl,
-      platforms: {
-        leetcode: { username: null },
-        github: { username: null },
-        codeforces: { username: null }
-      },
-      socialNetworks: {
-        linkedin: "",
-        twitter: ""
-      },
-      rateLimitInfo: {
-        dailyApiCalls: 0,
-        lastApiCallReset: new Date(),
-        platformRefreshCount: 0,
-        lastPlatformRefresh: new Date()
-      },
-      isProfileComplete: false,
-      isGoogleAuth: false,
-      lastActiveAt: new Date()
-    });
-
-    // Generate JWT token
-    const token = generateToken(newUser);
-
-    // Send minimal response (no extra data)
-    res.status(201).json({
-      message: "User registered successfully",
-      token,
-      user: {
-        _id: newUser._id,
-        fullName: newUser.fullName,
-        username: newUser.username,
-        email: newUser.email,
-        profilePicture: newUser.profilePicture,
-        platforms: newUser.platforms,
-        isProfileComplete: newUser.isProfileComplete
-      }
-    });
-
-  } catch (error) {
-    console.error("Signup error:", error);
-
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({
-        message: "Validation failed",
-        errors: Object.values(error.errors).map(err => err.message)
-      });
-    }
-
-    if (error.code === 11000) {
-      // Handle duplicate key errors
-      const field = Object.keys(error.keyPattern)[0];
-      return res.status(400).json({
-        message: `${field.charAt(0).toUpperCase() + field.slice(1)} already exists`
-      });
-    }
-
-    res.status(500).json({ message: "Registration failed. Please try again later." });
-  }
+  // Direct signup is disabled, only Google Auth is allowed
+  return res.status(403).json({
+    message: "Direct signup is currently disabled. Please use Google Authentication instead.",
+    googleAuthRequired: true
+  });
 };
 
 /**

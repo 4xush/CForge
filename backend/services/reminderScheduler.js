@@ -7,7 +7,7 @@ class ReminderScheduler {
 
   /**
    * Start the reminder scheduler
-   * Runs every 5 minutes to check for due reminders
+   * Runs every 15 minutes to check for due reminders
    */
   static start() {
     if (this.isRunning) {
@@ -16,9 +16,9 @@ class ReminderScheduler {
     }
 
     console.log('🚀 Starting reminder scheduler...');
-    
-    // Run every 5 minutes
-    cron.schedule('*/5 * * * *', async () => {
+
+    // Run every 15 minutes
+    cron.schedule('*/15 * * * *', async () => {
       await this.checkAndSendReminders();
     });
 
@@ -28,7 +28,7 @@ class ReminderScheduler {
     }, 10000); // Wait 10 seconds after startup
 
     this.isRunning = true;
-    console.log('✅ Reminder scheduler started - checking every 5 minutes');
+    console.log('✅ Reminder scheduler started - checking every 15 minutes');
   }
 
   /**
@@ -37,27 +37,27 @@ class ReminderScheduler {
   static async checkAndSendReminders() {
     try {
       console.log('⏰ Checking for due reminders...');
-      
+
       const now = new Date();
-      const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
+      const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000);
 
       // Find reminders that are due (within the last 5 minutes to current time)
       const dueReminders = await Reminder.find({
         status: 'pending',
         isActive: true,
         reminderDate: {
-          $gte: fiveMinutesAgo,
+          $gte: fifteenMinutesAgo,
           $lte: now
         }
       })
-      .populate({
-        path: 'userSolvedProblem',
-        populate: {
-          path: 'problem',
-          model: 'Problem'
-        }
-      })
-      .populate('user');
+        .populate({
+          path: 'userSolvedProblem',
+          populate: {
+            path: 'problem',
+            model: 'Problem'
+          }
+        })
+        .populate('user');
 
       if (dueReminders.length === 0) {
         console.log('📭 No due reminders found');

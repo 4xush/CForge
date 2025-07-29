@@ -65,7 +65,7 @@ app.use(
       ? {
         directives: {
           defaultSrc: ["'self'"],
-          connectSrc: ["'self'", process.env.FRONTEND_URL, `wss://${process.env.DOMAIN || 'yourdomain.com'}`],
+          connectSrc: ["'self'", process.env.FRONTEND_URL, `wss://${process.env.DOMAIN}`],
           scriptSrc: ["'self'", process.env.FRONTEND_URL],
           styleSrc: ["'self'", "'unsafe-inline'"],
           imgSrc: ["'self'", 'data:', process.env.FRONTEND_URL],
