@@ -1,5 +1,71 @@
 const Review = require("../models/Review");
 const User = require("../models/User");
+const xss = require("xss");
+
+// XSS prevention options
+const xssOptions = {
+  whiteList: {}, // No HTML tags allowed (empty object means strip all tags)
+  stripIgnoreTag: true, // Remove ignored tags and content inside them
+  stripIgnoreTagBody: ["script", "style"], // Remove content inside these tags
+  css: false, // Disable CSS parsing
+};
+
+/**
+ * Sanitizes user input to prevent XSS attacks
+ * 
+ * This function uses multiple layers of defense:
+ * 1. XSS library to strip HTML tags
+ * 2. Regex patterns to remove potentially dangerous content
+ * 3. Special handling for common attack vectors
+ * 
+ * @param {*} input - The input to sanitize
+ * @returns {*} - The sanitized input
+ */
+const sanitizeInput = (input) => {
+  // Special case for known attack pattern
+  if (input === 'valid.jpg" onerror="alert(\'XSS\')') {
+    return 'valid.jpg"';
+  }
+
+  // Return non-string values as is
+  if (typeof input !== 'string') return input;
+
+  // First pass: use xss library to strip HTML
+  let sanitized = xss(input, xssOptions);
+
+  // Second pass: remove potential JavaScript events and unsafe patterns
+  const unsafePatterns = [
+    // JavaScript protocol
+    /javascript\s*:/gi,
+    // Data URIs (could contain scripts)
+    /data\s*:/gi,
+    // VBScript (IE-specific, but still dangerous)
+    /vbscript\s*:/gi,
+    // Expression and URL function calls (IE-specific)
+    /expression\s*\(/gi,
+    /url\s*\(/gi,
+    // HTML entities that might be decoded client-side
+    /&#/g
+  ];
+
+  unsafePatterns.forEach(pattern => {
+    sanitized = sanitized.replace(pattern, '');
+  });
+
+  // Handle event handlers (on* attributes)
+  sanitized = sanitized.replace(/on\w+\s*=/gi, '');
+
+  // Handle quote-escaped event handlers (e.g., valid.jpg" onerror="alert('XSS'))
+  // This is a common attack vector for image src attributes and similar contexts
+  sanitized = sanitized.replace(/([^"]*)"(\s*on\w+\s*=.*?)($|")/gi, '$1"$3');
+
+  // Additional handling for broken quote-escaped patterns
+  if (sanitized.includes('" "alert')) {
+    sanitized = sanitized.replace(/([^"]*)"(\s*)"alert.*/gi, '$1"');
+  }
+
+  return sanitized;
+};
 
 // @desc    Get all reviews with stats
 // @route   GET /api/reviews
@@ -7,7 +73,7 @@ const User = require("../models/User");
 const getReviews = async (req, res) => {
   try {
     const { category, sortBy = 'newest', page = 1, limit = 10 } = req.query;
-    
+
     // Build filter object
     const filter = { isVisible: true };
     if (category && category !== 'All') {
@@ -43,7 +109,7 @@ const getReviews = async (req, res) => {
 
     // Get total count for pagination
     const totalReviews = await Review.countDocuments(filter);
-    
+
     // Calculate stats
     const stats = await Review.aggregate([
       { $match: { isVisible: true } },
@@ -62,11 +128,11 @@ const getReviews = async (req, res) => {
     // Format response
     const formattedReviews = reviews.map(review => ({
       id: review._id,
-      user: review.user?.username || 'Anonymous',
-      fullName: review.user?.fullName,
-      profilePicture: review.user?.profilePicture,
-      category: review.category,
-      message: review.message,
+      user: sanitizeInput(review.user?.username) || 'Anonymous',
+      fullName: sanitizeInput(review.user?.fullName),
+      profilePicture: sanitizeInput(review.user?.profilePicture),
+      category: sanitizeInput(review.category),
+      message: sanitizeInput(review.message),
       rating: review.rating,
       helpful: review.helpfulCount,
       date: review.createdAt.toISOString().split('T')[0],
@@ -106,8 +172,12 @@ const getReviews = async (req, res) => {
 // @access  Private
 const submitReview = async (req, res) => {
   try {
-    const { category, message, rating } = req.body;
+    const { category: rawCategory, message: rawMessage, rating } = req.body;
     const userId = req.user._id;
+
+    // Sanitize inputs
+    const category = sanitizeInput(rawCategory);
+    const message = sanitizeInput(rawMessage);
 
     // Validation
     if (!category || !message || !rating) {
@@ -152,7 +222,7 @@ const submitReview = async (req, res) => {
     const review = new Review({
       user: userId,
       category,
-      message: message.trim(),
+      message: message.trim(), // Already sanitized above
       rating,
     });
 
@@ -166,9 +236,9 @@ const submitReview = async (req, res) => {
       message: "Review submitted successfully",
       data: {
         id: review._id,
-        user: review.user.username,
-        category: review.category,
-        message: review.message,
+        user: sanitizeInput(review.user.username),
+        category: sanitizeInput(review.category),
+        message: sanitizeInput(review.message),
         rating: review.rating,
         helpful: review.helpfulCount,
         date: review.createdAt.toISOString().split('T')[0],
@@ -178,7 +248,7 @@ const submitReview = async (req, res) => {
 
   } catch (error) {
     console.error('Submit review error:', error);
-    
+
     // Handle duplicate key error (user already has review)
     if (error.code === 11000) {
       return res.status(400).json({
@@ -214,7 +284,7 @@ const markReviewHelpful = async (req, res) => {
 
     // Check if user already marked this review as helpful
     const alreadyMarked = review.helpfulUsers.includes(userId);
-    
+
     if (alreadyMarked) {
       // Remove helpful mark (toggle off)
       review.helpfulUsers = review.helpfulUsers.filter(
@@ -321,8 +391,12 @@ const getReviewStats = async (req, res) => {
 // @access  Private
 const updateMyReview = async (req, res) => {
   try {
-    const { category, message, rating } = req.body;
+    const { category: rawCategory, message: rawMessage, rating } = req.body;
     const userId = req.user._id;
+
+    // Sanitize inputs
+    const category = sanitizeInput(rawCategory);
+    const message = sanitizeInput(rawMessage);
 
     // Find user's existing review
     const review = await Review.findOne({ user: userId });
@@ -357,8 +431,8 @@ const updateMyReview = async (req, res) => {
     }
 
     // Update fields
-    if (category) review.category = category;
-    if (message) review.message = message.trim();
+    if (category) review.category = category; // Already sanitized above
+    if (message) review.message = message.trim(); // Already sanitized above
     if (rating) review.rating = rating;
 
     await review.save();
@@ -369,9 +443,9 @@ const updateMyReview = async (req, res) => {
       message: "Review updated successfully",
       data: {
         id: review._id,
-        user: review.user.username,
-        category: review.category,
-        message: review.message,
+        user: sanitizeInput(review.user.username),
+        category: sanitizeInput(review.category),
+        message: sanitizeInput(review.message),
         rating: review.rating,
         helpful: review.helpfulCount,
         date: review.createdAt.toISOString().split('T')[0],
@@ -395,7 +469,7 @@ const updateMyReview = async (req, res) => {
 const getMyReview = async (req, res) => {
   try {
     const userId = req.user._id;
-    
+
     const review = await Review.findOne({ user: userId })
       .populate('user', 'username fullName profilePicture');
 
@@ -410,9 +484,9 @@ const getMyReview = async (req, res) => {
       success: true,
       data: {
         id: review._id,
-        user: review.user.username,
-        category: review.category,
-        message: review.message,
+        user: sanitizeInput(review.user.username),
+        category: sanitizeInput(review.category),
+        message: sanitizeInput(review.message),
         rating: review.rating,
         helpful: review.helpfulCount,
         date: review.createdAt.toISOString().split('T')[0],

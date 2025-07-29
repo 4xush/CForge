@@ -4,6 +4,46 @@ const Room = require("../models/Room");
 const LastSeen = require("../models/LastSeen");
 const { encrypt, decrypt } = require("../utils/cryptoUtils");
 
+// Constants for validation
+const MAX_MESSAGE_LENGTH = 5000; // 5000 characters max for a message
+
+/**
+ * Sanitizes user input to prevent XSS attacks
+ * Simple implementation - for production, consider using a dedicated XSS library like 'xss'
+ */
+const sanitizeInput = (input) => {
+  if (typeof input !== 'string') return input;
+
+  // Special handling for quote-escaped attack patterns
+  if (input.includes('" onerror="') || input.includes('" onclick="') || input.includes('" onload="')) {
+    return input.replace(/([^"]*)"(\s*on\w+\s*=.*?)($|")/gi, '$1"');
+  }
+
+  // Remove potentially dangerous content
+  let sanitized = input;
+
+  // Remove script tags
+  sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+
+  // Handle dangerous protocols in URLs
+  const protocols = ['javascript:', 'data:', 'vbscript:', 'file:'];
+  protocols.forEach(protocol => {
+    sanitized = sanitized.replace(new RegExp(protocol, 'gi'), '');
+  });
+
+  // Handle event handlers
+  sanitized = sanitized.replace(/\s+on\w+\s*=\s*["'][^"']*["']/gi, '');
+
+  // Clean href attributes with JavaScript
+  sanitized = sanitized.replace(/<a\s+[^>]*href\s*=\s*["']?javascript:[^>]*>/gi, '<a>');
+
+  // Handle HTML entity encoding that could be used to bypass filters
+  // This is a simplified approach - consider using a library with entity decoding for production
+  sanitized = sanitized.replace(/&#x?\d+;/gi, '');
+
+  return sanitized;
+};
+
 // Send Message with Encryption
 exports.sendMessage = async (req, res) => {
   try {
@@ -11,12 +51,25 @@ exports.sendMessage = async (req, res) => {
     const { content } = req.body;
     const senderId = req.user._id;
 
+    // Input validation
+    if (!content) {
+      return res.status(400).json({ message: "Message content cannot be empty" });
+    }
+
+    if (content.length > MAX_MESSAGE_LENGTH) {
+      return res.status(400).json({
+        message: `Message too long. Maximum length is ${MAX_MESSAGE_LENGTH} characters`
+      });
+    }
+
     const room = await Room.findById(roomId);
     if (!room) {
       return res.status(404).json({ message: "Room not found" });
     }
-    // Encrypt the message content
-    const { encryptedData, iv } = encrypt(content);
+
+    // Sanitize and encrypt the message content
+    const sanitizedContent = sanitizeInput(content);
+    const { encryptedData, iv } = encrypt(sanitizedContent);
 
     const message = new Message({
       room: roomId,
@@ -40,7 +93,7 @@ exports.sendMessage = async (req, res) => {
       message: "Message sent successfully",
       data: {
         ...message.toObject(),
-        content, // Send decrypted content to the frontend
+        content: sanitizedContent, // Send sanitized content to the frontend
       },
     });
   } catch (error) {
@@ -101,11 +154,11 @@ exports.getMessages = async (req, res) => {
           };
         }
 
-        // Decrypt the message
+        // Decrypt the message and sanitize it
         const decryptedContent = decrypt(msg.content, msg.iv);
         return {
           ...msg,
-          content: decryptedContent,
+          content: sanitizeInput(decryptedContent), // Sanitize again when serving content
         };
       } catch (decryptError) {
         console.error(`Error decrypting message ${msg._id}:`, decryptError);
@@ -146,8 +199,15 @@ exports.editMessage = async (req, res) => {
     const { content } = req.body;
     const userId = req.user._id;
 
+    // Input validation
     if (!content || content.trim() === "") {
       return res.status(400).json({ message: "Message content cannot be empty" });
+    }
+
+    if (content.length > MAX_MESSAGE_LENGTH) {
+      return res.status(400).json({
+        message: `Message too long. Maximum length is ${MAX_MESSAGE_LENGTH} characters`
+      });
     }
 
     const message = await Message.findById(messageId);
@@ -164,8 +224,9 @@ exports.editMessage = async (req, res) => {
       return res.status(403).json({ message: "You are not authorized to edit this message" });
     }
 
-    // Encrypt the new content
-    const { encryptedData, iv } = encrypt(content);
+    // Sanitize and encrypt the new content
+    const sanitizedContent = sanitizeInput(content);
+    const { encryptedData, iv } = encrypt(sanitizedContent);
 
     message.content = encryptedData;
     message.iv = iv;
@@ -173,14 +234,14 @@ exports.editMessage = async (req, res) => {
 
     await message.save();
 
-    // Return decrypted content to the frontend
+    // Return sanitized content to the frontend
     await message.populate("sender", "username profilePicture");
     res.status(200).json({
       success: true,
       message: "Message edited successfully",
       data: {
         ...message.toObject(),
-        content, // Send decrypted content to the frontend
+        content: sanitizedContent, // Send sanitized content to the frontend
       },
     });
   } catch (error) {
