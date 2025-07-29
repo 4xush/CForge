@@ -3,19 +3,26 @@ const router = express.Router();
 const axios = require('axios');
 const redisClient = require('../services/cache/redisClient');
 
-// Rate limiting middleware (unchanged)
+// Improved rate limiting middleware that correctly identifies user IP
 const rateLimiter = async (req, res, next) => {
-    const ip = req.ip || req.headers['x-forwarded-for'] || 'anonymous';
+    // Get the real IP address (will use X-Forwarded-For when trust proxy is enabled)
+    const ip = req.ip || 'anonymous';
     const endpoint = req.path.split('/')[1] || 'contests';
     const rateLimitKey = redisClient.generateRateLimitKey(ip, endpoint);
 
     try {
-        const rateLimit = await redisClient.checkRateLimit(rateLimitKey, 10, 60);
+        const limit = process.env.NODE_ENV === 'production' ? 10 : 100;
+        const rateLimit = await redisClient.checkRateLimit(rateLimitKey, limit, 60);
         res.set({
             'X-RateLimit-Limit': '10',
             'X-RateLimit-Remaining': rateLimit.remaining.toString(),
             'X-RateLimit-Reset': new Date(rateLimit.reset).toISOString()
         });
+
+        // Log only in development for debugging
+        if (process.env.NODE_ENV !== 'production') {
+            console.log(`Rate limit for ${ip} (${endpoint}): ${rateLimit.remaining} requests remaining`);
+        }
 
         if (!rateLimit.allowed) {
             return res.status(429).json({
@@ -24,7 +31,11 @@ const rateLimiter = async (req, res, next) => {
         }
         next();
     } catch (error) {
-        console.error('Rate limit error:', error);
+        // Only log in development
+        if (process.env.NODE_ENV !== 'production') {
+            console.error('Rate limit error:', error);
+        }
+        // In production, we'll continue rather than failing the request
         next();
     }
 };

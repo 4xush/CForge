@@ -57,7 +57,7 @@ const { checkPlatformStatus, includeMetaData } = require('./middleware/platformS
 
 const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
-
+app.set('trust proxy', process.env.NODE_ENV === 'production' ? 1 : false);
 // Security middleware
 app.use(
   helmet({

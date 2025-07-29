@@ -1,7 +1,13 @@
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
+import toast from 'react-hot-toast';
 
 const API_URI = import.meta.env.VITE_API_URI;
+const isDevelopment = import.meta.env.MODE !== 'production';
+
+// Track rate limit toasts to prevent duplicates
+let lastRateLimitToastTime = 0;
+const RATE_LIMIT_TOAST_COOLDOWN = 3000; // 3 seconds between rate limit toasts
 
 
 const isTokenExpired = (token) => {
@@ -14,7 +20,7 @@ const isTokenExpired = (token) => {
             return true;
         }
         return false;
-    } catch (error) {
+    } catch {
         // If token can't be decoded, consider it expired
         return true;
     }
@@ -47,7 +53,23 @@ class ApiService {
             (response) => response,
             (error) => {
                 // Centralized error handling
-                console.error('API Error:', error.response?.data || error.message);
+                if (isDevelopment) {
+                    console.error('API Error:', error.response?.data || error.message);
+                }
+
+                // Handle rate limiting globally - with debouncing to prevent duplicate toasts
+                if (error.response?.status === 429) {
+                    const currentTime = Date.now();
+                    if (currentTime - lastRateLimitToastTime > RATE_LIMIT_TOAST_COOLDOWN) {
+                        const { error: errorMsg, retryAfter } = error.response.data || {};
+                        toast.error(
+                            `${errorMsg || 'Rate limit exceeded'}${retryAfter ? ` Please try again in ${retryAfter}.` : ''}`,
+                            { id: 'rate-limit-toast' } // Using an ID ensures only one toast with this ID can exist
+                        );
+                        lastRateLimitToastTime = currentTime;
+                    }
+                }
+
                 return Promise.reject(error);
             }
         );
