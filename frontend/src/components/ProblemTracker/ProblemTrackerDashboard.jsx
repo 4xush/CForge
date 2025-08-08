@@ -8,19 +8,15 @@ import {
   Star,
   Bell,
   BellOff,
+  Settings as SettingsIcon,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { problemTrackerApi } from "../../api/problemTrackerApi";
 import ProblemList from "./ProblemList";
 import ReminderList from "./ReminderList";
 import StatsCards from "./StatsCards";
-import NotificationPreferences from "./NotificationPreferences";
 import { useReminderContext } from "../../context/ReminderContext";
-import {
-  requestNotificationPermission,
-  checkDueReminders,
-  getNotificationStatus,
-  scheduleLocalNotification,
-} from "../../utils/notificationUtils";
+import { useAuthContext } from "../../context/AuthContext";
 
 const ProblemTrackerDashboard = () => {
   const [activeTab, setActiveTab] = useState("problems");
@@ -30,6 +26,7 @@ const ProblemTrackerDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [refreshingReminders, setRefreshingReminders] = useState(false);
+  const { authUser } = useAuthContext();
 
   // Use reminder context
   const {
@@ -40,6 +37,7 @@ const ProblemTrackerDashboard = () => {
     skipReminder: contextSkipReminder,
     refreshCount,
   } = useReminderContext();
+
   const [filters, setFilters] = useState({
     search: "",
     isImportant: "",
@@ -64,17 +62,14 @@ const ProblemTrackerDashboard = () => {
     totalProblems: 0,
   });
   const [isMobile, setIsMobile] = useState(false);
-  const [notificationStatus, setNotificationStatus] = useState(
-    getNotificationStatus()
-  );
-  const [scheduledNotifications, setScheduledNotifications] = useState([]);
-  const [showNotificationPreferences, setShowNotificationPreferences] =
-    useState(false);
+
+  // Get notification preferences from user settings
+  const notificationsEnabled =
+    authUser?.preferences?.notifications?.enabled || false;
 
   // Load initial data
   useEffect(() => {
     loadDashboardData();
-    checkNotificationPermission();
   }, []);
 
   useEffect(() => {
@@ -83,25 +78,6 @@ const ProblemTrackerDashboard = () => {
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
-
-  // Check for due reminders and show notifications
-  useEffect(() => {
-    if (reminders.length > 0 && notificationStatus.enabled) {
-      const dueCount = checkDueReminders(reminders, handleNotificationClick);
-      if (dueCount > 0) {
-        console.log(`Showed ${dueCount} due reminder notifications`);
-      }
-    }
-  }, [reminders, notificationStatus.enabled]);
-
-  // Load problems when filters change
-  useEffect(() => {
-    if (activeTab === "problems") {
-      loadProblems();
-    } else if (activeTab === "important") {
-      loadImportantProblems();
-    }
-  }, [filters, importantFilters, activeTab]);
 
   const loadDashboardData = async () => {
     try {
@@ -168,55 +144,11 @@ const ProblemTrackerDashboard = () => {
     try {
       setRefreshingReminders(true);
       await fetchPendingReminders();
-
-      // Schedule notifications for future reminders
-      if (notificationStatus.enabled) {
-        scheduleNotifications(reminders);
-      }
     } catch (error) {
       console.error("❌ Frontend: Error loading reminders:", error);
     } finally {
       setRefreshingReminders(false);
     }
-  };
-
-  const checkNotificationPermission = async () => {
-    const status = getNotificationStatus();
-    setNotificationStatus(status);
-  };
-
-  const handleRequestNotificationPermission = async () => {
-    const granted = await requestNotificationPermission();
-    if (granted) {
-      toast.success(
-        "Notifications enabled! You'll be notified when reminders are due."
-      );
-    } else {
-      toast.error(
-        "Notifications denied. Enable them in your browser settings."
-      );
-    }
-    setNotificationStatus(getNotificationStatus());
-  };
-
-  const scheduleNotifications = (reminders) => {
-    // Clear existing scheduled notifications
-    scheduledNotifications.forEach(clearTimeout);
-
-    const newTimeouts = reminders
-      .filter((reminder) => reminder.status === "pending")
-      .map((reminder) =>
-        scheduleLocalNotification(reminder, handleNotificationClick)
-      )
-      .filter(Boolean);
-
-    setScheduledNotifications(newTimeouts);
-  };
-
-  const handleNotificationClick = (reminder) => {
-    // Focus on reminders tab when notification is clicked
-    setActiveTab("reminders");
-    toast.info(`Reminder for: ${reminder.problem.title}`);
   };
 
   const handleSync = async () => {
@@ -348,32 +280,39 @@ const ProblemTrackerDashboard = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Notification Button */}
-            {notificationStatus.supported && (
-              <button
-                onClick={() => setShowNotificationPreferences(true)}
-                className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-colors text-xs sm:text-sm ${
-                  notificationStatus.enabled
-                    ? "bg-green-600 hover:bg-green-700 text-white"
-                    : "bg-gray-600 hover:bg-gray-700 text-gray-300"
-                }`}
-                title={
-                  notificationStatus.enabled
-                    ? "Notifications enabled - Click to configure"
-                    : "Enable notifications"
-                }
-              >
-                {notificationStatus.enabled ? (
-                  <Bell className="w-4 h-4" />
-                ) : (
-                  <BellOff className="w-4 h-4" />
-                )}
-                {!isMobile &&
-                  (notificationStatus.enabled
-                    ? "Notifications On"
-                    : "Enable Notifications")}
-              </button>
-            )}
+            {/* Settings Button */}
+            <Link
+              to="/settings?tab=notifications"
+              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-colors text-xs sm:text-sm bg-gray-600 hover:bg-gray-700"
+              title="Configure notifications in settings"
+            >
+              <SettingsIcon className="w-4 h-4" />
+              {!isMobile && "Settings"}
+            </Link>
+
+            {/* Notification Status Indicator */}
+            <div
+              className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm ${
+                notificationsEnabled
+                  ? "bg-green-600 text-white"
+                  : "bg-gray-600 text-gray-300"
+              }`}
+              title={
+                notificationsEnabled
+                  ? "Notifications enabled"
+                  : "Notifications disabled"
+              }
+            >
+              {notificationsEnabled ? (
+                <Bell className="w-4 h-4" />
+              ) : (
+                <BellOff className="w-4 h-4" />
+              )}
+              {!isMobile &&
+                (notificationsEnabled
+                  ? "Notifications On"
+                  : "Notifications Off")}
+            </div>
 
             {/* Sync Button */}
             <button
@@ -479,15 +418,6 @@ const ProblemTrackerDashboard = () => {
             </>
           )}
         </div>
-
-        {/* Notification Preferences Modal */}
-        <NotificationPreferences
-          isOpen={showNotificationPreferences}
-          onClose={() => {
-            setShowNotificationPreferences(false);
-            setNotificationStatus(getNotificationStatus());
-          }}
-        />
       </div>
     </div>
   );

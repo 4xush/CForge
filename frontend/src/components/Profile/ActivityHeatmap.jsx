@@ -78,20 +78,19 @@ const ActivityHeatmap = ({ data, platform }) => {
     if (counts.length === 0) return () => 0;
 
     const maxCount = Math.max(...counts);
-    const levels = [
-      0,
-      maxCount * 0.25,
-      maxCount * 0.5,
-      maxCount * 0.75,
-      maxCount,
-    ];
 
+    // New approach: Logarithmic scale for better distribution
     return (count) => {
       if (count === 0) return 0;
-      for (let i = levels.length - 1; i >= 0; i--) {
-        if (count >= levels[i]) return i;
+      if (count === 1) return 1;
+      if (maxCount <= 4) {
+        // Simple linear scale for small max values
+        return count;
+      } else {
+        // Logarithmic scale for better distribution of values
+        const normalized = Math.log(count) / Math.log(maxCount);
+        return 1 + Math.floor(normalized * 3); // Scale to levels 1-4
       }
-      return 0;
     };
   }, [calendarData]);
 
@@ -244,7 +243,9 @@ const ActivityHeatmap = ({ data, platform }) => {
                 {platform} Activity Heatmap
               </h4>
             </div>
-            <div className="text-xs sm:text-sm text-gray-400">Past 12 months</div>
+            <div className="text-xs sm:text-sm text-gray-400">
+              Past 12 months
+            </div>
           </div>
 
           {/* Heatmap Grid Container */}

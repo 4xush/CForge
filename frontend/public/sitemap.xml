@@ -1,73 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
+  <!-- Public routes that should be indexed -->
   <url>
     <loc>https://www.cforge.live/</loc>
-    <lastmod>2025-06-23T13:25:08.632Z</lastmod>
-    <changefreq>daily</changefreq>
+    <lastmod>2025-07-30T00:00:00.000Z</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
 
   <url>
-    <loc>https://www.cforge.live/login</loc>
-    <lastmod>2025-06-23T13:25:08.632Z</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
+    <loc>https://www.cforge.live/about</loc>
+    <lastmod>2025-07-30T00:00:00.000Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
 
   <url>
-    <loc>https://www.cforge.live/signup</loc>
-    <lastmod>2025-06-23T13:25:08.632Z</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://www.cforge.live/dashboard</loc>
-    <lastmod>2025-06-23T13:25:08.632Z</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://www.cforge.live/rooms</loc>
-    <lastmod>2025-06-23T13:25:08.632Z</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://www.cforge.live/settings</loc>
-    <lastmod>2025-06-23T13:25:08.632Z</lastmod>
-    <changefreq>daily</changefreq>
+    <loc>https://www.cforge.live/reviews</loc>
+    <lastmod>2025-07-30T00:00:00.000Z</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
     <loc>https://www.cforge.live/help</loc>
-    <lastmod>2025-06-23T13:25:08.632Z</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://www.cforge.live/about</loc>
-    <lastmod>2025-06-23T13:25:08.632Z</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://www.cforge.live/logout</loc>
-    <lastmod>2025-06-23T13:25:08.632Z</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
+    <lastmod>2025-07-30T00:00:00.000Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
 
   <url>
     <loc>https://www.cforge.live/contest-central</loc>
-    <lastmod>2025-06-23T13:25:08.632Z</lastmod>
+    <lastmod>2025-07-30T00:00:00.000Z</lastmod>
     <changefreq>daily</changefreq>
-    <priority>0.8</priority>
+    <priority>0.9</priority>
   </url>
+
 </urlset>
