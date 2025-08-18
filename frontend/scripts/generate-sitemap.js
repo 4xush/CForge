@@ -14,7 +14,6 @@ const generateSitemap = () => {
     { path: '/settings' },
     { path: '/help' },
     { path: '/about' },
-    { path: '/logout' },
     { path: '/contest-central' }
   ];
 

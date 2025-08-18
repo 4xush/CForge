@@ -11,16 +11,16 @@ const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 registerSW({
   immediate: true,
   onNeedRefresh() {
-    console.log("New content available, please refresh.");
+    // console.log("New content available, please refresh.");
   },
   onOfflineReady() {
     console.log("📱 App is ready to work offline.");
   },
   onRegistered(registration) {
-    console.log("Service Worker registered:", registration);
+    // console.log("Service Worker registered:", registration);
   },
   onRegisterError(error) {
-    console.error("Service Worker registration failed:", error);
+    // console.error("Service Worker registration failed:", error);
   },
 });
 

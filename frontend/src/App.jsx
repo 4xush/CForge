@@ -98,15 +98,6 @@ const App = () => {
     }
   }, []);
 
-  const Logout = () => {
-    useEffect(() => {
-      localStorage.clear();
-      sessionStorage.clear();
-      window.location.replace("/login");
-    }, []);
-    return null;
-  };
-
   return (
     <ErrorBoundary>
       <Router>
@@ -136,7 +127,6 @@ const App = () => {
                     {/* Public routes */}
                     <Route path="/signup" element={<SignupPage />} />
                     <Route path="/login" element={<LoginPage />} />
-                    <Route path="/logout" element={<Logout />} />
                     <Route path="/" element={<AuthLanding />} />
                     <Route path="/about" element={<AboutCForge />} />
                     <Route path="/reviews" element={<ReviewsPageWrapper />} />
