@@ -124,7 +124,6 @@ CForge is a powerful full-stack platform focused on competitive programming prog
 - **Core Framework**:
   - React 18.3.1 with React DOM
   - Vite as the build tool
-  - Next.js 13.4.19 integration
 - **UI Components & Styling**:
   - TailwindCSS with PostCSS and Autoprefixer
   - Material UI (MUI) for rich UI elements
